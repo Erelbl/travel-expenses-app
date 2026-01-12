@@ -3,8 +3,6 @@ import { ExpensesRepository } from "@/lib/data/repositories"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@prisma/client"
 
-const DEMO_USER_ID = "demo-user"
-
 // Type for expense rows returned by Prisma
 type ExpenseRow = Prisma.ExpenseGetPayload<{
   select: {
@@ -91,13 +89,13 @@ export class PrismaExpensesRepository implements ExpensesRepository {
     }
   }
 
-  async createExpense(expense: CreateExpense): Promise<Expense> {
+  async createExpense(expense: CreateExpense & { createdById: string }): Promise<Expense> {
     console.log('[EXPENSE CREATE] Starting expense creation:', expense.merchant)
     
     const created = await prisma.expense.create({
       data: {
         tripId: expense.tripId,
-        createdById: DEMO_USER_ID,
+        createdById: expense.createdById,
         title: expense.merchant || "Expense",
         category: expense.category,
         countryCode: expense.country,

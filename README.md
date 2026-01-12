@@ -110,12 +110,27 @@ travel-expenses-app/
    npm install
    ```
 
-3. **Run the development server**:
+3. **Configure environment variables**:
+   Create a `.env` or `.env.local` file in the project root with:
+   ```bash
+   # Database (Neon PostgreSQL)
+   DATABASE_URL="postgresql://..."
+   
+   # NextAuth (Authentication)
+   AUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
+   NEXTAUTH_URL="http://localhost:3000"  # Your app URL (production: https://yourdomain.com)
+   
+   # Resend (Email magic links)
+   RESEND_API_KEY="re_..."
+   EMAIL_FROM="TravelExpense <noreply@yourdomain.com>"
+   ```
+
+4. **Run the development server**:
    ```bash
    npm run dev
    ```
 
-4. **Open your browser**:
+5. **Open your browser**:
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ### Database Migrations

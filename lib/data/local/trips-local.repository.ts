@@ -20,16 +20,16 @@ export class LocalTripsRepository implements TripsRepository {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(trips))
   }
 
-  async listTrips(): Promise<Trip[]> {
+  async listTrips(userId: string): Promise<Trip[]> {
     return this.getTripsFromStorage().sort((a, b) => b.createdAt - a.createdAt)
   }
 
-  async getTrip(id: string): Promise<Trip | null> {
+  async getTrip(id: string, userId: string): Promise<Trip | null> {
     const trips = this.getTripsFromStorage()
     return trips.find((t) => t.id === id) ?? null
   }
 
-  async createTrip(trip: CreateTrip): Promise<Trip> {
+  async createTrip(trip: CreateTrip & { ownerId: string }): Promise<Trip> {
     const newTrip: Trip = {
       ...trip,
       id: crypto.randomUUID(),
@@ -45,7 +45,7 @@ export class LocalTripsRepository implements TripsRepository {
     return newTrip
   }
 
-  async updateTrip(id: string, updates: Partial<Trip>): Promise<Trip> {
+  async updateTrip(id: string, updates: Partial<Trip>, userId: string): Promise<Trip> {
     const trips = this.getTripsFromStorage()
     const index = trips.findIndex((t) => t.id === id)
     
@@ -62,7 +62,7 @@ export class LocalTripsRepository implements TripsRepository {
     return updatedTrip
   }
 
-  async deleteTrip(id: string): Promise<void> {
+  async deleteTrip(id: string, userId: string): Promise<void> {
     const trips = this.getTripsFromStorage()
     const filtered = trips.filter((t) => t.id !== id)
     this.saveTripsToStorage(filtered)

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
 import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repository'
 
 const expensesRepository = new PrismaExpensesRepository()
@@ -8,9 +9,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!process.env.DATABASE_URL) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
     const { id } = await params
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 })
@@ -31,9 +34,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!process.env.DATABASE_URL) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
     const { id } = await params
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 })
@@ -52,9 +57,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!process.env.DATABASE_URL) {
-      return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
     const { id } = await params
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 })

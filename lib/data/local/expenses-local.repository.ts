@@ -38,9 +38,9 @@ export class LocalExpensesRepository implements ExpensesRepository {
     return expenses.find((e) => e.id === id) ?? null
   }
 
-  async createExpense(expense: CreateExpense): Promise<Expense> {
+  async createExpense(expense: CreateExpense & { createdById: string }): Promise<Expense> {
     // Get trip to determine base currency
-    const trip = await this.tripsRepo.getTrip(expense.tripId)
+    const trip = await this.tripsRepo.getTrip(expense.tripId, expense.createdById)
     if (!trip) {
       throw new Error(`Trip not found: ${expense.tripId}`)
     }
