@@ -1,121 +1,147 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/db"
 import { PageContainer } from "@/components/ui/page-container"
 import { PageHeader } from "@/components/page-header"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { formatCurrency } from "@/lib/utils/currency"
-import { COUNTRIES } from "@/lib/utils/countries"
+import { ProfileForm } from "./ProfileForm"
+import { StatsDisplay } from "./StatsDisplay"
 
-interface UserData {
-  id: string
-  email: string | null
-  name: string | null
-  nickname: string | null
-  image: string | null
-  baseCurrency: string
-  language: string
+async function getProfileData(userId: string) {
+  try {
+    // Get user data
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        nickname: true,
+        image: true,
+        baseCurrency: true,
+        language: true,
+      },
+    })
+
+    if (!user) {
+      return null
+    }
+
+    // Get trips where user is owner or member
+    const myTrips = await prisma.trip.findMany({
+      where: {
+        OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+      },
+      select: { id: true },
+    })
+
+    const tripIds = myTrips.map((t) => t.id)
+
+    // Get expenses created by me
+    const myExpenses = await prisma.expense.findMany({
+      where: { createdById: userId },
+      select: {
+        tripId: true,
+        countryCode: true,
+        amount: true,
+        convertedAmount: true,
+        currency: true,
+      },
+    })
+
+    // Get all expenses in my trips
+    const tripsExpenses = await prisma.expense.findMany({
+      where: { tripId: { in: tripIds } },
+      select: {
+        tripId: true,
+        countryCode: true,
+        amount: true,
+        convertedAmount: true,
+        currency: true,
+      },
+    })
+
+    // Calculate stats for "my expenses"
+    const myStats = calculateStats(myExpenses, user.baseCurrency)
+
+    // Calculate stats for "all trip expenses"
+    const tripsStats = calculateStats(tripsExpenses, user.baseCurrency)
+
+    return {
+      user,
+      stats: {
+        my: { ...myStats, totalTrips: tripIds.length },
+        trips: { ...tripsStats, totalTrips: tripIds.length },
+      },
+    }
+  } catch (error) {
+    console.error("[Profile] Error loading data:", error)
+    return null
+  }
 }
 
-interface Stats {
-  totalTrips: number
-  totalExpenses: number
-  totalSpentBase: number
-  uniqueCountries: number
-  topCountries: Array<{
+function calculateStats(
+  expenses: Array<{
     countryCode: string
-    expensesCount: number
-    totalSpentBase: number
-  }>
+    amount: number
+    convertedAmount: number | null
+    currency: string
+  }>,
+  baseCurrency: string
+) {
+  const totalExpenses = expenses.length
+
+  let totalSpentBase = 0
+  const countriesMap = new Map<string, { count: number; total: number }>()
+
+  for (const exp of expenses) {
+    let baseAmount = 0
+    if (exp.convertedAmount !== null) {
+      baseAmount = exp.convertedAmount
+    } else if (exp.currency === baseCurrency) {
+      baseAmount = exp.amount
+    }
+
+    totalSpentBase += baseAmount
+
+    const current = countriesMap.get(exp.countryCode) || { count: 0, total: 0 }
+    countriesMap.set(exp.countryCode, {
+      count: current.count + 1,
+      total: current.total + baseAmount,
+    })
+  }
+
+  const uniqueCountries = countriesMap.size
+
+  const topCountries = Array.from(countriesMap.entries())
+    .map(([countryCode, { count, total }]) => ({
+      countryCode,
+      expensesCount: count,
+      totalSpentBase: total,
+    }))
+    .sort((a, b) => b.totalSpentBase - a.totalSpentBase)
+    .slice(0, 5)
+
+  return {
+    totalExpenses,
+    totalSpentBase,
+    uniqueCountries,
+    topCountries,
+  }
 }
 
-export default function ProfilePage() {
-  const router = useRouter()
-  const { data: session, status } = useSession()
-  const [user, setUser] = useState<UserData | null>(null)
-  const [stats, setStats] = useState<{ my: Stats; trips: Stats } | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+export default async function ProfilePage() {
+  const session = await auth()
 
-  const [formData, setFormData] = useState({
-    name: "",
-    nickname: "",
-    image: "",
-    baseCurrency: "USD",
-    language: "en",
-  })
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login")
-    } else if (status === "authenticated") {
-      fetchProfile()
-    }
-  }, [status, router])
-
-  const fetchProfile = async () => {
-    try {
-      const res = await fetch("/api/me")
-      if (!res.ok) throw new Error("Failed to fetch profile")
-      const data = await res.json()
-      setUser(data.user)
-      setStats(data.stats)
-      setFormData({
-        name: data.user.name || "",
-        nickname: data.user.nickname || "",
-        image: data.user.image || "",
-        baseCurrency: data.user.baseCurrency,
-        language: data.user.language,
-      })
-    } catch (error) {
-      console.error("Failed to load profile:", error)
-    } finally {
-      setLoading(false)
-    }
+  if (!session?.user?.id) {
+    redirect("/login")
   }
 
-  const handleSave = async () => {
-    setSaving(true)
-    setSaved(false)
-    try {
-      const res = await fetch("/api/me", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
-      if (!res.ok) throw new Error("Failed to update profile")
-      const data = await res.json()
-      setUser(data.user)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    } catch (error) {
-      console.error("Failed to save profile:", error)
-    } finally {
-      setSaving(false)
-    }
-  }
+  const profileData = await getProfileData(session.user.id)
 
-  if (loading || status === "loading") {
+  if (!profileData || !profileData.user) {
     return (
       <PageContainer>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-slate-500">Loading...</p>
-        </div>
-      </PageContainer>
-    )
-  }
-
-  if (!user || !stats) {
-    return (
-      <PageContainer>
+        <PageHeader title="Profile" description="Manage your account and view statistics" />
         <div className="flex items-center justify-center min-h-[60vh]">
           <p className="text-slate-500">Failed to load profile</p>
         </div>
@@ -123,225 +149,16 @@ export default function ProfilePage() {
     )
   }
 
+  const { user, stats } = profileData
+
   return (
     <PageContainer>
       <PageHeader title="Profile" description="Manage your account and view statistics" />
 
       <div className="space-y-8">
-        {/* Profile Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Email</Label>
-              <Input value={user.email || ""} disabled className="bg-slate-50" />
-            </div>
-
-            <div>
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Your name"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="nickname">Nickname</Label>
-              <Input
-                id="nickname"
-                value={formData.nickname}
-                onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-                placeholder="Display name"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="image">Profile Image URL</Label>
-              <Input
-                id="image"
-                value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="baseCurrency">Base Currency</Label>
-              <Select
-                id="baseCurrency"
-                value={formData.baseCurrency}
-                onChange={(e) => setFormData({ ...formData, baseCurrency: e.target.value })}
-              >
-                {["USD", "EUR", "GBP", "ILS", "JPY", "AUD", "CAD", "CHF"].map((curr) => (
-                  <option key={curr} value={curr}>
-                    {curr}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="language">Language</Label>
-              <Select
-                id="language"
-                value={formData.language}
-                onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-              >
-                <option value="en">English</option>
-                <option value="he">עברית</option>
-              </Select>
-            </div>
-
-            <Button onClick={handleSave} disabled={saving} className="w-full">
-              {saving ? "Saving..." : saved ? "Saved ✓" : "Save Changes"}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Stats Section */}
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">Statistics</h2>
-          <Tabs defaultValue="my" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="my">שלי</TabsTrigger>
-              <TabsTrigger value="trips">כל הטיולים שלי</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="my" className="space-y-6 mt-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">{stats.my.totalTrips}</div>
-                    <p className="text-sm text-slate-600">Total Trips</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">{stats.my.totalExpenses}</div>
-                    <p className="text-sm text-slate-600">Total Expenses</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">
-                      {formatCurrency(stats.my.totalSpentBase, user.baseCurrency)}
-                    </div>
-                    <p className="text-sm text-slate-600">Total Spent</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">{stats.my.uniqueCountries}</div>
-                    <p className="text-sm text-slate-600">Countries</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {stats.my.topCountries.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Countries</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {stats.my.topCountries.map((country) => {
-                        const countryData = COUNTRIES.find((c) => c.code === country.countryCode)
-                        return (
-                          <div key={country.countryCode} className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <span className="text-2xl">{countryData?.flag || "🏳️"}</span>
-                              <div>
-                                <p className="font-medium text-slate-900">
-                                  {countryData?.name || country.countryCode}
-                                </p>
-                                <p className="text-sm text-slate-500">
-                                  {country.expensesCount} expense{country.expensesCount !== 1 ? "s" : ""}
-                                </p>
-                              </div>
-                            </div>
-                            <p className="font-semibold text-slate-900">
-                              {formatCurrency(country.totalSpentBase, user.baseCurrency)}
-                            </p>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="trips" className="space-y-6 mt-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">{stats.trips.totalTrips}</div>
-                    <p className="text-sm text-slate-600">Total Trips</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">{stats.trips.totalExpenses}</div>
-                    <p className="text-sm text-slate-600">Total Expenses</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">
-                      {formatCurrency(stats.trips.totalSpentBase, user.baseCurrency)}
-                    </div>
-                    <p className="text-sm text-slate-600">Total Spent</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">{stats.trips.uniqueCountries}</div>
-                    <p className="text-sm text-slate-600">Countries</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {stats.trips.topCountries.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Countries</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {stats.trips.topCountries.map((country) => {
-                        const countryData = COUNTRIES.find((c) => c.code === country.countryCode)
-                        return (
-                          <div key={country.countryCode} className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <span className="text-2xl">{countryData?.flag || "🏳️"}</span>
-                              <div>
-                                <p className="font-medium text-slate-900">
-                                  {countryData?.name || country.countryCode}
-                                </p>
-                                <p className="text-sm text-slate-500">
-                                  {country.expensesCount} expense{country.expensesCount !== 1 ? "s" : ""}
-                                </p>
-                              </div>
-                            </div>
-                            <p className="font-semibold text-slate-900">
-                              {formatCurrency(country.totalSpentBase, user.baseCurrency)}
-                            </p>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
+        <ProfileForm user={user} />
+        <StatsDisplay stats={stats} baseCurrency={user.baseCurrency} />
       </div>
     </PageContainer>
   )
 }
-
