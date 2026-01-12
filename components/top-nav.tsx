@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Plane } from "lucide-react"
+import { Plane, User } from "lucide-react"
 import { LanguageToggle } from "./LanguageToggle"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 
@@ -15,7 +15,16 @@ export function TopNav() {
           <Plane className="h-6 w-6 text-sky-600" />
           <span>{t('app.name')}</span>
         </Link>
-        <LanguageToggle />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/profile"
+            className="inline-flex items-center justify-center rounded-md p-2 hover:bg-slate-100 transition-colors"
+            aria-label="Profile"
+          >
+            <User className="h-5 w-5 text-slate-700" />
+          </Link>
+          <LanguageToggle />
+        </div>
       </div>
     </nav>
   )
