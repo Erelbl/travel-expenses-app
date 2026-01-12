@@ -1,17 +1,18 @@
 import { Expense, CreateExpense } from "@/lib/schemas/expense.schema"
 import { ExpensesRepository } from "@/lib/data/repositories"
 import { prisma } from "@/lib/db"
+import { Expense as PrismaExpense } from "@prisma/client"
 
 const DEMO_USER_ID = "demo-user"
 
 export class PrismaExpensesRepository implements ExpensesRepository {
   async listExpenses(tripId: string): Promise<Expense[]> {
-    const expenses = await prisma.expense.findMany({
+    const expenses: PrismaExpense[] = await prisma.expense.findMany({
       where: { tripId },
       orderBy: { createdAt: "desc" },
     })
     
-    return expenses.map(e => ({
+    return expenses.map((e: PrismaExpense) => ({
       id: e.id,
       tripId: e.tripId,
       amount: e.amount,
@@ -21,7 +22,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       fxRateDate: e.fxDate?.toISOString().split('T')[0],
       convertedAmount: e.convertedAmount ?? undefined,
       fxRateSource: e.fxRate ? "manual" as const : undefined,
-      amountInBase: e.convertedAmount,
+      amountInBase: e.convertedAmount ?? undefined,
       category: e.category as any,
       country: e.countryCode,
       merchant: e.title,
@@ -51,7 +52,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       fxRateDate: e.fxDate?.toISOString().split('T')[0],
       convertedAmount: e.convertedAmount ?? undefined,
       fxRateSource: e.fxRate ? "manual" as const : undefined,
-      amountInBase: e.convertedAmount,
+      amountInBase: e.convertedAmount ?? undefined,
       category: e.category as any,
       country: e.countryCode,
       merchant: e.title,
@@ -79,13 +80,13 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         countryCode: expense.country,
         currency: expense.currency,
         amount: expense.amount,
-        convertedAmount: expense.convertedAmount,
-        fxRate: expense.fxRateUsed,
-        fxDate: expense.fxRateDate ? new Date(expense.fxRateDate) : null,
+        convertedAmount: null,
+        fxRate: null,
+        fxDate: null,
         expenseDate: new Date(expense.date),
         usageDate: expense.usageDate ? new Date(expense.usageDate) : null,
-        nights: expense.numberOfNights,
-        note: expense.note,
+        nights: expense.numberOfNights ?? null,
+        note: expense.note ?? null,
       },
     })
     
@@ -101,7 +102,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       fxRateDate: created.fxDate?.toISOString().split('T')[0],
       convertedAmount: created.convertedAmount ?? undefined,
       fxRateSource: created.fxRate ? "manual" as const : undefined,
-      amountInBase: created.convertedAmount,
+      amountInBase: created.convertedAmount ?? undefined,
       category: created.category as any,
       country: created.countryCode,
       merchant: created.title,
@@ -146,7 +147,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       fxRateDate: updated.fxDate?.toISOString().split('T')[0],
       convertedAmount: updated.convertedAmount ?? undefined,
       fxRateSource: updated.fxRate ? "manual" as const : undefined,
-      amountInBase: updated.convertedAmount,
+      amountInBase: updated.convertedAmount ?? undefined,
       category: updated.category as any,
       country: updated.countryCode,
       merchant: updated.title,
