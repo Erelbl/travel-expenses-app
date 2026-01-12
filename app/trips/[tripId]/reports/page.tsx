@@ -575,7 +575,6 @@ export default function ReportsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
 
       {/* Filters Modal (Centered Popup) */}
       <Modal open={showFilters} onOpenChange={setShowFilters} size="lg">
