@@ -1,18 +1,41 @@
 import { Expense, CreateExpense } from "@/lib/schemas/expense.schema"
 import { ExpensesRepository } from "@/lib/data/repositories"
 import { prisma } from "@/lib/db"
-import { Expense as PrismaExpense } from "@prisma/client"
+import { Prisma } from "@prisma/client"
 
 const DEMO_USER_ID = "demo-user"
 
+// Type for expense rows returned by Prisma
+type ExpenseRow = Prisma.ExpenseGetPayload<{
+  select: {
+    id: true
+    tripId: true
+    createdById: true
+    title: true
+    category: true
+    countryCode: true
+    currency: true
+    amount: true
+    convertedAmount: true
+    fxRate: true
+    fxDate: true
+    expenseDate: true
+    usageDate: true
+    nights: true
+    note: true
+    createdAt: true
+    updatedAt: true
+  }
+}>
+
 export class PrismaExpensesRepository implements ExpensesRepository {
   async listExpenses(tripId: string): Promise<Expense[]> {
-    const expenses: PrismaExpense[] = await prisma.expense.findMany({
+    const expenses: ExpenseRow[] = await prisma.expense.findMany({
       where: { tripId },
       orderBy: { createdAt: "desc" },
     })
     
-    return expenses.map((e: PrismaExpense) => ({
+    return expenses.map((e: ExpenseRow) => ({
       id: e.id,
       tripId: e.tripId,
       amount: e.amount,
