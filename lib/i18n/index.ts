@@ -25,7 +25,7 @@ export function setStoredLocale(locale: Locale): void {
   localStorage.setItem('locale', locale);
 }
 
-export function t(key: string, locale: Locale): string {
+export function t(key: string, locale: Locale, params?: Record<string, string | number>): string {
   const keys = key.split('.');
   let value: any = messages[locale];
   
@@ -34,8 +34,10 @@ export function t(key: string, locale: Locale): string {
     value = value?.[k];
   }
   
-  // If found, return it
-  if (typeof value === 'string') return value;
+  // If found, apply params and return
+  if (typeof value === 'string') {
+    return applyParams(value, params);
+  }
   
   // Fallback to English
   if (locale !== 'en') {
@@ -43,10 +45,22 @@ export function t(key: string, locale: Locale): string {
     for (const k of keys) {
       value = value?.[k];
     }
-    if (typeof value === 'string') return value;
+    if (typeof value === 'string') {
+      return applyParams(value, params);
+    }
   }
   
   // If still not found, return the key itself
   return key;
+}
+
+function applyParams(text: string, params?: Record<string, string | number>): string {
+  if (!params) return text;
+  
+  let result = text;
+  for (const [key, value] of Object.entries(params)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value));
+  }
+  return result;
 }
 

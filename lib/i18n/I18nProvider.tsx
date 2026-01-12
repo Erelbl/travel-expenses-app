@@ -6,7 +6,7 @@ import { Locale, detectLocale, getStoredLocale, setStoredLocale, t as translateF
 interface I18nContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
@@ -37,7 +37,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const t = (key: string) => translateFn(key, locale);
+  const t = (key: string, params?: Record<string, string | number>) => translateFn(key, locale, params);
 
   // Prevent hydration mismatch
   if (!mounted) {
