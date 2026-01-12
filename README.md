@@ -118,6 +118,30 @@ travel-expenses-app/
 4. **Open your browser**:
    Navigate to [http://localhost:3000](http://localhost:3000)
 
+### Database Migrations
+
+This project uses Prisma Migrate for database schema management.
+
+**Local Development:**
+- When you change the Prisma schema, run:
+  ```bash
+  npm run migrate:dev
+  ```
+  This creates a new migration and applies it to your local database.
+
+**Production (Vercel):**
+- Vercel runs `npm run build` automatically, which generates Prisma Client
+- To apply migrations to production database, run:
+  ```bash
+  npm run migrate:deploy
+  ```
+  ⚠️ **Important:** Run this after deploying schema changes to apply migrations safely
+
+**Important Notes:**
+- Do NOT use `prisma db push` except for disposable dev databases
+- Always commit migration files in `prisma/migrations/` to Git
+- Production migrations should be reviewed before deployment
+
 ### Prisma Studio
 
 To view and edit database records in Prisma Studio:
@@ -205,12 +229,14 @@ MIT
 ## Commands Reference
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm start            # Run production build
-npm run lint         # Run ESLint
-npm run studio       # Open Prisma Studio (manual browser open)
-npm run studio:auto  # Open Prisma Studio (auto-opens browser)
+npm run dev             # Start development server
+npm run build           # Build for production (includes prisma generate)
+npm start               # Run production build
+npm run lint            # Run ESLint
+npm run migrate:dev     # Create and apply new migration (local dev)
+npm run migrate:deploy  # Apply pending migrations (production)
+npm run studio          # Open Prisma Studio (manual browser open)
+npm run studio:auto     # Open Prisma Studio (auto-opens browser)
 ```
 
 ---
