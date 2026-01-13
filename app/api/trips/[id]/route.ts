@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
+import { logError } from '@/lib/utils/logger'
 
 const tripsRepository = new PrismaTripsRepository()
 
@@ -24,7 +25,7 @@ export async function GET(
     }
     return NextResponse.json(trip)
   } catch (error) {
-    console.error('[API /trips/[id] GET] Error:', error)
+    logError('API /trips/[id] GET', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
   }
 }
@@ -47,7 +48,7 @@ export async function PATCH(
     const trip = await tripsRepository.updateTrip(id, body, session.user.id)
     return NextResponse.json(trip)
   } catch (error) {
-    console.error('[API /trips/[id] PATCH] Error:', error)
+    logError('API /trips/[id] PATCH', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
   }
 }
@@ -69,7 +70,7 @@ export async function DELETE(
     await tripsRepository.deleteTrip(id, session.user.id)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[API /trips/[id] DELETE] Error:', error)
+    logError('API /trips/[id] DELETE', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
   }
 }

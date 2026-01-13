@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { logError } from "@/lib/utils/logger"
 
 /**
  * Exchange Rate API Route
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
       source: "api",
     })
   } catch (error) {
-    console.error("Failed to fetch exchange rate:", error)
+    logError("API /exchange-rates", error)
     return NextResponse.json(
       { 
         error: "Failed to fetch exchange rate",

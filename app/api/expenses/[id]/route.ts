@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repository'
+import { logError } from '@/lib/utils/logger'
 
 const expensesRepository = new PrismaExpensesRepository()
 
@@ -24,7 +25,7 @@ export async function GET(
     }
     return NextResponse.json(expense)
   } catch (error) {
-    console.error('[API /expenses/[id] GET] Error:', error)
+    logError('API /expenses/[id] GET', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
   }
 }
@@ -47,7 +48,7 @@ export async function PATCH(
     const expense = await expensesRepository.updateExpense(id, body)
     return NextResponse.json(expense)
   } catch (error) {
-    console.error('[API /expenses/[id] PATCH] Error:', error)
+    logError('API /expenses/[id] PATCH', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
   }
 }
@@ -69,7 +70,7 @@ export async function DELETE(
     await expensesRepository.deleteExpense(id)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('[API /expenses/[id] DELETE] Error:', error)
+    logError('API /expenses/[id] DELETE', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
   }
 }

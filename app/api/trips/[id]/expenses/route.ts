@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repository'
+import { logError } from '@/lib/utils/logger'
 
 const expensesRepository = new PrismaExpensesRepository()
 
@@ -21,7 +22,7 @@ export async function GET(
     const expenses = await expensesRepository.listExpenses(id)
     return NextResponse.json(expenses)
   } catch (error) {
-    console.error('[API /trips/[id]/expenses GET] Error:', error)
+    logError('API /trips/[id]/expenses GET', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
   }
 }
@@ -44,7 +45,7 @@ export async function POST(
     const expense = await expensesRepository.createExpense({ ...body, createdById: session.user.id })
     return NextResponse.json(expense)
   } catch (error) {
-    console.error('[API /trips/[id]/expenses POST] Error:', error)
+    logError('API /trips/[id]/expenses POST', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
   }
 }

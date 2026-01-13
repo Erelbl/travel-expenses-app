@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { logError } from "@/lib/utils/logger"
 
 export async function GET() {
   try {
@@ -77,7 +78,7 @@ export async function GET() {
       },
     })
   } catch (error) {
-    console.error("[API /me GET] Error:", error)
+    logError("API /me GET", error)
     return NextResponse.json({ error: "Internal error" }, { status: 500 })
   }
 }
@@ -134,7 +135,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ user: updatedUser })
   } catch (error) {
-    console.error("[API /me PATCH] Error:", error)
+    logError("API /me PATCH", error)
     return NextResponse.json({ error: "Internal error" }, { status: 500 })
   }
 }

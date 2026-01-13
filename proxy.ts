@@ -23,7 +23,10 @@ export default auth((req) => {
 
     return NextResponse.next()
   } catch (error) {
-    console.error("[Proxy] Error:", error)
+    // Log only in development
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[Proxy] Error:", error)
+    }
     return NextResponse.next()
   }
 })

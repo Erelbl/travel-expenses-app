@@ -5,60 +5,61 @@ import { PageContainer } from "@/components/ui/page-container"
 import { PageHeader } from "@/components/page-header"
 import { ProfileForm } from "./ProfileForm"
 import { StatsDisplay } from "./StatsDisplay"
+import { unstable_cache } from "next/cache"
 
-async function getProfileData(userId: string) {
+async function getProfileDataUncached(userId: string) {
   try {
-    // Get user data
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        nickname: true,
-        image: true,
-        baseCurrency: true,
-        language: true,
-      },
-    })
+    // Run queries in parallel for better performance
+    const [user, myTrips, myExpenses] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          nickname: true,
+          image: true,
+          baseCurrency: true,
+          language: true,
+        },
+      }),
+      prisma.trip.findMany({
+        where: {
+          OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+        },
+        select: { id: true },
+      }),
+      prisma.expense.findMany({
+        where: { createdById: userId },
+        select: {
+          tripId: true,
+          countryCode: true,
+          amount: true,
+          convertedAmount: true,
+          currency: true,
+        },
+      }),
+    ])
 
     if (!user) {
       return null
     }
 
-    // Get trips where user is owner or member
-    const myTrips = await prisma.trip.findMany({
-      where: {
-        OR: [{ ownerId: userId }, { members: { some: { userId } } }],
-      },
-      select: { id: true },
-    })
-
     const tripIds = myTrips.map((t) => t.id)
 
-    // Get expenses created by me
-    const myExpenses = await prisma.expense.findMany({
-      where: { createdById: userId },
-      select: {
-        tripId: true,
-        countryCode: true,
-        amount: true,
-        convertedAmount: true,
-        currency: true,
-      },
-    })
-
-    // Get all expenses in my trips
-    const tripsExpenses = await prisma.expense.findMany({
-      where: { tripId: { in: tripIds } },
-      select: {
-        tripId: true,
-        countryCode: true,
-        amount: true,
-        convertedAmount: true,
-        currency: true,
-      },
-    })
+    // Fetch all trip expenses only if there are trips
+    const tripsExpenses = tripIds.length > 0
+      ? await prisma.expense.findMany({
+          where: { tripId: { in: tripIds } },
+          select: {
+            tripId: true,
+            countryCode: true,
+            amount: true,
+            convertedAmount: true,
+            currency: true,
+          },
+        })
+      : []
 
     // Calculate stats for "my expenses"
     const myStats = calculateStats(myExpenses, user.baseCurrency)
@@ -74,10 +75,23 @@ async function getProfileData(userId: string) {
       },
     }
   } catch (error) {
-    console.error("[Profile] Error loading data:", error)
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[Profile] Error loading data:", error)
+    }
     return null
   }
 }
+
+// Cache profile data for 60 seconds per user
+const getProfileData = (userId: string) => 
+  unstable_cache(
+    async () => getProfileDataUncached(userId),
+    [`profile-data-${userId}`],
+    {
+      revalidate: 60,
+      tags: [`profile-${userId}`],
+    }
+  )()
 
 function calculateStats(
   expenses: Array<{

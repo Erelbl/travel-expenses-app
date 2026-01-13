@@ -90,8 +90,6 @@ export class PrismaExpensesRepository implements ExpensesRepository {
   }
 
   async createExpense(expense: CreateExpense & { createdById: string }): Promise<Expense> {
-    console.log('[EXPENSE CREATE] Starting expense creation:', expense.merchant)
-    
     const created = await prisma.expense.create({
       data: {
         tripId: expense.tripId,
@@ -110,8 +108,6 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         note: expense.note ?? null,
       },
     })
-    
-    console.log('[EXPENSE CREATE] Expense created successfully:', created.id)
     
     return {
       id: created.id,

@@ -86,8 +86,6 @@ export class PrismaTripsRepository implements TripsRepository {
   }
 
   async createTrip(data: CreateTrip & { ownerId: string }): Promise<Trip> {
-    console.log('[TRIP CREATE] Starting trip creation:', data.name)
-    
     const created = await prisma.trip.create({
       data: {
         ownerId: data.ownerId,
@@ -101,8 +99,6 @@ export class PrismaTripsRepository implements TripsRepository {
         owner: { select: { id: true, name: true } }
       }
     })
-    
-    console.log('[TRIP CREATE] Trip created successfully:', created.id)
     
     return {
       id: created.id,
