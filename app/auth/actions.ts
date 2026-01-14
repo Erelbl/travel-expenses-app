@@ -49,6 +49,12 @@ export async function signUpAction(formData: FormData) {
 
     redirect("/trips")
   } catch (error) {
+    // Re-throw redirect errors (not actual errors)
+    if (error && typeof error === "object" && "digest" in error && 
+        typeof error.digest === "string" && error.digest.startsWith("NEXT_REDIRECT")) {
+      throw error
+    }
+    
     console.error("[AUTH][SIGNUP] Error:", error)
     // If passwordHash column doesn't exist (P2022), return friendly error
     if (error && typeof error === "object" && "code" in error && error.code === "P2022") {
