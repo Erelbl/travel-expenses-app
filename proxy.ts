@@ -7,7 +7,7 @@ export default auth((req) => {
     const isLoggedIn = !!req.auth
 
     // Public paths that don't require authentication
-    const publicPaths = ["/login", "/api/auth"]
+    const publicPaths = ["/login", "/auth/login", "/auth/signup", "/auth/verify", "/api/auth"]
     const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
 
     // If accessing protected path without auth, redirect to login
@@ -16,8 +16,8 @@ export default auth((req) => {
       return NextResponse.redirect(loginUrl)
     }
 
-    // If accessing login while authenticated, redirect to trips
-    if (pathname === "/login" && isLoggedIn) {
+    // If accessing login/signup while authenticated, redirect to trips
+    if ((pathname === "/login" || pathname === "/auth/login" || pathname === "/auth/signup") && isLoggedIn) {
       return NextResponse.redirect(new URL("/trips", req.url))
     }
 

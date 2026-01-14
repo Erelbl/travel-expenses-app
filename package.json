@@ -38,9 +38,11 @@
     "tailwind-merge": "^3.4.0",
     "ws": "^8.19.0",
     "zod": "^4.3.5",
-    "zustand": "^5.0.9"
+    "zustand": "^5.0.9",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
