@@ -156,12 +156,12 @@ export default async function SettingsPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Settings" description="Manage your account and preferences" />
+      <div className="flex items-center justify-between mb-6">
+        <PageHeader title="Settings" description="Manage your account and preferences" />
+        <SignOutButton />
+      </div>
 
       <div className="space-y-6">
-        <div className="flex justify-end">
-          <SignOutButton />
-        </div>
         <SettingsForm user={user} />
         <StatsDisplay stats={stats} baseCurrency={user.baseCurrency} />
       </div>

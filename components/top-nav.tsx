@@ -17,9 +17,9 @@ export function TopNav() {
         </Link>
         <div className="flex items-center gap-2">
           <Link
-            href="/profile"
+            href="/settings"
             className="inline-flex items-center justify-center rounded-md p-2 hover:bg-slate-100 transition-colors"
-            aria-label="Profile"
+            aria-label="Settings"
           >
             <User className="h-5 w-5 text-slate-700" />
           </Link>
