@@ -65,14 +65,13 @@ export class LocalExpensesRepository implements ExpensesRepository {
         // Try to get rate from API or local storage
         const rates = await this.ratesRepo.getRates(baseCurrency)
         if (rates && rates.rates[expense.currency]) {
-          // Use stored rate
+          // Use stored rate (rateToBase: base per 1 unit of expense currency)
           fxRateUsed = rates.rates[expense.currency]
+          // Canonical conversion: amountBase = amountOriginal * rateToBase
           convertedAmount = expense.amount * fxRateUsed
           fxRateDate = expense.date
           fxRateSource = "auto"
         } else {
-          // If no rate available, leave as undefined
-          // (will be handled by manual fallback in UI)
           convertedAmount = undefined
           fxRateUsed = undefined
           fxRateDate = undefined
@@ -80,7 +79,6 @@ export class LocalExpensesRepository implements ExpensesRepository {
         }
       } catch (error) {
         console.error("Failed to get exchange rate:", error)
-        // Leave undefined - manual fallback will handle
         convertedAmount = undefined
         fxRateUsed = undefined
         fxRateDate = undefined

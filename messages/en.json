@@ -3,6 +3,9 @@
     "name": "TravelExpense",
     "tagline": "Track Your Travel Spending"
   },
+  "auth": {
+    "signOut": "Sign Out"
+  },
   "trips": {
     "title": "My Trips",
     "subtitle": "Track your travels",
