@@ -10,9 +10,14 @@ export default auth((req) => {
     const publicPaths = ["/login", "/auth/login", "/auth/signup", "/auth/verify", "/api/auth"]
     const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
 
+    // For API routes (except /api/auth), return 401 JSON instead of redirecting
+    if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth") && !isLoggedIn) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     // If accessing protected path without auth, redirect to login
     if (!isPublicPath && !isLoggedIn) {
-      const loginUrl = new URL("/login", req.url)
+      const loginUrl = new URL("/auth/login", req.url)
       return NextResponse.redirect(loginUrl)
     }
 
@@ -33,7 +38,8 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$|.*\\.ico$).*)"
+    // Run proxy on all routes except: /api/auth/*, /_next/*, static assets
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(png|jpg|jpeg|gif|svg|ico|css|js)$).*)"
   ],
 }
 
