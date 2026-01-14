@@ -10,60 +10,70 @@ import crypto from "crypto"
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function signUpAction(formData: FormData) {
-  const name = formData.get("name") as string
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
+  try {
+    const name = formData.get("name") as string
+    const email = formData.get("email") as string
+    const password = formData.get("password") as string
 
-  if (!email || !password) {
-    return { error: "Email and password are required" }
-  }
+    if (!email || !password) {
+      return { error: "Email and password are required" }
+    }
 
-  // Check if user exists
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  })
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    })
 
-  if (existingUser) {
-    return { error: "User with this email already exists" }
-  }
+    if (existingUser) {
+      return { error: "User with this email already exists" }
+    }
 
-  // Hash password
-  const passwordHash = await bcrypt.hash(password, 10)
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10)
 
-  // Create user
-  const user = await prisma.user.create({
-    data: {
+    // Create user
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name: name || null,
+        passwordHash,
+      },
+    })
+
+    // Sign in the user
+    await signIn("credentials", {
       email,
-      name: name || null,
-      passwordHash,
-    },
-  })
+      password,
+      redirect: false,
+    })
 
-  // Sign in the user
-  await signIn("credentials", {
-    email,
-    password,
-    redirect: false,
-  })
-
-  redirect("/trips")
+    redirect("/trips")
+  } catch (error) {
+    console.error("[AUTH][SIGNUP] Error:", error)
+    // If passwordHash column doesn't exist (P2022), return friendly error
+    if (error && typeof error === "object" && "code" in error && error.code === "P2022") {
+      return { error: "Database schema mismatch. Please contact support." }
+    }
+    return { error: "Failed to create account. Please try again." }
+  }
 }
 
 export async function loginAction(formData: FormData) {
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
-
-  if (!email || !password) {
-    return { error: "Email and password are required" }
-  }
-
   try {
+    const email = formData.get("email") as string
+    const password = formData.get("password") as string
+
+    if (!email || !password) {
+      return { error: "Email and password are required" }
+    }
+
     await signIn("credentials", {
       email,
       password,
       redirectTo: "/trips",
     })
   } catch (error) {
+    console.error("[AUTH][LOGIN] Error:", error)
     return { error: "Invalid email or password" }
   }
 }
