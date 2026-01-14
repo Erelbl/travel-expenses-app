@@ -4,6 +4,12 @@ import { NextResponse } from "next/server"
 export default auth((req) => {
   try {
     const { pathname } = req.nextUrl
+    
+    // Skip static files
+    if (pathname.includes('.') && !pathname.startsWith('/api')) {
+      return NextResponse.next()
+    }
+    
     const isLoggedIn = !!req.auth
 
     // Public paths that don't require authentication
@@ -38,8 +44,7 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    // Run proxy on all routes except: /api/auth/*, /_next/*, static assets
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(png|jpg|jpeg|gif|svg|ico|css|js)$).*)"
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }
 
