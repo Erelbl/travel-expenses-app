@@ -6,7 +6,7 @@ export interface TripsRepository {
   listTrips(userId: string): Promise<Trip[]>
   getTrip(tripId: string): Promise<Trip | null>
   getTripForUser(tripId: string, userId: string): Promise<Trip | null>
-  createTrip(trip: CreateTrip & { ownerId: string }): Promise<Trip>
+  createTrip(trip: CreateTrip): Promise<Trip>
   updateTrip(tripId: string, data: Partial<Trip>): Promise<Trip>
   deleteTrip(id: string, userId: string): Promise<void>
 }

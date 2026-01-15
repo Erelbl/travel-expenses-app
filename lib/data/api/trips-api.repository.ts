@@ -19,7 +19,7 @@ export class ApiTripsRepository implements TripsRepository {
     return this.getTrip(tripId)
   }
 
-  async createTrip(trip: CreateTrip & { ownerId: string }): Promise<Trip> {
+  async createTrip(trip: CreateTrip): Promise<Trip> {
     const res = await fetch('/api/trips', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const trip = await tripsRepository.createTrip({ ...body, ownerId: session.user.id })
+    const trip = await tripsRepository.createTrip(body, session.user.id)
     return NextResponse.json(trip)
   } catch (error) {
     logError('API /trips POST', error)
