@@ -14,7 +14,7 @@ import { getTodayString } from "@/lib/utils/date"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { getCategoryColors } from "@/lib/utils/categoryColors"
 import { getCurrentUserMember } from "@/lib/utils/permissions"
-import { getTripAllowedCurrencies, currencyForCountry } from "@/lib/utils/countryCurrency"
+import { getTripAllowedCurrencies } from "@/lib/utils/countryCurrency"
 import { getCurrencySymbol } from "@/lib/utils/currency"
 
 const CATEGORIES: ExpenseCategory[] = [
@@ -91,7 +91,7 @@ export function QuickAddExpense({
       amount: "",
       category: "Food",
       currency: defaultCurrency,
-      country: defaultCountry,
+      country: trip.currentCountry || trip.plannedCountries?.[0] || trip.countries?.[0] || "US",
     })
   }
 
