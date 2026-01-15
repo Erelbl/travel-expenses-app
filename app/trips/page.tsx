@@ -27,9 +27,14 @@ export default function TripsPage() {
       setLoading(true)
       setError(false)
       const data = await tripsRepository.listTrips("")
-      setTrips(data)
-    } catch (error) {
+      setTrips(data || [])
+    } catch (error: any) {
       console.error("Failed to load trips:", error)
+      // Handle 401 - redirect to login
+      if (error.message?.includes('Unauthorized') || error.status === 401) {
+        window.location.href = '/auth/login'
+        return
+      }
       setError(true)
     } finally {
       setLoading(false)

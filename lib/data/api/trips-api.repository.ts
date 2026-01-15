@@ -4,7 +4,11 @@ import { TripsRepository } from "@/lib/data/repositories"
 export class ApiTripsRepository implements TripsRepository {
   async listTrips(userId: string): Promise<Trip[]> {
     const res = await fetch('/api/trips')
-    if (!res.ok) throw new Error('Failed to fetch trips')
+    if (!res.ok) {
+      const error: any = new Error('Failed to fetch trips')
+      error.status = res.status
+      throw error
+    }
     return res.json()
   }
 
