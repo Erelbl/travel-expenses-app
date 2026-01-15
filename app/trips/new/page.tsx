@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { tripsRepository } from "@/lib/data"
 import { CreateTrip } from "@/lib/schemas/trip.schema"
 import { CURRENCIES } from "@/lib/utils/currency"
 import { COUNTRIES_DATA, getCountryName } from "@/lib/utils/countries.data"
@@ -20,6 +19,7 @@ import { getTodayString } from "@/lib/utils/date"
 import { getTripAllowedCurrencies } from "@/lib/utils/countryCurrency"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { usePreferencesStore } from "@/lib/store/preferences.store"
+import { createTripAction } from "./actions"
 
 // Helper to convert ISO country code to emoji flag
 const flagEmoji = (code: string) => {
@@ -88,7 +88,7 @@ export default function NewTripPage() {
         ],
       }
 
-      const trip = await tripsRepository.createTrip(tripData)
+      const trip = await createTripAction(tripData)
       toast.success(t('createTrip.success'))
       router.push(`/trips/${trip.id}`)
     } catch (error) {
