@@ -234,7 +234,11 @@
     "allExpenses": "הכל",
     "noExpensesTitle": "אין הוצאות עדיין",
     "noExpensesMessage": "התחל לעקוב אחר הוצאות הטיול שלך",
-    "addYourFirst": "הוסף את ההוצאה הראשונה"
+    "addYourFirst": "הוסף את ההוצאה הראשונה",
+    "currentLocation": "מיקום נוכחי",
+    "selectLocation": "בחר מיקום...",
+    "locationUpdated": "המיקום עודכן",
+    "locationCleared": "המיקום נוקה"
   },
   "rates": {
     "title": "שערי המרה",

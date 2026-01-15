@@ -70,18 +70,18 @@ export default function BatchAddPage() {
         tripData.plannedCountries && tripData.plannedCountries.length > 0
           ? tripData.plannedCountries
           : tripData.countries || []
-      const defaultCountry = tripCountries[0] || "US"
+      const defaultCountry = tripData.currentCountry || tripCountries[0] || "US"
       setCountry(defaultCountry)
 
-      // Add initial row
-      addRow(tripData.baseCurrency)
+      // Add initial row with trip's current currency or base currency
+      addRow(tripData.currentCurrency || tripData.baseCurrency)
     } catch (error) {
       console.error("Failed to load trip:", error)
     }
   }
 
   function addRow(defaultCurrency?: string) {
-    const currency = defaultCurrency || trip?.baseCurrency || "USD"
+    const currency = defaultCurrency || trip?.currentCurrency || trip?.baseCurrency || "USD"
     setRows((prev) => [
       ...prev,
       {

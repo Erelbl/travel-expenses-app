@@ -234,7 +234,11 @@
     "allExpenses": "All",
     "noExpensesTitle": "No expenses yet",
     "noExpensesMessage": "Start tracking your trip spending",
-    "addYourFirst": "Add Your First Expense"
+    "addYourFirst": "Add Your First Expense",
+    "currentLocation": "Current location",
+    "selectLocation": "Select location...",
+    "locationUpdated": "Location updated",
+    "locationCleared": "Location cleared"
   },
   "rates": {
     "title": "Exchange Rates",

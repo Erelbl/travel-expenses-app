@@ -32,7 +32,6 @@ interface QuickAddExpenseProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   trip: Trip
-  defaultCountry: string
   onExpenseAdded: () => void
 }
 
@@ -40,7 +39,6 @@ export function QuickAddExpense({
   open,
   onOpenChange,
   trip,
-  defaultCountry,
   onExpenseAdded,
 }: QuickAddExpenseProps) {
   const { t, locale } = useI18n()
@@ -53,8 +51,8 @@ export function QuickAddExpense({
     merchant: "",
     amount: "",
     category: "Food" as ExpenseCategory,
-    currency: trip.baseCurrency,
-    country: defaultCountry,
+    currency: trip.currentCurrency || trip.baseCurrency,
+    country: trip.currentCountry || trip.plannedCountries?.[0] || trip.countries?.[0] || "US",
   })
 
   // Allowed currencies for this trip
@@ -70,28 +68,19 @@ export function QuickAddExpense({
 
   async function loadLastUsedCurrency() {
     try {
-      // Fetch last expense for this trip to get last used currency
-      const expenses = await expensesRepository.listExpenses(trip.id)
-      if (expenses.length > 0) {
-        const lastCurrency = expenses[0].currency
-        setLastUsedCurrency(lastCurrency)
-        setFormData(prev => ({ ...prev, currency: lastCurrency }))
-      } else {
-        // No expenses yet, use country currency or base currency
-        const countryCurrency = currencyForCountry(defaultCountry)
-        const defaultCurrency = countryCurrency && allowedCurrencies.includes(countryCurrency)
-          ? countryCurrency
-          : trip.baseCurrency
-        setFormData(prev => ({ ...prev, currency: defaultCurrency }))
-      }
+      // Default currency precedence: currentCurrency > lastUsedCurrency > baseCurrency
+      const defaultCurrency = trip.currentCurrency || trip.baseCurrency
+      setFormData(prev => ({ 
+        ...prev, 
+        currency: defaultCurrency,
+        country: trip.currentCountry || trip.plannedCountries?.[0] || trip.countries?.[0] || "US"
+      }))
     } catch (error) {
-      console.error("Failed to load last used currency:", error)
-      // Fallback to country currency or base currency
-      const countryCurrency = currencyForCountry(defaultCountry)
-      const defaultCurrency = countryCurrency && allowedCurrencies.includes(countryCurrency)
-        ? countryCurrency
-        : trip.baseCurrency
-      setFormData(prev => ({ ...prev, currency: defaultCurrency }))
+      console.error("Failed to load currency:", error)
+      setFormData(prev => ({ 
+        ...prev, 
+        currency: trip.baseCurrency 
+      }))
     }
   }
 
@@ -195,37 +184,6 @@ export function QuickAddExpense({
               autoFocus
             />
           </div>
-
-          {/* Country (optional) - for quick currency switching */}
-          {trip.plannedCountries && trip.plannedCountries.length > 1 && (
-            <div className="space-y-2">
-              <Label htmlFor="qa-country" className="font-semibold text-slate-800">
-                {t('addExpense.country')}
-              </Label>
-              <select
-                id="qa-country"
-                value={formData.country}
-                onChange={(e) => {
-                  const newCountry = e.target.value
-                  const countryCurrency = currencyForCountry(newCountry)
-                  setFormData({
-                    ...formData,
-                    country: newCountry,
-                    currency: countryCurrency && allowedCurrencies.includes(countryCurrency)
-                      ? countryCurrency
-                      : formData.currency,
-                  })
-                }}
-                className="h-12 w-full px-3 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {trip.plannedCountries.map((country) => (
-                  <option key={country} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
 
           {/* Amount & Currency */}
           <div className="space-y-2">

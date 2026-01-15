@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter } from "lucide-react"
+import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { FloatingAddButton } from "@/components/floating-add-button"
 import { QuickAddExpense } from "@/components/quick-add-expense"
@@ -20,6 +20,10 @@ import { Trip } from "@/lib/schemas/trip.schema"
 import { Expense } from "@/lib/schemas/expense.schema"
 import { formatCurrency } from "@/lib/utils/currency"
 import { useI18n } from "@/lib/i18n/I18nProvider"
+import { currencyForCountry } from "@/lib/utils/countryCurrency"
+import { getCountryName } from "@/lib/utils/countries.data"
+import { updateCurrentLocation } from "./actions"
+import { toast } from "sonner"
 import {
   calculateSummary,
   getTodayString,
@@ -187,6 +191,64 @@ export default function TripHomePage() {
       </div>
 
       <div className="container mx-auto max-w-4xl px-4 py-5 space-y-6">
+        {/* Current Location Selector */}
+        {canAddExpense(trip) && (
+          <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <MapPin className="h-4 w-4 text-slate-500 shrink-0" />
+              <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide shrink-0">
+                {t("home.currentLocation")}
+              </span>
+              <select
+                value={trip.currentCountry || ""}
+                onChange={async (e) => {
+                  const country = e.target.value || null
+                  const currency = country ? currencyForCountry(country) : null
+                  try {
+                    await updateCurrentLocation(tripId, country, currency)
+                    await loadData()
+                    toast.success(t("home.locationUpdated"))
+                  } catch (error) {
+                    toast.error(t("common.errorMessage"))
+                  }
+                }}
+                className="flex-1 text-sm font-medium text-slate-900 bg-transparent border-none focus:outline-none"
+              >
+                <option value="">{t("home.selectLocation")}</option>
+                {(trip.plannedCountries && trip.plannedCountries.length > 0
+                  ? trip.plannedCountries
+                  : trip.countries || []
+                ).map((country) => (
+                  <option key={country} value={country}>
+                    {getCountryName(country, locale)}
+                  </option>
+                ))}
+              </select>
+              {trip.currentCurrency && (
+                <span className="text-xs font-medium text-emerald-600 shrink-0">
+                  {trip.currentCurrency}
+                </span>
+              )}
+              {trip.currentCountry && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await updateCurrentLocation(tripId, null, null)
+                      await loadData()
+                      toast.success(t("home.locationCleared"))
+                    } catch (error) {
+                      toast.error(t("common.errorMessage"))
+                    }
+                  }}
+                  className="text-slate-400 hover:text-slate-600 shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Quick Add CTA - Primary Action (only for owners/editors) */}
         {canAddExpense(trip) && (
           <button
@@ -393,7 +455,6 @@ export default function TripHomePage() {
           open={showQuickAdd}
           onOpenChange={setShowQuickAdd}
           trip={trip}
-          defaultCountry={trip.plannedCountries?.[0] || trip.countries?.[0] || "US"}
           onExpenseAdded={loadData}
         />
       )}

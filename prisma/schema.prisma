@@ -38,6 +38,8 @@ model Trip {
   endDate    DateTime?
   countries  String[]
   baseCurrency String  @default("USD")
+  currentCountry String?
+  currentCurrency String?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 

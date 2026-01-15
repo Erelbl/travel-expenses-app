@@ -25,6 +25,8 @@ export const TripSchema = z.object({
   baseCurrency: z.string().length(3, "Currency must be 3-letter ISO code"),
   countries: z.array(z.string().length(2, "Country must be 2-letter ISO code")).optional().default([]),
   plannedCountries: z.array(z.string().length(2, "Country must be 2-letter ISO code")).optional().default([]),
+  currentCountry: z.string().length(2, "Country must be 2-letter ISO code").nullable().optional(),
+  currentCurrency: z.string().length(3, "Currency must be 3-letter ISO code").nullable().optional(),
   // Optional itinerary with per-country date ranges
   itineraryLegs: z.array(ItineraryLegSchema).optional().default([]),
   members: z.array(TripMemberSchema).min(1, "Trip must have at least one member"),
