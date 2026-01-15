@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, User, Settings as SettingsIcon, CreditCard, Shield, Check, LogOut, UserCog } from "lucide-react"
+import { ArrowLeft, User, Settings as SettingsIcon, CreditCard, Shield, Check, LogOut, UserCog, Lock } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +16,7 @@ import { useI18n } from "@/lib/i18n/I18nProvider"
 import { CURRENCIES } from "@/lib/utils/currency"
 import { signOut } from "next-auth/react"
 import Link from "next/link"
+import { changePasswordAction } from "@/app/auth/actions"
 
 interface SettingsClientProps {
   isAdmin: boolean
@@ -31,6 +32,13 @@ export function SettingsClient({ isAdmin }: SettingsClientProps) {
   const [formProfile, setFormProfile] = useState(profile)
   const [formPreferences, setFormPreferences] = useState(preferences)
   const [hasChanges, setHasChanges] = useState(false)
+  
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  })
+  const [changingPassword, setChangingPassword] = useState(false)
 
   useEffect(() => {
     const profileChanged = JSON.stringify(formProfile) !== JSON.stringify(profile)
@@ -59,6 +67,44 @@ export function SettingsClient({ isAdmin }: SettingsClientProps) {
   function handleSignOut() {
     signOut({ callbackUrl: "/auth/login" })
   }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("New passwords do not match")
+      return
+    }
+    
+    if (passwordForm.newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters")
+      return
+    }
+    
+    setChangingPassword(true)
+    try {
+      const result = await changePasswordAction({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      })
+      
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success("Password changed successfully")
+        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" })
+      }
+    } catch (error) {
+      toast.error("Failed to change password")
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
+  const isPasswordFormValid = 
+    passwordForm.currentPassword.length > 0 &&
+    passwordForm.newPassword.length >= 8 &&
+    passwordForm.newPassword === passwordForm.confirmPassword
 
   return (
     <div className="min-h-screen bg-slate-50" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -214,6 +260,77 @@ export function SettingsClient({ isAdmin }: SettingsClientProps) {
                   {t('appSettings.languageHelper')}
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Lock className="h-5 w-5 text-sky-600" />
+                Change Password
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword" className="text-sm font-medium text-slate-700">
+                    Current Password
+                  </Label>
+                  <Input
+                    id="currentPassword"
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                    disabled={changingPassword}
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword" className="text-sm font-medium text-slate-700">
+                    New Password
+                  </Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    disabled={changingPassword}
+                    autoComplete="new-password"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Must be at least 8 characters
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">
+                    Confirm New Password
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    disabled={changingPassword}
+                    autoComplete="new-password"
+                  />
+                  {passwordForm.confirmPassword.length > 0 && 
+                   passwordForm.newPassword !== passwordForm.confirmPassword && (
+                    <p className="text-xs text-red-600">
+                      Passwords do not match
+                    </p>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  disabled={!isPasswordFormValid || changingPassword}
+                  className="w-full"
+                >
+                  {changingPassword ? "Changing..." : "Change Password"}
+                </Button>
+              </form>
             </CardContent>
           </Card>
 

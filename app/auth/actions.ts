@@ -175,3 +175,59 @@ export async function verifyEmailAction(token: string) {
   return { success: true }
 }
 
+export async function changePasswordAction(data: {
+  currentPassword: string
+  newPassword: string
+}) {
+  try {
+    const { auth } = await import("@/lib/auth")
+    const session = await auth()
+
+    if (!session?.user?.id) {
+      return { error: "Not authenticated" }
+    }
+
+    const { currentPassword, newPassword } = data
+
+    if (!currentPassword || !newPassword) {
+      return { error: "All fields are required" }
+    }
+
+    if (newPassword.length < 8) {
+      return { error: "New password must be at least 8 characters" }
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, passwordHash: true },
+    })
+
+    if (!user || !user.passwordHash) {
+      return { error: "Password not enabled for this account" }
+    }
+
+    const isCurrentValid = await bcrypt.compare(currentPassword, user.passwordHash)
+
+    if (!isCurrentValid) {
+      return { error: "Invalid current password" }
+    }
+
+    const isSameAsOld = await bcrypt.compare(newPassword, user.passwordHash)
+    if (isSameAsOld) {
+      return { error: "New password must be different from current password" }
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10)
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: newPasswordHash },
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("[AUTH][CHANGE_PASSWORD] Error:", error)
+    return { error: "Failed to change password. Please try again." }
+  }
+}
+
