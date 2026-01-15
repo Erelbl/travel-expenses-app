@@ -72,9 +72,9 @@ export function ExpenseRow({ expense, trip, onClick, onEdit }: ExpenseRowProps) 
             <p className="font-bold text-slate-900 whitespace-nowrap tabular-nums">
               {formatCurrency(expense.amount, expense.currency)}
             </p>
-            {expense.currency !== "USD" && expense.amountInBase && (
+            {trip && expense.currency !== trip.baseCurrency && expense.amountInBase && (
               <p className="text-xs text-slate-500 whitespace-nowrap tabular-nums">
-                ≈ {formatCurrency(expense.amountInBase, "USD")}
+                ≈ {formatCurrency(expense.amountInBase, trip.baseCurrency)}
               </p>
             )}
           </div>
@@ -85,7 +85,7 @@ export function ExpenseRow({ expense, trip, onClick, onEdit }: ExpenseRowProps) 
           <span>{formatDateShort(expense.date, locale)}</span>
           <span className="text-slate-400">•</span>
           <span className={`font-medium ${categoryColors.text}`}>{categoryName}</span>
-          {expense.currency !== "USD" && (
+          {trip && expense.currency !== trip.baseCurrency && (
             <>
               <span className="text-slate-400">•</span>
               <span className="text-slate-500">{expense.currency}</span>

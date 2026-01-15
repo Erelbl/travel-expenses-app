@@ -72,17 +72,16 @@ export class LocalExpensesRepository implements ExpensesRepository {
           fxRateDate = expense.date
           fxRateSource = "auto"
         } else {
-          convertedAmount = undefined
-          fxRateUsed = undefined
-          fxRateDate = undefined
-          fxRateSource = undefined
+          // No rate available - fail fast to prevent expense creation without conversion
+          throw new Error(`Currency conversion failed: No rate available for ${expense.currency} -> ${baseCurrency}`)
         }
       } catch (error) {
-        console.error("Failed to get exchange rate:", error)
-        convertedAmount = undefined
-        fxRateUsed = undefined
-        fxRateDate = undefined
-        fxRateSource = undefined
+        // Re-throw to prevent expense creation without proper conversion
+        throw new Error(
+          error instanceof Error 
+            ? error.message 
+            : `Currency conversion failed: ${expense.currency} -> ${baseCurrency}`
+        )
       }
     }
 
