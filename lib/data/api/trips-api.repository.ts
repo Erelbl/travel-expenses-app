@@ -19,11 +19,11 @@ export class ApiTripsRepository implements TripsRepository {
     return this.getTrip(tripId)
   }
 
-  async createTrip(trip: CreateTrip): Promise<Trip> {
+  async createTrip(input: CreateTrip & { ownerId: string }): Promise<Trip> {
     const res = await fetch('/api/trips', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(trip),
+      body: JSON.stringify(input),
     })
     if (!res.ok) throw new Error('Failed to create trip')
     return res.json()

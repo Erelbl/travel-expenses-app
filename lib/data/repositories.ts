@@ -2,11 +2,13 @@ import { Trip, CreateTrip } from "@/lib/schemas/trip.schema"
 import { Expense, CreateExpense } from "@/lib/schemas/expense.schema"
 import { ExchangeRate } from "@/lib/schemas/exchange-rate.schema"
 
+export type CreateTripInput = CreateTrip & { ownerId: string }
+
 export interface TripsRepository {
   listTrips(userId: string): Promise<Trip[]>
   getTrip(tripId: string): Promise<Trip | null>
   getTripForUser(tripId: string, userId: string): Promise<Trip | null>
-  createTrip(trip: CreateTrip): Promise<Trip>
+  createTrip(input: CreateTripInput): Promise<Trip>
   updateTrip(tripId: string, data: Partial<Trip>): Promise<Trip>
   deleteTrip(id: string, userId: string): Promise<void>
 }

@@ -125,15 +125,15 @@ export class PrismaTripsRepository implements TripsRepository {
     }
   }
 
-  async createTrip(data: CreateTrip, ownerId: string): Promise<Trip> {
+  async createTrip(input: CreateTrip & { ownerId: string }): Promise<Trip> {
     const created = await prisma.trip.create({
       data: {
-        ownerId,
-        name: data.name,
-        startDate: data.startDate ? new Date(data.startDate) : null,
-        endDate: data.endDate ? new Date(data.endDate) : null,
-        baseCurrency: data.baseCurrency,
-        countries: data.plannedCountries || data.countries || [],
+        ownerId: input.ownerId,
+        name: input.name,
+        startDate: input.startDate ? new Date(input.startDate) : null,
+        endDate: input.endDate ? new Date(input.endDate) : null,
+        baseCurrency: input.baseCurrency,
+        countries: input.plannedCountries || input.countries || [],
       },
       include: {
         owner: { select: { id: true, name: true } }

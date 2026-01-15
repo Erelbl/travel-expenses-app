@@ -33,9 +33,9 @@ export class LocalTripsRepository implements TripsRepository {
     return this.getTrip(tripId)
   }
 
-  async createTrip(trip: CreateTrip): Promise<Trip> {
+  async createTrip(input: CreateTrip & { ownerId: string }): Promise<Trip> {
     const newTrip: Trip = {
-      ...trip,
+      ...input,
       id: crypto.randomUUID(),
       createdAt: Date.now(),
     }
