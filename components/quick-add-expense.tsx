@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Modal, ModalHeader, ModalTitle, ModalContent, ModalClose } from "@/components/ui/modal"
@@ -14,6 +14,8 @@ import { getTodayString } from "@/lib/utils/date"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { getCategoryColors } from "@/lib/utils/categoryColors"
 import { getCurrentUserMember } from "@/lib/utils/permissions"
+import { getTripAllowedCurrencies, currencyForCountry } from "@/lib/utils/countryCurrency"
+import { getCurrencySymbol } from "@/lib/utils/currency"
 
 const CATEGORIES: ExpenseCategory[] = [
   "Food",
@@ -31,7 +33,6 @@ interface QuickAddExpenseProps {
   onOpenChange: (open: boolean) => void
   trip: Trip
   defaultCountry: string
-  defaultCurrency: string
   onExpenseAdded: () => void
 }
 
@@ -40,7 +41,6 @@ export function QuickAddExpense({
   onOpenChange,
   trip,
   defaultCountry,
-  defaultCurrency,
   onExpenseAdded,
 }: QuickAddExpenseProps) {
   const { t, locale } = useI18n()
@@ -48,17 +48,61 @@ export function QuickAddExpense({
   const isRTL = locale === 'he'
   
   const [loading, setLoading] = useState(false)
+  const [lastUsedCurrency, setLastUsedCurrency] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     merchant: "",
     amount: "",
     category: "Food" as ExpenseCategory,
+    currency: trip.baseCurrency,
+    country: defaultCountry,
   })
 
+  // Allowed currencies for this trip
+  const allowedCurrencies = getTripAllowedCurrencies(trip.plannedCountries)
+
+  // Load last used currency when modal opens
+  useEffect(() => {
+    if (open) {
+      loadLastUsedCurrency()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, trip.id])
+
+  async function loadLastUsedCurrency() {
+    try {
+      // Fetch last expense for this trip to get last used currency
+      const expenses = await expensesRepository.listExpenses(trip.id)
+      if (expenses.length > 0) {
+        const lastCurrency = expenses[0].currency
+        setLastUsedCurrency(lastCurrency)
+        setFormData(prev => ({ ...prev, currency: lastCurrency }))
+      } else {
+        // No expenses yet, use country currency or base currency
+        const countryCurrency = currencyForCountry(defaultCountry)
+        const defaultCurrency = countryCurrency && allowedCurrencies.includes(countryCurrency)
+          ? countryCurrency
+          : trip.baseCurrency
+        setFormData(prev => ({ ...prev, currency: defaultCurrency }))
+      }
+    } catch (error) {
+      console.error("Failed to load last used currency:", error)
+      // Fallback to country currency or base currency
+      const countryCurrency = currencyForCountry(defaultCountry)
+      const defaultCurrency = countryCurrency && allowedCurrencies.includes(countryCurrency)
+        ? countryCurrency
+        : trip.baseCurrency
+      setFormData(prev => ({ ...prev, currency: defaultCurrency }))
+    }
+  }
+
   function resetForm() {
+    const defaultCurrency = lastUsedCurrency || trip.baseCurrency
     setFormData({
       merchant: "",
       amount: "",
       category: "Food",
+      currency: defaultCurrency,
+      country: defaultCountry,
     })
   }
 
@@ -89,15 +133,18 @@ export function QuickAddExpense({
       const expenseData: CreateExpense = {
         tripId: trip.id,
         amount,
-        currency: defaultCurrency,
+        currency: formData.currency,
         category: formData.category,
-        country: defaultCountry,
+        country: formData.country,
         merchant: formData.merchant.trim(),
         date: getTodayString(),
         createdByMemberId: currentUser?.id,
       }
 
       const created = await expensesRepository.createExpense(expenseData)
+      
+      // Update last used currency
+      setLastUsedCurrency(formData.currency)
       
       toast.success(t('addExpense.success'))
       onExpenseAdded()
@@ -112,7 +159,14 @@ export function QuickAddExpense({
       }
     } catch (error) {
       console.error("Failed to create expense:", error)
-      toast.error(t('addExpense.error'))
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      
+      // Show specific error if FX conversion failed
+      if (message.includes('Currency conversion failed')) {
+        toast.error(t('addExpense.fxError') || 'Currency conversion failed. Please try again.')
+      } else {
+        toast.error(t('addExpense.error'))
+      }
     } finally {
       setLoading(false)
     }
@@ -142,21 +196,70 @@ export function QuickAddExpense({
             />
           </div>
 
-          {/* Amount */}
+          {/* Country (optional) - for quick currency switching */}
+          {trip.plannedCountries && trip.plannedCountries.length > 1 && (
+            <div className="space-y-2">
+              <Label htmlFor="qa-country" className="font-semibold text-slate-800">
+                {t('addExpense.country')}
+              </Label>
+              <select
+                id="qa-country"
+                value={formData.country}
+                onChange={(e) => {
+                  const newCountry = e.target.value
+                  const countryCurrency = currencyForCountry(newCountry)
+                  setFormData({
+                    ...formData,
+                    country: newCountry,
+                    currency: countryCurrency && allowedCurrencies.includes(countryCurrency)
+                      ? countryCurrency
+                      : formData.currency,
+                  })
+                }}
+                className="h-12 w-full px-3 rounded-lg border border-slate-200 bg-white text-slate-900 font-medium text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {trip.plannedCountries.map((country) => (
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Amount & Currency */}
           <div className="space-y-2">
             <Label htmlFor="qa-amount" className="font-semibold text-slate-800">
-              {t('addExpense.amount')} ({defaultCurrency})
+              {t('addExpense.amount')}
             </Label>
-            <Input
-              id="qa-amount"
-              type="number"
-              step="0.01"
-              inputMode="decimal"
-              placeholder="0.00"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              className="h-14 bg-white text-2xl font-bold text-slate-900 placeholder:text-slate-300"
-            />
+            <div className="flex gap-2">
+              <Input
+                id="qa-amount"
+                type="number"
+                step="0.01"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                className="h-14 bg-white text-2xl font-bold text-slate-900 placeholder:text-slate-300 flex-1"
+              />
+              <select
+                value={formData.currency}
+                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                className="h-14 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 font-semibold text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {allowedCurrencies.map((curr) => (
+                  <option key={curr} value={curr}>
+                    {getCurrencySymbol(curr)} {curr}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {formData.currency !== trip.baseCurrency && (
+              <p className="text-xs text-slate-500">
+                {t('addExpense.willConvertTo')} {trip.baseCurrency}
+              </p>
+            )}
           </div>
 
           {/* Category - Compact pills */}

@@ -109,6 +109,8 @@
     "currencyAutoUpdate": "Currency will auto-update based on country",
     "noRateFound": "⚠️ No exchange rate for {currency}. Update in Settings or use {baseCurrency}.",
     "invalidAmount": "Please enter a valid amount",
+    "willConvertTo": "Will be converted to",
+    "fxError": "Currency conversion failed. Please check your connection and try again.",
     "save": "Save Expense",
     "saving": "Saving...",
     "success": "Expense saved!",
@@ -317,6 +319,21 @@
     "errorTitle": "Something went wrong",
     "errorMessage": "We couldn't load the data. Please try again.",
     "loadingData": "Loading data..."
+  },
+  "batchAdd": {
+    "title": "Batch Add",
+    "subtitle": "Add multiple expenses at once",
+    "globalSettings": "Default Settings",
+    "expenses": "Expenses",
+    "addRow": "Add Row",
+    "removeRow": "Remove",
+    "noRows": "No expenses added yet. Click \"Add Row\" to start.",
+    "description": "Description",
+    "note": "Note",
+    "saveAll": "Save All",
+    "noValidRows": "Please add at least one valid expense",
+    "success": "Successfully added {count} expenses!",
+    "error": "Failed to add expenses. Please try again."
   },
   "appSettings": {
     "title": "Settings",

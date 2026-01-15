@@ -2,6 +2,7 @@ import { Expense, CreateExpense } from "@/lib/schemas/expense.schema"
 import { ExpensesRepository } from "@/lib/data/repositories"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@prisma/client"
+import { convertCurrency } from "@/lib/server/fx"
 
 // Type for expense rows returned by Prisma
 type ExpenseRow = Prisma.ExpenseGetPayload<{
@@ -90,6 +91,47 @@ export class PrismaExpensesRepository implements ExpensesRepository {
   }
 
   async createExpense(expense: CreateExpense & { createdById: string }): Promise<Expense> {
+    // Get trip to determine base currency
+    const trip = await prisma.trip.findUnique({
+      where: { id: expense.tripId },
+      select: { baseCurrency: true },
+    })
+    
+    if (!trip) {
+      throw new Error(`Trip not found: ${expense.tripId}`)
+    }
+
+    const baseCurrency = trip.baseCurrency
+    let convertedAmount: number | null = null
+    let fxRate: number | null = null
+    let fxDate: Date | null = null
+
+    // Calculate FX conversion
+    if (expense.currency === baseCurrency) {
+      // Same currency: no conversion needed
+      convertedAmount = expense.amount
+      fxRate = 1
+      fxDate = new Date(expense.date)
+    } else {
+      // Different currency: fetch rate and convert
+      try {
+        const fxResult = await convertCurrency(
+          expense.currency,
+          baseCurrency,
+          expense.amount,
+          expense.date
+        )
+        convertedAmount = fxResult.amountBase
+        fxRate = fxResult.rateToBase
+        fxDate = new Date(fxResult.asOf)
+      } catch (error) {
+        // FX conversion failed - throw error to prevent partial save
+        throw new Error(
+          `Currency conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        )
+      }
+    }
+
     const created = await prisma.expense.create({
       data: {
         tripId: expense.tripId,
@@ -99,9 +141,9 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         countryCode: expense.country,
         currency: expense.currency,
         amount: expense.amount,
-        convertedAmount: null,
-        fxRate: null,
-        fxDate: null,
+        convertedAmount,
+        fxRate,
+        fxDate,
         expenseDate: new Date(expense.date),
         usageDate: expense.usageDate ? new Date(expense.usageDate) : null,
         nights: expense.numberOfNights ?? null,
