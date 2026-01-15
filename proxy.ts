@@ -6,20 +6,15 @@ export default auth((req) => {
     const { pathname } = req.nextUrl
     
     // Skip static files
-    if (pathname.includes('.') && !pathname.startsWith('/api')) {
+    if (pathname.includes('.')) {
       return NextResponse.next()
     }
     
     const isLoggedIn = !!req.auth
 
     // Public paths that don't require authentication
-    const publicPaths = ["/login", "/auth/login", "/auth/signup", "/auth/verify", "/api/auth"]
+    const publicPaths = ["/login", "/auth/login", "/auth/signup", "/auth/verify"]
     const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
-
-    // For API routes (except /api/auth), return 401 JSON instead of redirecting
-    if (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth") && !isLoggedIn) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
 
     // If accessing protected path without auth, redirect to login
     if (!isPublicPath && !isLoggedIn) {
@@ -34,10 +29,7 @@ export default auth((req) => {
 
     return NextResponse.next()
   } catch (error) {
-    // Log only in development
-    if (process.env.NODE_ENV !== "production") {
-      console.error("[Proxy] Error:", error)
-    }
+    // Never crash - always allow request through
     return NextResponse.next()
   }
 })
