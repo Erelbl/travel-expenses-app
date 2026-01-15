@@ -130,10 +130,11 @@ const categorySkewInsight: InsightEvaluator = {
       id: "category_skew",
       type: "category_skew",
       titleKey: "insights.categorySkewTitle",
-      value: `${Math.round(percentage)}% ${maxCategory}`,
+      value: `${Math.round(percentage)}%`,
       comparisonKey: "insights.mostBudgetGoesTo",
       comparisonParams: {
-        category: maxCategory.toLowerCase(),
+        category: maxCategory,
+        categoryRaw: maxCategory, // Keep raw category for UI translation
       },
       score,
     }

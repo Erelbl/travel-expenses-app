@@ -392,16 +392,24 @@ export default function TripHomePage() {
                   <span className="text-lg font-bold text-amber-800">
                     {topInsight.value}
                     {topInsight.type === 'daily_spend' && t('insights.perDay')}
+                    {topInsight.type === 'category_skew' && topInsight.comparisonParams?.categoryRaw && 
+                      ` ${t(`categories.${topInsight.comparisonParams.categoryRaw}`)}`}
                     {topInsight.type === 'expense_concentration' && ` ${t('insights.inTop20')}`}
                   </span>
                 </div>
                 <p className="text-sm text-amber-700">
-                  {topInsight.comparisonParams?.tripType 
-                    ? t(topInsight.comparisonKey, {
-                        ...topInsight.comparisonParams,
-                        tripType: t(`insights.${topInsight.comparisonParams.tripType}`)
-                      })
-                    : t(topInsight.comparisonKey, topInsight.comparisonParams)}
+                  {(() => {
+                    const params = { ...topInsight.comparisonParams }
+                    // Translate tripType if present
+                    if (params?.tripType) {
+                      params.tripType = t(`insights.${params.tripType}`)
+                    }
+                    // Translate category if present
+                    if (params?.categoryRaw) {
+                      params.category = t(`categories.${params.categoryRaw}`).replace(/[🍔🚕✈️🏨🎟️🛍️💊💳]\s*/, "").toLowerCase()
+                    }
+                    return t(topInsight.comparisonKey, params)
+                  })()}
                 </p>
                 <p className="text-xs text-amber-600 mt-1">
                   {t('insights.updatedAsYouGo')}
