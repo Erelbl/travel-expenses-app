@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -30,6 +29,20 @@ model User {
   verificationTokens EmailVerificationToken[]
 }
 
+enum TripType {
+  SOLO
+  COUPLE
+  FAMILY
+  FRIENDS
+}
+
+enum TravelStyle {
+  BUDGET
+  BALANCED
+  COMFORT
+  LUXURY
+}
+
 model Trip {
   id         String    @id @default(cuid())
   ownerId    String
@@ -40,6 +53,10 @@ model Trip {
   baseCurrency String  @default("USD")
   currentCountry String?
   currentCurrency String?
+  tripType   TripType?
+  adults     Int       @default(1)
+  children   Int       @default(0)
+  travelStyle TravelStyle?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 

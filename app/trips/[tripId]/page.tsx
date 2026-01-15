@@ -29,6 +29,7 @@ import {
   getTodayString,
   classifyExpenses,
 } from "@/lib/utils/reports"
+import { generateInsights } from "@/lib/server/insights"
 
 const MAX_RECENT_EXPENSES = 15
 
@@ -135,6 +136,9 @@ export default function TripHomePage() {
   // Calculate summary using reports utilities (after checking trip exists)
   const summary = calculateSummary(expenses, trip)
   const { realized, future } = classifyExpenses(expenses)
+  
+  // Generate insights
+  const insights = generateInsights(trip, expenses)
 
   // Calculate today's spend
   const today = getTodayString()
@@ -347,6 +351,37 @@ export default function TripHomePage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Trip Insights */}
+        {insights.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Trip Insights
+              </h2>
+              <p className="text-xs text-slate-500">
+                Updated as you add expenses
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {insights.map((insight) => (
+                <Card key={insight.id} className="border-slate-200 bg-gradient-to-br from-white to-slate-50">
+                  <CardContent className="p-4">
+                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                      {insight.title}
+                    </p>
+                    <p className="text-2xl font-bold text-slate-900 mb-1">
+                      {insight.value}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      {insight.comparison}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Secondary Links: Reports & Exchange Rates */}
         <div className="grid grid-cols-2 gap-4">
