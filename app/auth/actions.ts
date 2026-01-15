@@ -65,32 +65,30 @@ export async function signUpAction(formData: FormData) {
 }
 
 export async function loginAction(formData: FormData) {
+  const email = formData.get("email") as string
+  const password = formData.get("password") as string
+
+  if (!email || !password) {
+    return { error: "Email and password are required" }
+  }
+
   try {
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
-
-    if (!email || !password) {
-      return { error: "Email and password are required" }
-    }
-
-    await signIn("credentials", {
+    const result = await signIn("credentials", {
       email,
       password,
-      redirectTo: "/trips",
       redirect: false,
     })
     
-    // If signIn succeeds, manually redirect
-    redirect("/trips")
-  } catch (error) {
-    // Network/fetch errors
-    if (error instanceof TypeError && error.message.includes("fetch")) {
-      return { error: "Network error. Please check your connection and try again." }
+    if (result?.error) {
+      return { error: "Invalid email or password" }
     }
-    
+  } catch (error) {
     console.error("[AUTH][LOGIN] Error:", error)
     return { error: "Invalid email or password" }
   }
+  
+  // Redirect outside try-catch
+  redirect("/trips")
 }
 
 export async function sendVerificationEmail(userId: string) {
