@@ -8,6 +8,7 @@ import { I18nProvider } from "@/lib/i18n/I18nProvider";
 import { auth } from "@/lib/auth";
 import { EmailVerificationBanner } from "@/components/EmailVerificationBanner";
 import { prisma } from "@/lib/db";
+import { unstable_cache } from "next/cache";
 
 // Font for Latin characters
 const manrope = Manrope({ 
@@ -29,6 +30,20 @@ export const metadata: Metadata = {
   description: "מעקב הוצאות נסיעות מודרני לטיולים שלך",
 };
 
+// Cached user verification check (10s cache)
+const getUserVerificationStatus = (userId: string) =>
+  unstable_cache(
+    async () => {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { emailVerified: true },
+      });
+      return !user?.emailVerified;
+    },
+    [`user-verification-${userId}`],
+    { revalidate: 10, tags: [`user-${userId}`] }
+  )();
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -39,12 +54,8 @@ export default async function RootLayout({
   let userId = "";
 
   if (session?.user?.id) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { emailVerified: true },
-    });
-    showBanner = !user?.emailVerified;
     userId = session.user.id;
+    showBanner = await getUserVerificationStatus(userId);
   }
 
   return (

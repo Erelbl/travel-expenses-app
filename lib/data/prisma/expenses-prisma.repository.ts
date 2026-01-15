@@ -3,6 +3,7 @@ import { ExpensesRepository } from "@/lib/data/repositories"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@prisma/client"
 import { convertCurrency } from "@/lib/server/fx"
+import { unstable_cache } from "next/cache"
 
 // Type for expense rows returned by Prisma
 type ExpenseRow = Prisma.ExpenseGetPayload<{
@@ -29,12 +30,33 @@ type ExpenseRow = Prisma.ExpenseGetPayload<{
 
 export class PrismaExpensesRepository implements ExpensesRepository {
   async listExpenses(tripId: string): Promise<Expense[]> {
-    const expenses: ExpenseRow[] = await prisma.expense.findMany({
+    return unstable_cache(
+      async () => {
+        const expenses: ExpenseRow[] = await prisma.expense.findMany({
       where: { tripId },
+      select: {
+        id: true,
+        tripId: true,
+        createdById: true,
+        title: true,
+        category: true,
+        countryCode: true,
+        currency: true,
+        amount: true,
+        convertedAmount: true,
+        fxRate: true,
+        fxDate: true,
+        expenseDate: true,
+        usageDate: true,
+        nights: true,
+        note: true,
+        createdAt: true,
+        updatedAt: true,
+      },
       orderBy: { createdAt: "desc" },
-    })
-    
-    return expenses.map((e: ExpenseRow) => ({
+        })
+        
+        return expenses.map((e: ExpenseRow) => ({
       id: e.id,
       tripId: e.tripId,
       amount: e.amount,
@@ -57,11 +79,36 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       isFutureExpense: !!e.usageDate,
       usageDate: e.usageDate?.toISOString().split('T')[0],
       pricePerNight: e.nights && e.convertedAmount ? e.convertedAmount / e.nights : undefined,
-    }))
+        }))
+      },
+      [`expenses-${tripId}`],
+      { revalidate: 15, tags: [`expenses-${tripId}`] }
+    )()
   }
 
   async getExpense(id: string): Promise<Expense | null> {
-    const e = await prisma.expense.findUnique({ where: { id } })
+    const e = await prisma.expense.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        tripId: true,
+        createdById: true,
+        title: true,
+        category: true,
+        countryCode: true,
+        currency: true,
+        amount: true,
+        convertedAmount: true,
+        fxRate: true,
+        fxDate: true,
+        expenseDate: true,
+        usageDate: true,
+        nights: true,
+        note: true,
+        createdAt: true,
+        updatedAt: true,
+      }
+    })
     if (!e) return null
     
     return {

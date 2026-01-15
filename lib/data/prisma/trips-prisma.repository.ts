@@ -1,28 +1,39 @@
 import { Trip, CreateTrip } from "@/lib/schemas/trip.schema"
 import { TripsRepository } from "@/lib/data/repositories"
 import { prisma } from "@/lib/db"
+import { unstable_cache } from "next/cache"
 
 export class PrismaTripsRepository implements TripsRepository {
   async listTrips(userId: string): Promise<Trip[]> {
-    const trips = await prisma.trip.findMany({
+    return unstable_cache(
+      async () => {
+        const trips = await prisma.trip.findMany({
       where: {
         OR: [
           { ownerId: userId },
           { members: { some: { userId } } }
         ]
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+        baseCurrency: true,
+        countries: true,
+        createdAt: true,
         owner: { select: { id: true, name: true } },
         members: {
-          include: {
+          select: {
+            role: true,
             user: { select: { id: true, name: true } }
           }
         }
       },
       orderBy: { createdAt: "desc" },
-    })
-    
-    return trips.map(t => ({
+        })
+        
+        return trips.map(t => ({
       id: t.id,
       name: t.name,
       startDate: t.startDate?.toISOString().split('T')[0] ?? null,
@@ -32,7 +43,7 @@ export class PrismaTripsRepository implements TripsRepository {
       plannedCountries: t.countries,
       itineraryLegs: [],
       members: [
-        { id: t.owner.id, name: t.owner.name ?? "Owner", role: "owner" },
+        { id: t.owner.id, name: t.owner.name ?? "Owner", role: "owner" as const },
         ...t.members.map(m => ({
           id: m.user.id,
           name: m.user.name ?? "Member",
@@ -40,49 +51,71 @@ export class PrismaTripsRepository implements TripsRepository {
         }))
       ],
       createdAt: t.createdAt.getTime(),
-    }))
+        }))
+      },
+      [`trips-list-${userId}`],
+      { revalidate: 15, tags: [`trips-${userId}`] }
+    )()
   }
 
   async getTrip(tripId: string): Promise<Trip | null> {
-    const trip = await prisma.trip.findUnique({
-      where: { id: tripId },
-      include: {
-        owner: { select: { id: true, name: true } },
-        members: {
-          include: {
-            user: { select: { id: true, name: true } }
+    return unstable_cache(
+      async () => {
+        const trip = await prisma.trip.findUnique({
+          where: { id: tripId },
+          select: {
+            id: true,
+            name: true,
+            startDate: true,
+            endDate: true,
+            baseCurrency: true,
+            countries: true,
+            currentCountry: true,
+            currentCurrency: true,
+            createdAt: true,
+            owner: { select: { id: true, name: true } },
+            members: {
+              select: {
+                role: true,
+                user: { select: { id: true, name: true } }
+              }
+            }
           }
+        })
+        
+        if (!trip) return null
+        
+        return {
+          id: trip.id,
+          name: trip.name,
+          startDate: trip.startDate?.toISOString().split('T')[0] ?? null,
+          endDate: trip.endDate?.toISOString().split('T')[0] ?? null,
+          baseCurrency: trip.baseCurrency,
+          countries: trip.countries,
+          plannedCountries: trip.countries,
+          currentCountry: trip.currentCountry ?? undefined,
+          currentCurrency: trip.currentCurrency ?? undefined,
+          itineraryLegs: [],
+          members: [
+            { id: trip.owner.id, name: trip.owner.name ?? "Owner", role: "owner" as const },
+            ...trip.members.map(m => ({
+              id: m.user.id,
+              name: m.user.name ?? "Member",
+              role: m.role.toLowerCase() as "editor" | "viewer"
+            }))
+          ],
+          createdAt: trip.createdAt.getTime(),
         }
-      }
-    })
-    
-    if (!trip) return null
-    
-    return {
-      id: trip.id,
-      name: trip.name,
-      startDate: trip.startDate?.toISOString().split('T')[0] ?? null,
-      endDate: trip.endDate?.toISOString().split('T')[0] ?? null,
-      baseCurrency: trip.baseCurrency,
-      countries: trip.countries,
-      plannedCountries: trip.countries,
-      currentCountry: trip.currentCountry ?? undefined,
-      currentCurrency: trip.currentCurrency ?? undefined,
-      itineraryLegs: [],
-      members: [
-        { id: trip.owner.id, name: trip.owner.name ?? "Owner", role: "owner" },
-        ...trip.members.map(m => ({
-          id: m.user.id,
-          name: m.user.name ?? "Member",
-          role: m.role.toLowerCase() as "editor" | "viewer"
-        }))
-      ],
-      createdAt: trip.createdAt.getTime(),
-    }
+      },
+      [`trip-${tripId}`],
+      { revalidate: 15, tags: [`trip-${tripId}`] }
+    )()
   }
 
   async getTripForUser(tripId: string, userId: string): Promise<Trip | null> {
-    const trip = await prisma.trip.findFirst({
+    return unstable_cache(
+      async () => {
+        const trip = await prisma.trip.findFirst({
       where: {
         id: tripId,
         OR: [
@@ -90,39 +123,53 @@ export class PrismaTripsRepository implements TripsRepository {
           { members: { some: { userId } } }
         ]
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+        baseCurrency: true,
+        countries: true,
+        currentCountry: true,
+        currentCurrency: true,
+        createdAt: true,
         owner: { select: { id: true, name: true } },
         members: {
-          include: {
+          select: {
+            role: true,
             user: { select: { id: true, name: true } }
           }
         }
       }
-    })
-    
-    if (!trip) return null
-    
-    return {
-      id: trip.id,
-      name: trip.name,
-      startDate: trip.startDate?.toISOString().split('T')[0] ?? null,
-      endDate: trip.endDate?.toISOString().split('T')[0] ?? null,
-      baseCurrency: trip.baseCurrency,
-      countries: trip.countries,
-      plannedCountries: trip.countries,
-      currentCountry: trip.currentCountry ?? undefined,
-      currentCurrency: trip.currentCurrency ?? undefined,
-      itineraryLegs: [],
-      members: [
-        { id: trip.owner.id, name: trip.owner.name ?? "Owner", role: "owner" },
-        ...trip.members.map(m => ({
-          id: m.user.id,
-          name: m.user.name ?? "Member",
-          role: m.role.toLowerCase() as "editor" | "viewer"
-        }))
-      ],
-      createdAt: trip.createdAt.getTime(),
-    }
+        })
+        
+        if (!trip) return null
+        
+        return {
+          id: trip.id,
+          name: trip.name,
+          startDate: trip.startDate?.toISOString().split('T')[0] ?? null,
+          endDate: trip.endDate?.toISOString().split('T')[0] ?? null,
+          baseCurrency: trip.baseCurrency,
+          countries: trip.countries,
+          plannedCountries: trip.countries,
+          currentCountry: trip.currentCountry ?? undefined,
+          currentCurrency: trip.currentCurrency ?? undefined,
+          itineraryLegs: [],
+          members: [
+            { id: trip.owner.id, name: trip.owner.name ?? "Owner", role: "owner" as const },
+            ...trip.members.map(m => ({
+              id: m.user.id,
+              name: m.user.name ?? "Member",
+              role: m.role.toLowerCase() as "editor" | "viewer"
+            }))
+          ],
+          createdAt: trip.createdAt.getTime(),
+        }
+      },
+      [`trip-user-${tripId}-${userId}`],
+      { revalidate: 15, tags: [`trip-${tripId}`, `trips-${userId}`] }
+    )()
   }
 
   async createTrip(input: CreateTrip & { ownerId: string }): Promise<Trip> {
@@ -135,7 +182,14 @@ export class PrismaTripsRepository implements TripsRepository {
         baseCurrency: input.baseCurrency,
         countries: input.plannedCountries || input.countries || [],
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+        baseCurrency: true,
+        countries: true,
+        createdAt: true,
         owner: { select: { id: true, name: true } }
       }
     })
@@ -149,7 +203,7 @@ export class PrismaTripsRepository implements TripsRepository {
       countries: created.countries,
       plannedCountries: created.countries,
       itineraryLegs: [],
-      members: [{ id: created.owner.id, name: created.owner.name ?? "Me", role: "owner" }],
+      members: [{ id: created.owner.id, name: created.owner.name ?? "Me", role: "owner" as const }],
       createdAt: created.createdAt.getTime(),
     }
   }
@@ -166,10 +220,20 @@ export class PrismaTripsRepository implements TripsRepository {
         currentCountry: data.currentCountry,
         currentCurrency: data.currentCurrency,
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+        baseCurrency: true,
+        countries: true,
+        currentCountry: true,
+        currentCurrency: true,
+        createdAt: true,
         owner: { select: { id: true, name: true } },
         members: {
-          include: {
+          select: {
+            role: true,
             user: { select: { id: true, name: true } }
           }
         }
@@ -188,7 +252,7 @@ export class PrismaTripsRepository implements TripsRepository {
       currentCurrency: updated.currentCurrency ?? undefined,
       itineraryLegs: [],
       members: [
-        { id: updated.owner.id, name: updated.owner.name ?? "Owner", role: "owner" },
+        { id: updated.owner.id, name: updated.owner.name ?? "Owner", role: "owner" as const },
         ...updated.members.map(m => ({
           id: m.user.id,
           name: m.user.name ?? "Member",
