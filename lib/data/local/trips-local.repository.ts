@@ -24,9 +24,13 @@ export class LocalTripsRepository implements TripsRepository {
     return this.getTripsFromStorage().sort((a, b) => b.createdAt - a.createdAt)
   }
 
-  async getTrip(id: string, userId: string): Promise<Trip | null> {
+  async getTrip(tripId: string): Promise<Trip | null> {
     const trips = this.getTripsFromStorage()
-    return trips.find((t) => t.id === id) ?? null
+    return trips.find((t) => t.id === tripId) ?? null
+  }
+
+  async getTripForUser(tripId: string, userId: string): Promise<Trip | null> {
+    return this.getTrip(tripId)
   }
 
   async createTrip(trip: CreateTrip & { ownerId: string }): Promise<Trip> {

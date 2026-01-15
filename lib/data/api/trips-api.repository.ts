@@ -8,11 +8,15 @@ export class ApiTripsRepository implements TripsRepository {
     return res.json()
   }
 
-  async getTrip(id: string, userId: string): Promise<Trip | null> {
-    const res = await fetch(`/api/trips/${id}`)
+  async getTrip(tripId: string): Promise<Trip | null> {
+    const res = await fetch(`/api/trips/${tripId}`)
     if (res.status === 404) return null
     if (!res.ok) throw new Error('Failed to fetch trip')
     return res.json()
+  }
+
+  async getTripForUser(tripId: string, userId: string): Promise<Trip | null> {
+    return this.getTrip(tripId)
   }
 
   async createTrip(trip: CreateTrip & { ownerId: string }): Promise<Trip> {

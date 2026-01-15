@@ -4,7 +4,8 @@ import { ExchangeRate } from "@/lib/schemas/exchange-rate.schema"
 
 export interface TripsRepository {
   listTrips(userId: string): Promise<Trip[]>
-  getTrip(id: string, userId: string): Promise<Trip | null>
+  getTrip(tripId: string): Promise<Trip | null>
+  getTripForUser(tripId: string, userId: string): Promise<Trip | null>
   createTrip(trip: CreateTrip & { ownerId: string }): Promise<Trip>
   updateTrip(id: string, trip: Partial<Trip>, userId: string): Promise<Trip>
   deleteTrip(id: string, userId: string): Promise<void>

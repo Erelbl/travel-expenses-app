@@ -19,7 +19,7 @@ export async function GET(
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 })
     }
-    const trip = await tripsRepository.getTrip(id, session.user.id)
+    const trip = await tripsRepository.getTripForUser(id, session.user.id)
     if (!trip) {
       return NextResponse.json({ error: 'Trip not found' }, { status: 404 })
     }
