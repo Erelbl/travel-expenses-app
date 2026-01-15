@@ -77,8 +77,17 @@ export async function loginAction(formData: FormData) {
       email,
       password,
       redirectTo: "/trips",
+      redirect: false,
     })
+    
+    // If signIn succeeds, manually redirect
+    redirect("/trips")
   } catch (error) {
+    // Network/fetch errors
+    if (error instanceof TypeError && error.message.includes("fetch")) {
+      return { error: "Network error. Please check your connection and try again." }
+    }
+    
     console.error("[AUTH][LOGIN] Error:", error)
     return { error: "Invalid email or password" }
   }
