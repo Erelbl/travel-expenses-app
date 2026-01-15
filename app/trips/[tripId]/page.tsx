@@ -116,7 +116,7 @@ export default function TripHomePage() {
         <div className="sticky top-0 z-10 border-b bg-white">
           <div className="container mx-auto max-w-4xl">
             <div className="flex items-center justify-between p-4">
-              <h1 className="text-xl font-bold text-slate-900">{t("dashboard.title")}</h1>
+              <h1 className="text-xl font-bold text-slate-900">{t("trips.title")}</h1>
             </div>
           </div>
         </div>

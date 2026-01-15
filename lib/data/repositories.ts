@@ -3,11 +3,11 @@ import { Expense, CreateExpense } from "@/lib/schemas/expense.schema"
 import { ExchangeRate } from "@/lib/schemas/exchange-rate.schema"
 
 export interface TripsRepository {
-  listTrips(userId: string): Promise<Trip[]>
-  getTrip(id: string, userId: string): Promise<Trip | null>
-  createTrip(trip: CreateTrip & { ownerId: string }): Promise<Trip>
-  updateTrip(id: string, trip: Partial<Trip>, userId: string): Promise<Trip>
-  deleteTrip(id: string, userId: string): Promise<void>
+  listTrips(): Promise<Trip[]>
+  getTrip(id: string): Promise<Trip | null>
+  createTrip(trip: CreateTrip): Promise<Trip>
+  updateTrip(id: string, trip: Partial<Trip>): Promise<Trip>
+  deleteTrip(id: string): Promise<void>
 }
 
 export interface ExpensesRepository {
