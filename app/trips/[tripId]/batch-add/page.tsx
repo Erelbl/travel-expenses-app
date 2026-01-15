@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Plus, Trash2 } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Copy, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { PrimaryButton } from "@/components/ui/primary-button"
@@ -32,6 +32,7 @@ const CATEGORIES: ExpenseCategory[] = [
 
 interface ExpenseRow extends BatchExpenseInput {
   tempId: string
+  error?: string
 }
 
 export default function BatchAddPage() {
@@ -44,8 +45,10 @@ export default function BatchAddPage() {
   const [loading, setLoading] = useState(false)
   const [globalDate, setGlobalDate] = useState(getTodayString())
   const [country, setCountry] = useState("")
+  const [globalError, setGlobalError] = useState<string | null>(null)
 
   const [rows, setRows] = useState<ExpenseRow[]>([])
+  const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map())
 
   useEffect(() => {
     loadTrip()
@@ -106,14 +109,118 @@ export default function BatchAddPage() {
     )
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  function duplicateRow(tempId: string) {
+    const rowToDuplicate = rows.find((r) => r.tempId === tempId)
+    if (!rowToDuplicate) return
+
+    const newRow: ExpenseRow = {
+      ...rowToDuplicate,
+      tempId: `row-${Date.now()}-${Math.random()}`,
+      error: undefined,
+    }
+
+    setRows((prev) => {
+      const index = prev.findIndex((r) => r.tempId === tempId)
+      const newRows = [...prev]
+      newRows.splice(index + 1, 0, newRow)
+      return newRows
+    })
+
+    // Focus the amount field of the new row after render
+    setTimeout(() => {
+      const newAmountInput = inputRefs.current.get(`${newRow.tempId}-amount`)
+      newAmountInput?.focus()
+      newAmountInput?.select()
+    }, 50)
+  }
+
+  function clearRow(tempId: string) {
+    const defaultCurrency = trip?.currentCurrency || trip?.baseCurrency || "USD"
+    updateRow(tempId, {
+      amount: 0,
+      currency: defaultCurrency,
+      category: "Food",
+      merchant: "",
+      note: "",
+      date: globalDate,
+      error: undefined,
+    })
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent, tempId: string, fieldName: string) {
+    if (e.key === "Enter" && !e.shiftKey && fieldName === "note") {
+      e.preventDefault()
+      
+      const row = rows.find((r) => r.tempId === tempId)
+      if (!row) return
+
+      // Validate row minimally
+      if (row.amount <= 0) {
+        updateRow(tempId, { error: t("batchAdd.amountRequired") })
+        return
+      }
+      if (!row.merchant.trim()) {
+        updateRow(tempId, { error: t("batchAdd.merchantRequired") })
+        return
+      }
+
+      // Clear error if valid
+      if (row.error) {
+        updateRow(tempId, { error: undefined })
+      }
+
+      // If this is the last row, add a new one
+      const rowIndex = rows.findIndex((r) => r.tempId === tempId)
+      if (rowIndex === rows.length - 1) {
+        addRow()
+        // Focus will be set when the new row is added
+        setTimeout(() => {
+          const newRows = rows
+          if (newRows.length > rowIndex + 1) {
+            const nextRowId = rows[rows.length - 1]?.tempId
+            if (nextRowId) {
+              const nextAmountInput = inputRefs.current.get(`${nextRowId}-amount`)
+              nextAmountInput?.focus()
+            }
+          }
+        }, 50)
+      }
+    }
+  }
+
+  async function handleSubmit(e?: React.FormEvent) {
+    if (e) e.preventDefault()
     if (!trip) return
+
+    // Clear previous errors
+    setGlobalError(null)
+    setRows((prev) => prev.map((r) => ({ ...r, error: undefined })))
 
     // Validation
     const validRows = rows.filter((r) => r.amount > 0 && r.merchant.trim() !== "")
     if (validRows.length === 0) {
-      toast.error(t("batchAdd.noValidRows"))
+      setGlobalError(t("batchAdd.noValidRows"))
+      return
+    }
+
+    // Check for invalid rows and mark them
+    let hasInvalidRows = false
+    setRows((prev) =>
+      prev.map((r) => {
+        if (r.amount <= 0 && r.merchant.trim()) {
+          hasInvalidRows = true
+          return { ...r, error: t("batchAdd.amountRequired") }
+        }
+        if (!r.merchant.trim() && r.amount > 0) {
+          hasInvalidRows = true
+          return { ...r, error: t("batchAdd.merchantRequired") }
+        }
+        return r
+      })
+    )
+
+    if (hasInvalidRows) {
+      setGlobalError(t("batchAdd.fixErrors"))
       return
     }
 
@@ -130,13 +237,33 @@ export default function BatchAddPage() {
         toast.success(t("batchAdd.success", { count: result.created }))
         router.push(`/trips/${tripId}`)
       } else {
-        toast.error(
-          result.errors?.[0]?.message || t("batchAdd.error")
-        )
+        // Handle row-specific errors
+        if (result.errors && result.errors.length > 0) {
+          const hasSpecificErrors = result.errors.some((e) => e.index >= 0)
+          
+          if (hasSpecificErrors) {
+            // Map errors to rows
+            setRows((prev) =>
+              prev.map((r, idx) => {
+                const error = result.errors?.find((e) => e.index === idx)
+                if (error) {
+                  return { ...r, error: error.message }
+                }
+                return r
+              })
+            )
+            setGlobalError(t("batchAdd.someRowsFailed"))
+          } else {
+            // Generic error
+            setGlobalError(result.errors[0].message)
+          }
+        } else {
+          setGlobalError(t("batchAdd.error"))
+        }
       }
     } catch (error) {
       console.error("Batch add failed:", error)
-      toast.error(t("batchAdd.error"))
+      setGlobalError(t("batchAdd.error"))
     } finally {
       setLoading(false)
     }
@@ -177,6 +304,13 @@ export default function BatchAddPage() {
       </div>
 
       <div className="container mx-auto max-w-4xl px-4 py-6">
+        {/* Global Error */}
+        {globalError && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+            <p className="font-medium">{globalError}</p>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Global Settings */}
           <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
@@ -247,25 +381,56 @@ export default function BatchAddPage() {
                 {rows.map((row, index) => (
                   <div
                     key={row.tempId}
-                    className="bg-white rounded-lg border border-slate-200 p-4 space-y-3"
+                    className={`bg-white rounded-lg border ${
+                      row.error ? "border-red-300" : "border-slate-200"
+                    } p-4 space-y-3`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-slate-500">
                         #{index + 1}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => removeRow(row.tempId)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => duplicateRow(row.tempId)}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                          title={t("batchAdd.duplicate")}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => clearRow(row.tempId)}
+                          className="text-slate-500 hover:text-slate-700 transition-colors"
+                          title={t("batchAdd.clear")}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeRow(row.tempId)}
+                          className="text-red-500 hover:text-red-700 transition-colors"
+                          title={t("batchAdd.removeRow")}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Row error */}
+                    {row.error && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded px-3 py-2">
+                        {row.error}
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                       {/* Amount */}
                       <div className="md:col-span-3">
                         <Input
+                          ref={(el) => {
+                            if (el) inputRefs.current.set(`${row.tempId}-amount`, el)
+                          }}
                           type="number"
                           step="0.01"
                           placeholder={t("addExpense.amount")}
@@ -337,6 +502,7 @@ export default function BatchAddPage() {
                           onChange={(e) =>
                             updateRow(row.tempId, { note: e.target.value })
                           }
+                          onKeyDown={(e) => handleKeyDown(e, row.tempId, "note")}
                           className="h-10"
                         />
                       </div>
@@ -350,8 +516,18 @@ export default function BatchAddPage() {
       </div>
 
       {/* Sticky Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 glass-effect border-t border-white/20 p-4 shadow-2xl">
+      <div className="fixed bottom-0 left-0 right-0 glass-effect border-t border-white/20 p-4 shadow-2xl z-30">
         <div className="container mx-auto flex max-w-4xl gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => addRow()}
+            disabled={loading}
+            className="h-12 flex-1 rounded-xl border-2 border-slate-300 bg-white font-semibold gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {t("batchAdd.addRow")}
+          </Button>
           <Button
             type="button"
             variant="outline"
@@ -368,7 +544,7 @@ export default function BatchAddPage() {
             size="xl"
             className="flex-[2] h-12 font-semibold"
           >
-            {t("batchAdd.saveAll")} ({rows.filter((r) => r.amount > 0 && r.merchant.trim()).length})
+            {loading ? t("common.saving") : t("batchAdd.saveAll")} ({rows.filter((r) => r.amount > 0 && r.merchant.trim()).length})
           </PrimaryButton>
         </div>
       </div>
