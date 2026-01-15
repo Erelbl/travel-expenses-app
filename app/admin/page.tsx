@@ -5,6 +5,7 @@ import { PageContainer } from "@/components/ui/page-container"
 import { PageHeader } from "@/components/page-header"
 import { StatCard } from "@/components/stat-card"
 import { Users, UserCheck, UserX, Calendar, MapPin, Receipt } from "lucide-react"
+import { SetPasswordForm } from "./SetPasswordForm"
 
 function isAdminEmail(email: string | null | undefined): boolean {
   if (!email) return false
@@ -40,6 +41,12 @@ export default async function AdminPage() {
       />
       
       <div className="space-y-8">
+        {/* Admin Tools */}
+        <section>
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">Admin Tools</h2>
+          <SetPasswordForm />
+        </section>
+
         {/* Users Stats */}
         <section>
           <h2 className="text-lg font-semibold text-slate-800 mb-4">Users</h2>
