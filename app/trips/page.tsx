@@ -26,7 +26,7 @@ export default function TripsPage() {
     try {
       setLoading(true)
       setError(false)
-      const data = await tripsRepository.listTrips()
+      const data = await tripsRepository.listTrips("")
       setTrips(data)
     } catch (error) {
       console.error("Failed to load trips:", error)
