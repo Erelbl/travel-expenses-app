@@ -11,9 +11,10 @@ import { Expense } from "@/lib/schemas/expense.schema"
 export interface Insight {
   id: string
   type: "daily_spend" | "category_skew" | "cost_per_adult" | "country_comparison" | "expense_concentration"
-  title: string
+  titleKey: string
   value: string
-  comparison: string
+  comparisonKey: string
+  comparisonParams?: Record<string, string | number>
   score: number // Higher = more interesting/actionable
 }
 
@@ -77,16 +78,18 @@ const dailySpendInsight: InsightEvaluator = {
     // Score higher if deviation is significant
     const score = deviationAbs >= 20 ? 90 : deviationAbs >= 10 ? 70 : 50
     
-    const comparison = deviation > 0
-      ? `${Math.round(deviationAbs)}% above typical ${trip.tripType} trips`
-      : `${Math.round(deviationAbs)}% below typical ${trip.tripType} trips`
+    const comparisonKey = deviation > 0 ? "insights.aboveTypical" : "insights.belowTypical"
     
     return {
       id: "daily_spend",
       type: "daily_spend",
-      title: "Daily Spending Pace",
-      value: `${dailyAvg.toFixed(0)} ${trip.baseCurrency}/day`,
-      comparison,
+      titleKey: "insights.dailySpendTitle",
+      value: `${dailyAvg.toFixed(0)} ${trip.baseCurrency}`,
+      comparisonKey,
+      comparisonParams: {
+        percent: Math.round(deviationAbs).toString(),
+        tripType: trip.tripType || "solo",
+      },
       score,
     }
   },
@@ -126,9 +129,12 @@ const categorySkewInsight: InsightEvaluator = {
     return {
       id: "category_skew",
       type: "category_skew",
-      title: "Spending Category Focus",
+      titleKey: "insights.categorySkewTitle",
       value: `${Math.round(percentage)}% ${maxCategory}`,
-      comparison: `Most of your budget is going to ${maxCategory.toLowerCase()}`,
+      comparisonKey: "insights.mostBudgetGoesTo",
+      comparisonParams: {
+        category: maxCategory.toLowerCase(),
+      },
       score,
     }
   },
@@ -149,12 +155,17 @@ const costPerAdultInsight: InsightEvaluator = {
     // Medium-high score by default
     const score = 75
     
+    const comparisonKey = trip.adults > 1 ? "insights.basedOnAdultsPlural" : "insights.basedOnAdults"
+    
     return {
       id: "cost_per_adult",
       type: "cost_per_adult",
-      title: "Cost Per Person Daily",
+      titleKey: "insights.costPerAdultTitle",
       value: `${perAdult.toFixed(0)} ${trip.baseCurrency}`,
-      comparison: `Based on ${trip.adults} adult${trip.adults > 1 ? 's' : ''}`,
+      comparisonKey,
+      comparisonParams: {
+        adults: trip.adults.toString(),
+      },
       score,
     }
   },
@@ -205,9 +216,14 @@ const countryComparisonInsight: InsightEvaluator = {
     return {
       id: "country_comparison",
       type: "country_comparison",
-      title: "Country Cost Difference",
-      value: `${Math.round(difference)}% variance`,
-      comparison: `${highest.country} costs ${Math.round(difference)}% more than ${lowest.country}`,
+      titleKey: "insights.countryComparisonTitle",
+      value: `${Math.round(difference)}%`,
+      comparisonKey: "insights.costsDifference",
+      comparisonParams: {
+        country1: highest.country,
+        country2: lowest.country,
+        percent: Math.round(difference).toString(),
+      },
       score,
     }
   },
@@ -238,9 +254,9 @@ const expenseConcentrationInsight: InsightEvaluator = {
     return {
       id: "expense_concentration",
       type: "expense_concentration",
-      title: "Spending Concentration",
-      value: `${Math.round(percentage)}% in top 20%`,
-      comparison: `A few large expenses dominate your spending`,
+      titleKey: "insights.expenseConcentrationTitle",
+      value: `${Math.round(percentage)}%`,
+      comparisonKey: "insights.fewLargeExpenses",
       score,
     }
   },

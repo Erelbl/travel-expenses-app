@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X } from "lucide-react"
+import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X, Lightbulb } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { FloatingAddButton } from "@/components/floating-add-button"
 import { QuickAddExpense } from "@/components/quick-add-expense"
@@ -51,9 +51,16 @@ export default function TripHomePage() {
   const [showRates, setShowRates] = useState(false)
   // Expense filter (for shared trips)
   const [showOnlyMine, setShowOnlyMine] = useState(false)
+  // Insight banner dismissal
+  const [insightDismissed, setInsightDismissed] = useState(false)
 
   useEffect(() => {
     loadData()
+    // Check if insight was dismissed
+    if (typeof window !== 'undefined') {
+      const dismissed = localStorage.getItem(`tw_insight_dismissed_${tripId}`)
+      setInsightDismissed(dismissed === 'true')
+    }
   }, [tripId])
 
   async function loadData() {
@@ -139,6 +146,17 @@ export default function TripHomePage() {
   
   // Generate insights
   const insights = generateInsights(trip, expenses)
+  
+  // Dismiss insight banner
+  const dismissInsight = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`tw_insight_dismissed_${tripId}`, 'true')
+      setInsightDismissed(true)
+    }
+  }
+  
+  // Get top insight for banner
+  const topInsight = insights.length > 0 ? insights[0] : null
 
   // Calculate today's spend
   const today = getTodayString()
@@ -352,33 +370,43 @@ export default function TripHomePage() {
           </Card>
         </div>
 
-        {/* Trip Insights */}
-        {insights.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">
-                Trip Insights
-              </h2>
-              <p className="text-xs text-slate-500">
-                Updated as you add expenses
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {insights.map((insight) => (
-                <Card key={insight.id} className="border-slate-200 bg-gradient-to-br from-white to-slate-50">
-                  <CardContent className="p-4">
-                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
-                      {insight.title}
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900 mb-1">
-                      {insight.value}
-                    </p>
-                    <p className="text-sm text-slate-600">
-                      {insight.comparison}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+        {/* Trip Insights Banner */}
+        {topInsight && !insightDismissed && (
+          <div className="relative bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+            <button
+              onClick={dismissInsight}
+              className="absolute top-3 right-3 text-amber-600 hover:text-amber-800 transition-colors"
+              aria-label={t('common.close')}
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="flex items-start gap-3 pr-8">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                <Lightbulb className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-2 mb-1">
+                  <h3 className="text-sm font-semibold text-amber-900">
+                    {t(topInsight.titleKey)}
+                  </h3>
+                  <span className="text-lg font-bold text-amber-800">
+                    {topInsight.value}
+                    {topInsight.type === 'daily_spend' && t('insights.perDay')}
+                    {topInsight.type === 'expense_concentration' && ` ${t('insights.inTop20')}`}
+                  </span>
+                </div>
+                <p className="text-sm text-amber-700">
+                  {topInsight.comparisonParams?.tripType 
+                    ? t(topInsight.comparisonKey, {
+                        ...topInsight.comparisonParams,
+                        tripType: t(`insights.${topInsight.comparisonParams.tripType}`)
+                      })
+                    : t(topInsight.comparisonKey, topInsight.comparisonParams)}
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  {t('insights.updatedAsYouGo')}
+                </p>
+              </div>
             </div>
           </div>
         )}

@@ -263,16 +263,16 @@ export default function NewTripPage() {
             <div className="border-t pt-6 space-y-4">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
-                  Help us tailor insights for this trip (optional)
+                  {t('createTrip.metadataTitle')}
                 </h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  These details help generate personalized insights about your spending
+                  {t('createTrip.metadataSubtitle')}
                 </p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="tripType">Trip Type</Label>
+                  <Label htmlFor="tripType">{t('createTrip.tripType')}</Label>
                   <Select
                     id="tripType"
                     value={formData.tripType}
@@ -282,16 +282,16 @@ export default function NewTripPage() {
                       setFormData({ ...formData, tripType, adults: defaultAdults })
                     }}
                   >
-                    <option value="">Select type</option>
-                    <option value="solo">Solo</option>
-                    <option value="couple">Couple</option>
-                    <option value="family">Family</option>
-                    <option value="friends">Friends</option>
+                    <option value="">{t('createTrip.tripTypeSelect')}</option>
+                    <option value="solo">{t('createTrip.tripTypeSolo')}</option>
+                    <option value="couple">{t('createTrip.tripTypeCouple')}</option>
+                    <option value="family">{t('createTrip.tripTypeFamily')}</option>
+                    <option value="friends">{t('createTrip.tripTypeFriends')}</option>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="travelStyle">Travel Style</Label>
+                  <Label htmlFor="travelStyle">{t('createTrip.travelStyle')}</Label>
                   <Select
                     id="travelStyle"
                     value={formData.travelStyle}
@@ -299,18 +299,18 @@ export default function NewTripPage() {
                       setFormData({ ...formData, travelStyle: e.target.value as typeof formData.travelStyle })
                     }
                   >
-                    <option value="">Select style</option>
-                    <option value="budget">Budget</option>
-                    <option value="balanced">Balanced</option>
-                    <option value="comfort">Comfort</option>
-                    <option value="luxury">Luxury</option>
+                    <option value="">{t('createTrip.travelStyleSelect')}</option>
+                    <option value="budget">{t('createTrip.travelStyleBudget')}</option>
+                    <option value="balanced">{t('createTrip.travelStyleBalanced')}</option>
+                    <option value="comfort">{t('createTrip.travelStyleComfort')}</option>
+                    <option value="luxury">{t('createTrip.travelStyleLuxury')}</option>
                   </Select>
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="adults">Adults</Label>
+                  <Label htmlFor="adults">{t('createTrip.adults')}</Label>
                   <Input
                     id="adults"
                     type="number"
@@ -323,7 +323,7 @@ export default function NewTripPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="children">Children</Label>
+                  <Label htmlFor="children">{t('createTrip.children')}</Label>
                   <Input
                     id="children"
                     type="number"
