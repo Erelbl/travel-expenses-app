@@ -29,11 +29,11 @@ export class ApiTripsRepository implements TripsRepository {
     return res.json()
   }
 
-  async updateTrip(id: string, trip: Partial<Trip>, userId: string): Promise<Trip> {
-    const res = await fetch(`/api/trips/${id}`, {
+  async updateTrip(tripId: string, data: Partial<Trip>): Promise<Trip> {
+    const res = await fetch(`/api/trips/${tripId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(trip),
+      body: JSON.stringify(data),
     })
     if (!res.ok) throw new Error('Failed to update trip')
     return res.json()

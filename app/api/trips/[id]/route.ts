@@ -44,8 +44,15 @@ export async function PATCH(
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 })
     }
+    
+    // Verify user has access to this trip
+    const existing = await tripsRepository.getTripForUser(id, session.user.id)
+    if (!existing) {
+      return NextResponse.json({ error: 'Trip not found' }, { status: 404 })
+    }
+    
     const body = await request.json()
-    const trip = await tripsRepository.updateTrip(id, body, session.user.id)
+    const trip = await tripsRepository.updateTrip(id, body)
     return NextResponse.json(trip)
   } catch (error) {
     logError('API /trips/[id] PATCH', error)

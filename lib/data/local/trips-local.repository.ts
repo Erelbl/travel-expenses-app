@@ -49,15 +49,15 @@ export class LocalTripsRepository implements TripsRepository {
     return newTrip
   }
 
-  async updateTrip(id: string, updates: Partial<Trip>, userId: string): Promise<Trip> {
+  async updateTrip(tripId: string, data: Partial<Trip>): Promise<Trip> {
     const trips = this.getTripsFromStorage()
-    const index = trips.findIndex((t) => t.id === id)
+    const index = trips.findIndex((t) => t.id === tripId)
     
     if (index === -1) {
-      throw new Error(`Trip not found: ${id}`)
+      throw new Error(`Trip not found: ${tripId}`)
     }
     
-    const updatedTrip = { ...trips[index], ...updates }
+    const updatedTrip = { ...trips[index], ...data }
     TripSchema.parse(updatedTrip)
     
     trips[index] = updatedTrip

@@ -154,24 +154,18 @@ export class PrismaTripsRepository implements TripsRepository {
     }
   }
 
-  async updateTrip(id: string, updates: Partial<Trip>, userId: string): Promise<Trip> {
-    // Verify user has access
-    const existing = await this.getTripForUser(id, userId)
-    if (!existing) {
-      throw new Error("Trip not found or unauthorized")
-    }
-
+  async updateTrip(tripId: string, data: Partial<Trip>): Promise<Trip> {
     const updated = await prisma.trip.update({
-      where: { id },
+      where: { id: tripId },
       data: {
-        name: updates.name,
-        startDate: updates.startDate ? new Date(updates.startDate) : undefined,
-        endDate: updates.endDate ? new Date(updates.endDate) : undefined,
-      baseCurrency: updates.baseCurrency,
-      countries: updates.plannedCountries || updates.countries,
-      currentCountry: updates.currentCountry,
-      currentCurrency: updates.currentCurrency,
-    },
+        name: data.name,
+        startDate: data.startDate ? new Date(data.startDate) : undefined,
+        endDate: data.endDate ? new Date(data.endDate) : undefined,
+        baseCurrency: data.baseCurrency,
+        countries: data.plannedCountries || data.countries,
+        currentCountry: data.currentCountry,
+        currentCurrency: data.currentCurrency,
+      },
       include: {
         owner: { select: { id: true, name: true } },
         members: {
