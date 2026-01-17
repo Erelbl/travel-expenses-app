@@ -61,20 +61,51 @@ export interface CurrencyInfo {
 }
 
 export const CURRENCIES_INFO: CurrencyInfo[] = [
+  // Major currencies
   { code: 'USD', symbol: '$', name: 'US Dollar' },
   { code: 'EUR', symbol: '€', name: 'Euro' },
   { code: 'GBP', symbol: '£', name: 'British Pound' },
-  { code: 'ILS', symbol: '₪', name: 'Israeli Shekel' },
   { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+  
+  // Middle East & Africa
+  { code: 'ILS', symbol: '₪', name: 'Israeli Shekel' },
+  { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' },
+  { code: 'EGP', symbol: 'E£', name: 'Egyptian Pound' },
+  { code: 'ZAR', symbol: 'R', name: 'South African Rand' },
+  
+  // Asia
   { code: 'THB', symbol: '฿', name: 'Thai Baht' },
   { code: 'VND', symbol: '₫', name: 'Vietnamese Dong' },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-  { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc' },
-  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
   { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-  { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' },
+  { code: 'IDR', symbol: 'Rp', name: 'Indonesian Rupiah' },
+  { code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit' },
+  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+  { code: 'PHP', symbol: '₱', name: 'Philippine Peso' },
+  { code: 'KRW', symbol: '₩', name: 'South Korean Won' },
+  
+  // Europe (non-EUR)
+  { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc' },
+  { code: 'SEK', symbol: 'kr', name: 'Swedish Krona' },
+  { code: 'NOK', symbol: 'kr', name: 'Norwegian Krone' },
+  { code: 'DKK', symbol: 'kr', name: 'Danish Krone' },
+  { code: 'CZK', symbol: 'Kč', name: 'Czech Koruna' },
+  { code: 'PLN', symbol: 'zł', name: 'Polish Złoty' },
+  { code: 'HUF', symbol: 'Ft', name: 'Hungarian Forint' },
+  { code: 'RON', symbol: 'lei', name: 'Romanian Leu' },
   { code: 'TRY', symbol: '₺', name: 'Turkish Lira' },
+  
+  // Americas
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+  { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
+  { code: 'MXN', symbol: 'Mex$', name: 'Mexican Peso' },
+  { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
+  
+  // Southeast Asia
+  { code: 'KHR', symbol: '៛', name: 'Cambodian Riel' },
+  { code: 'LAK', symbol: '₭', name: 'Lao Kip' },
+  { code: 'LKR', symbol: 'Rs', name: 'Sri Lankan Rupee' },
 ];
 
 export function getCurrencyInfo(code: string): CurrencyInfo | undefined {

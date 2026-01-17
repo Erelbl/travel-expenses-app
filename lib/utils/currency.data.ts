@@ -44,6 +44,8 @@ export const CURRENCIES_DATA: CurrencyData[] = [
   { code: 'MYR', symbol: 'RM', name_en: 'Malaysian Ringgit', name_he: 'רינגיט מלזי' },
   { code: 'PHP', symbol: '₱', name_en: 'Philippine Peso', name_he: 'פסו פיליפיני' },
   { code: 'IDR', symbol: 'Rp', name_en: 'Indonesian Rupiah', name_he: 'רופיה אינדונזית' },
+  { code: 'KRW', symbol: '₩', name_en: 'South Korean Won', name_he: 'וון דרום קוריאני' },
+  { code: 'BRL', symbol: 'R$', name_en: 'Brazilian Real', name_he: 'ריאל ברזילאי' },
   { code: 'EGP', symbol: 'E£', name_en: 'Egyptian Pound', name_he: 'לירה מצרית' },
 ];
 
