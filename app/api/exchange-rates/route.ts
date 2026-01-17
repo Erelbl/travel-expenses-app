@@ -57,21 +57,31 @@ export async function GET(request: NextRequest) {
   try {
     // Fetch from ExchangeRate-API (free tier, no API key needed)
     // Endpoint: https://api.exchangerate-api.com/v4/latest/{base}
-    const apiUrl = `https://api.exchangerate-api.com/v4/latest/${base}`
+    // Supports 160+ currencies including LKR, VND, THB, etc.
+    const apiUrl = process.env.FX_API_BASE_URL 
+      ? `${process.env.FX_API_BASE_URL}/${base}`
+      : `https://api.exchangerate-api.com/v4/latest/${base}`
     
     const response = await fetch(apiUrl, {
       next: { revalidate: 86400 }, // Cache for 24 hours
     })
 
     if (!response.ok) {
-      throw new Error(`API responded with status ${response.status}`)
+      throw new Error(`FX API responded with status ${response.status}`)
     }
 
     const data = await response.json()
     
-    if (!data.rates || !data.rates[target]) {
+    if (!data.rates || typeof data.rates !== 'object') {
+      throw new Error(`Invalid response format from FX API`)
+    }
+
+    if (!data.rates[target]) {
       return NextResponse.json(
-        { error: `Exchange rate not available for ${base} -> ${target}` },
+        { 
+          error: `Exchange rate not available for ${base} -> ${target}`,
+          availableCurrencies: Object.keys(data.rates).sort().join(', ')
+        },
         { status: 404 }
       )
     }
@@ -88,7 +98,7 @@ export async function GET(request: NextRequest) {
       base,
       target,
       rate,
-      date: date || new Date().toISOString().split("T")[0],
+      date: date || data.date || new Date().toISOString().split("T")[0],
       source: "api",
     })
   } catch (error) {
@@ -96,7 +106,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { 
         error: "Failed to fetch exchange rate",
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error",
+        details: "Please check currency codes and try again. If the problem persists, the expense will be stored without conversion."
       },
       { status: 500 }
     )

@@ -1,11 +1,14 @@
 /**
- * Server-side FX conversion service using Frankfurter API (ECB-based, free, no API key)
- * https://www.frankfurter.app/docs/
+ * Server-side FX conversion service using ExchangeRate-API (supports 160+ currencies)
+ * https://www.exchangerate-api.com/docs/free
  */
 
 // Simple in-memory cache for rates
 const fxCache = new Map<string, { rateToBase: number; asOf: string; timestamp: number }>()
 const CACHE_TTL = 12 * 60 * 60 * 1000 // 12 hours
+
+// Get API URL from env or use default free endpoint
+const FX_API_BASE_URL = process.env.FX_API_BASE_URL || 'https://api.exchangerate-api.com/v4/latest'
 
 export interface FxConversionResult {
   from: string
@@ -57,31 +60,31 @@ export async function convertCurrency(
   }
 
   try {
-    // Frankfurter endpoint: https://api.frankfurter.app/latest?from=USD&to=EUR
-    // Or historical: https://api.frankfurter.app/2024-01-15?from=USD&to=EUR
-    const endpoint = date 
-      ? `https://api.frankfurter.app/${date}?from=${fromUpper}&to=${toUpper}`
-      : `https://api.frankfurter.app/latest?from=${fromUpper}&to=${toUpper}`
+    // ExchangeRate-API endpoint: https://api.exchangerate-api.com/v4/latest/{base}
+    // This API supports 160+ currencies including LKR, and doesn't require an API key
+    // Note: Historical rates not supported on free tier, so we use latest for all requests
+    const endpoint = `${FX_API_BASE_URL}/${fromUpper}`
 
     const response = await fetch(endpoint, {
       next: { revalidate: 43200 }, // 12 hours
     })
 
     if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error(`Unsupported currency pair: ${fromUpper}/${toUpper}`)
-      }
-      throw new Error(`Frankfurter API error: ${response.status}`)
+      throw new Error(`FX API error: ${response.status} - ${response.statusText}`)
     }
 
     const data = await response.json()
     
-    if (!data.rates || !data.rates[toUpper]) {
-      throw new Error(`Rate not available for ${fromUpper} -> ${toUpper}`)
+    if (!data.rates || typeof data.rates !== 'object') {
+      throw new Error(`Invalid response format from FX API`)
+    }
+
+    if (!data.rates[toUpper]) {
+      throw new Error(`Rate not available for ${fromUpper} -> ${toUpper}. Supported currencies: ${Object.keys(data.rates).join(', ')}`)
     }
 
     const rateToBase = data.rates[toUpper]
-    const asOf = data.date
+    const asOf = data.date || new Date().toISOString().split('T')[0]
 
     // Cache result
     fxCache.set(cacheKey, {
@@ -99,6 +102,8 @@ export async function convertCurrency(
       asOf,
     }
   } catch (error) {
+    // Log error but don't expose internal details
+    console.error(`[FX] Conversion failed for ${fromUpper} -> ${toUpper}:`, error)
     throw new Error(
       error instanceof Error 
         ? error.message 

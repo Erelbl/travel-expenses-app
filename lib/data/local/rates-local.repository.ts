@@ -3,38 +3,35 @@ import { RatesRepository } from "@/lib/data/repositories"
 
 const STORAGE_KEY = "travel-expenses:rates"
 
-// Default exchange rates (1 unit of currency = X USD)
-const DEFAULT_RATES: Record<string, Record<string, number>> = {
-  USD: {
-    USD: 1,
-    EUR: 0.92,
-    GBP: 0.79,
-    ILS: 3.65,
-    JPY: 149.5,
-    AUD: 1.52,
-    CAD: 1.36,
-    CHF: 0.88,
-  },
-  EUR: {
-    USD: 1.09,
-    EUR: 1,
-    GBP: 0.86,
-    ILS: 3.97,
-    JPY: 162.5,
-    AUD: 1.65,
-    CAD: 1.48,
-    CHF: 0.96,
-  },
-  ILS: {
-    USD: 0.27,
-    EUR: 0.25,
-    GBP: 0.22,
-    ILS: 1,
-    JPY: 41,
-    AUD: 0.42,
-    CAD: 0.37,
-    CHF: 0.24,
-  },
+/**
+ * Fetch rates from API for a given base currency
+ * This is a client-side safe implementation that fetches on-demand
+ */
+async function fetchRatesFromAPI(baseCurrency: string): Promise<Record<string, number> | null> {
+  try {
+    const response = await fetch(`/api/exchange-rates?base=${baseCurrency}&target=USD`)
+    
+    if (!response.ok) {
+      console.warn(`Failed to fetch rates for ${baseCurrency}:`, response.statusText)
+      return null
+    }
+
+    // The API returns a single rate, but we can fetch the full rate set
+    // by making a request and then using the base currency endpoint
+    const fullRatesResponse = await fetch(
+      `https://api.exchangerate-api.com/v4/latest/${baseCurrency}`
+    )
+    
+    if (!fullRatesResponse.ok) {
+      return null
+    }
+
+    const data = await fullRatesResponse.json()
+    return data.rates || null
+  } catch (error) {
+    console.error(`Error fetching rates for ${baseCurrency}:`, error)
+    return null
+  }
 }
 
 export class LocalRatesRepository implements RatesRepository {
@@ -57,17 +54,33 @@ export class LocalRatesRepository implements RatesRepository {
   async getRates(baseCurrency: string): Promise<ExchangeRate | null> {
     const allRates = this.getRatesFromStorage()
     
+    // Check if we have recent cached rates (< 24 hours old)
     if (allRates[baseCurrency]) {
-      return allRates[baseCurrency]
+      const age = Date.now() - allRates[baseCurrency].updatedAt
+      const maxAge = 24 * 60 * 60 * 1000 // 24 hours
+      
+      if (age < maxAge) {
+        return allRates[baseCurrency]
+      }
     }
     
-    // Return default rates if available
-    if (DEFAULT_RATES[baseCurrency]) {
+    // Fetch fresh rates from API
+    const freshRates = await fetchRatesFromAPI(baseCurrency)
+    
+    if (freshRates) {
+      // Cache the fresh rates
+      await this.setRates(baseCurrency, freshRates)
       return {
         baseCurrency,
-        rates: DEFAULT_RATES[baseCurrency],
+        rates: freshRates,
         updatedAt: Date.now(),
       }
+    }
+    
+    // If API fails, return stale cache if available
+    if (allRates[baseCurrency]) {
+      console.warn(`Using stale rates for ${baseCurrency}`)
+      return allRates[baseCurrency]
     }
     
     return null

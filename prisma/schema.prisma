@@ -165,3 +165,16 @@ model EmailVerificationToken {
 
   @@index([userId])
 }
+
+model ExchangeRateCache {
+  id           String   @id @default(cuid())
+  baseCurrency String
+  date         String   // YYYY-MM-DD format
+  ratesJson    String   // JSON map of currency -> rate
+  fetchedAt    DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@unique([baseCurrency, date])
+  @@index([baseCurrency])
+  @@index([date])
+}
