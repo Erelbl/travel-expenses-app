@@ -47,6 +47,8 @@ export function QuickAddExpense({
   
   const [loading, setLoading] = useState(false)
   const [lastUsedCurrency, setLastUsedCurrency] = useState<string | null>(null)
+  const [manualRate, setManualRate] = useState("")
+  const [showManualRate, setShowManualRate] = useState(false)
   const [formData, setFormData] = useState({
     merchant: "",
     amount: "",
@@ -93,6 +95,8 @@ export function QuickAddExpense({
       currency: defaultCurrency,
       country: trip.currentCountry || trip.plannedCountries?.[0] || trip.countries?.[0] || "US",
     })
+    setManualRate("")
+    setShowManualRate(false)
   }
 
   function handleClose() {
@@ -119,6 +123,7 @@ export function QuickAddExpense({
       // Get current user for createdByMemberId
       const currentUser = getCurrentUserMember(trip)
       
+      const parsedManualRate = manualRate ? parseFloat(manualRate) : undefined
       const expenseData: CreateExpense = {
         tripId: trip.id,
         amount,
@@ -128,6 +133,7 @@ export function QuickAddExpense({
         merchant: formData.merchant.trim(),
         date: getTodayString(),
         createdByMemberId: currentUser?.id,
+        manualRateToBase: parsedManualRate && parsedManualRate > 0 ? parsedManualRate : undefined,
       }
 
       const created = await expensesRepository.createExpense(expenseData)
@@ -214,9 +220,37 @@ export function QuickAddExpense({
               </select>
             </div>
             {formData.currency !== trip.baseCurrency && (
-              <p className="text-xs text-slate-500">
-                {t('addExpense.willConvertTo')} {trip.baseCurrency}
-              </p>
+              <div className="space-y-2">
+                <p className="text-xs text-slate-500">
+                  {t('addExpense.willConvertTo')} {trip.baseCurrency}
+                </p>
+                {!showManualRate && (
+                  <button
+                    type="button"
+                    onClick={() => setShowManualRate(true)}
+                    className="text-xs text-blue-600 hover:text-blue-700 underline"
+                  >
+                    {t('addExpense.fxRateManualOption') || 'Set manual rate'}
+                  </button>
+                )}
+                {showManualRate && (
+                  <div className="space-y-1">
+                    <Label htmlFor="qa-manual-rate" className="text-xs text-slate-600">
+                      1 {formData.currency} = ? {trip.baseCurrency}
+                    </Label>
+                    <Input
+                      id="qa-manual-rate"
+                      type="number"
+                      step="0.0001"
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      value={manualRate}
+                      onChange={(e) => setManualRate(e.target.value)}
+                      className="h-10 bg-white text-sm"
+                    />
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

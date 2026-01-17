@@ -19,6 +19,7 @@ type ExpenseRow = Prisma.ExpenseGetPayload<{
     convertedAmount: true
     fxRate: true
     fxDate: true
+    manualRateToBase: true
     expenseDate: true
     usageDate: true
     nights: true
@@ -46,6 +47,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         convertedAmount: true,
         fxRate: true,
         fxDate: true,
+        manualRateToBase: true,
         expenseDate: true,
         usageDate: true,
         nights: true,
@@ -65,7 +67,8 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       fxRateUsed: e.fxRate ?? undefined,
       fxRateDate: e.fxDate?.toISOString().split('T')[0],
       convertedAmount: e.convertedAmount ?? undefined,
-      fxRateSource: e.fxRate ? "manual" as const : undefined,
+      fxRateSource: e.manualRateToBase ? "manual" as const : (e.fxRate ? "auto" as const : undefined),
+      manualRateToBase: e.manualRateToBase ?? undefined,
       amountInBase: e.convertedAmount ?? undefined,
       category: e.category as any,
       country: e.countryCode,
@@ -101,6 +104,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         convertedAmount: true,
         fxRate: true,
         fxDate: true,
+        manualRateToBase: true,
         expenseDate: true,
         usageDate: true,
         nights: true,
@@ -120,7 +124,8 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       fxRateUsed: e.fxRate ?? undefined,
       fxRateDate: e.fxDate?.toISOString().split('T')[0],
       convertedAmount: e.convertedAmount ?? undefined,
-      fxRateSource: e.fxRate ? "manual" as const : undefined,
+      fxRateSource: e.manualRateToBase ? "manual" as const : (e.fxRate ? "auto" as const : undefined),
+      manualRateToBase: e.manualRateToBase ?? undefined,
       amountInBase: e.convertedAmount ?? undefined,
       category: e.category as any,
       country: e.countryCode,
@@ -152,12 +157,19 @@ export class PrismaExpensesRepository implements ExpensesRepository {
     let convertedAmount: number | null = null
     let fxRate: number | null = null
     let fxDate: Date | null = null
+    let manualRateToBase: number | null = null
 
     // Calculate FX conversion
     if (expense.currency === baseCurrency) {
       // Same currency: no conversion needed
       convertedAmount = expense.amount
       fxRate = 1
+      fxDate = new Date(expense.date)
+    } else if (expense.manualRateToBase && expense.manualRateToBase > 0) {
+      // Manual rate provided (highest priority)
+      manualRateToBase = expense.manualRateToBase
+      fxRate = expense.manualRateToBase
+      convertedAmount = expense.amount * expense.manualRateToBase
       fxDate = new Date(expense.date)
     } else {
       // Different currency: fetch rate and convert
@@ -191,6 +203,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         convertedAmount,
         fxRate,
         fxDate,
+        manualRateToBase,
         expenseDate: new Date(expense.date),
         usageDate: expense.usageDate ? new Date(expense.usageDate) : null,
         nights: expense.numberOfNights ?? null,
@@ -207,7 +220,8 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       fxRateUsed: created.fxRate ?? undefined,
       fxRateDate: created.fxDate?.toISOString().split('T')[0],
       convertedAmount: created.convertedAmount ?? undefined,
-      fxRateSource: created.fxRate ? "manual" as const : undefined,
+      fxRateSource: created.manualRateToBase ? "manual" as const : (created.fxRate ? "auto" as const : undefined),
+      manualRateToBase: created.manualRateToBase ?? undefined,
       amountInBase: created.convertedAmount ?? undefined,
       category: created.category as any,
       country: created.countryCode,
@@ -236,6 +250,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         convertedAmount: updates.convertedAmount,
         fxRate: updates.fxRateUsed,
         fxDate: updates.fxRateDate ? new Date(updates.fxRateDate) : undefined,
+        manualRateToBase: updates.manualRateToBase,
         expenseDate: updates.date ? new Date(updates.date) : undefined,
         usageDate: updates.usageDate ? new Date(updates.usageDate) : undefined,
         nights: updates.numberOfNights,
@@ -252,7 +267,8 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       fxRateUsed: updated.fxRate ?? undefined,
       fxRateDate: updated.fxDate?.toISOString().split('T')[0],
       convertedAmount: updated.convertedAmount ?? undefined,
-      fxRateSource: updated.fxRate ? "manual" as const : undefined,
+      fxRateSource: updated.manualRateToBase ? "manual" as const : (updated.fxRate ? "auto" as const : undefined),
+      manualRateToBase: updated.manualRateToBase ?? undefined,
       amountInBase: updated.convertedAmount ?? undefined,
       category: updated.category as any,
       country: updated.countryCode,

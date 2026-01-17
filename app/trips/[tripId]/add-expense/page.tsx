@@ -288,6 +288,8 @@ export default function AddExpensePage() {
         pricePerNight: pricePerNight,
         // Collaboration field
         createdByMemberId: currentUser?.id,
+        // Manual FX rate if provided
+        manualRateToBase: fxRateStatus === "manual" && fxRate ? fxRate : undefined,
       }
 
       await expensesRepository.createExpense(expenseData)

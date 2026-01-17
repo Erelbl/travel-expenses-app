@@ -25,6 +25,7 @@ export const ExpenseSchema = z.object({
   fxRateDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)").optional(), // Date of the FX rate
   convertedAmount: z.number().positive().optional(), // Amount in base currency (null if conversion unavailable)
   fxRateSource: z.enum(["auto", "manual"]).optional(), // How the rate was obtained
+  manualRateToBase: z.number().positive().optional(), // Manual rate: baseCurrency per 1 unit of expense currency
   
   // Legacy field (for backward compatibility)
   amountInBase: z.number().optional(),
@@ -55,6 +56,8 @@ export const CreateExpenseSchema = ExpenseSchema.omit({
   fxRateUsed: true, // Will be computed or provided
   fxRateDate: true, // Will be set
   fxRateSource: true, // Will be set
+}).extend({
+  manualRateToBase: z.number().positive().optional(), // Allow manual rate input on create
 })
 
 export type Expense = z.infer<typeof ExpenseSchema>

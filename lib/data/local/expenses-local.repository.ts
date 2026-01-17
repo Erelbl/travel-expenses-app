@@ -52,6 +52,7 @@ export class LocalExpensesRepository implements ExpensesRepository {
     let fxRateUsed: number | undefined
     let fxRateDate: string | undefined
     let fxRateSource: "auto" | "manual" | undefined
+    let manualRateToBase: number | undefined
 
     if (expense.currency === baseCurrency) {
       // Same currency: no conversion needed
@@ -59,6 +60,13 @@ export class LocalExpensesRepository implements ExpensesRepository {
       fxRateUsed = 1
       fxRateDate = expense.date
       fxRateSource = "auto"
+    } else if (expense.manualRateToBase && expense.manualRateToBase > 0) {
+      // Manual rate provided (highest priority)
+      manualRateToBase = expense.manualRateToBase
+      fxRateUsed = expense.manualRateToBase
+      convertedAmount = expense.amount * expense.manualRateToBase
+      fxRateDate = expense.date
+      fxRateSource = "manual"
     } else {
       // Different currency: attempt auto-fetch or use stored rates
       try {
@@ -92,6 +100,7 @@ export class LocalExpensesRepository implements ExpensesRepository {
       fxRateUsed,
       fxRateDate,
       fxRateSource,
+      manualRateToBase,
       amountInBase: convertedAmount, // Legacy field for backward compatibility
       id: crypto.randomUUID(),
       createdAt: Date.now(),
