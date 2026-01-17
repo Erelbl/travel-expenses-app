@@ -188,7 +188,11 @@
     "memberAdded": "משתתף נוסף!",
     "memberRemoved": "משתתף הוסר",
     "memberNameRequired": "נא להזין שם משתתף",
-    "removeMemberConfirm": "האם אתה בטוח שברצונך להסיר משתתף זה?"
+    "removeMemberConfirm": "האם אתה בטוח שברצונך להסיר משתתף זה?",
+    "closeTrip": "סגור טיול",
+    "closeTripConfirm": "האם אתה בטוח שברצונך לסגור את הטיול הזה? זה מסמן אותו כמסתיים.",
+    "closeTripSuccess": "הטיול נסגר בהצלחה",
+    "closeTripError": "שגיאה בסגירת הטיול"
   },
   "reports": {
     "title": "דוחות",
@@ -345,7 +349,8 @@
     "settings": "הגדרות"
   },
   "tripCard": {
-    "members": "משתתפים"
+    "members": "משתתפים",
+    "finished": "הסתיים"
   },
   "common": {
     "save": "שמור",

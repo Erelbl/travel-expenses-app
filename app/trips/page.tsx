@@ -27,7 +27,12 @@ export default function TripsPage() {
       setLoading(true)
       setError(false)
       const data = await tripsRepository.listTrips("")
-      setTrips(data || [])
+      // Sort: open trips first, closed trips last
+      const sortedTrips = (data || []).sort((a, b) => {
+        if (a.isClosed === b.isClosed) return 0
+        return a.isClosed ? 1 : -1
+      })
+      setTrips(sortedTrips)
     } catch (error: any) {
       console.error("Failed to load trips:", error)
       // Handle 401 - redirect to login

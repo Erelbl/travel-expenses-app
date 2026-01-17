@@ -188,7 +188,11 @@
     "memberAdded": "Member added!",
     "memberRemoved": "Member removed",
     "memberNameRequired": "Please enter a member name",
-    "removeMemberConfirm": "Are you sure you want to remove this member?"
+    "removeMemberConfirm": "Are you sure you want to remove this member?",
+    "closeTrip": "Close Trip",
+    "closeTripConfirm": "Are you sure you want to close this trip? This marks it as finished.",
+    "closeTripSuccess": "Trip closed successfully",
+    "closeTripError": "Failed to close trip"
   },
   "reports": {
     "title": "Reports",
@@ -345,7 +349,8 @@
     "settings": "Settings"
   },
   "tripCard": {
-    "members": "members"
+    "members": "members",
+    "finished": "Finished"
   },
   "common": {
     "save": "Save",

@@ -57,6 +57,8 @@ model Trip {
   adults     Int       @default(1)
   children   Int       @default(0)
   travelStyle TravelStyle?
+  isClosed   Boolean   @default(false)
+  closedAt   DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 

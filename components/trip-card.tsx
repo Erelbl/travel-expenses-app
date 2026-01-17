@@ -8,6 +8,7 @@ import { formatDate, getDaysBetween } from "@/lib/utils/format"
 import { getCountryFlag } from "@/lib/utils/countries.data"
 import { Calendar, Users } from "lucide-react"
 import { useI18n } from "@/lib/i18n/I18nProvider"
+import { Badge } from "@/components/ui/badge"
 
 interface TripCardProps {
   trip: Trip
@@ -23,6 +24,11 @@ export function TripCard({ trip }: TripCardProps) {
       <div className="bg-white border border-slate-200 rounded-lg p-6 transition-all duration-200 hover:border-slate-300 hover:shadow-md hover:bg-slate-50/50 active:scale-[0.99]">
         <div className="flex items-start justify-between mb-4">
           <h3 className="text-lg font-semibold text-slate-900 group-hover:text-sky-600 transition-colors">{trip.name}</h3>
+          {trip.isClosed && (
+            <Badge variant="secondary" className="bg-slate-200 text-slate-700 shrink-0">
+              {t('tripCard.finished')}
+            </Badge>
+          )}
         </div>
         <div className="space-y-2.5 text-sm text-slate-600">
           <div className="flex items-center gap-2">

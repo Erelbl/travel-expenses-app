@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Plus, Trash2, Link2, Copy, Check, Users } from "lucide-react"
+import { ArrowLeft, Plus, Trash2, Link2, Copy, Check, Users, XCircle } from "lucide-react"
 import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,8 @@ import { ExchangeRate } from "@/lib/schemas/exchange-rate.schema"
 import { CURRENCIES, getCurrencySymbol } from "@/lib/utils/currency"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { TripInvite, invitesRepository } from "@/lib/data/local/invites-local.repository"
-import { getCurrentUserMember, canShareTrip } from "@/lib/utils/permissions"
+import { getCurrentUserMember, canShareTrip, canManageTrip } from "@/lib/utils/permissions"
+import { closeTrip } from "../actions"
 
 export default function TripSettingsPage() {
   const { t, locale } = useI18n()
@@ -208,6 +209,22 @@ export default function TripSettingsPage() {
       case "editor": return t('settings.roleEditor')
       case "viewer": return t('settings.roleViewer')
       default: return role
+    }
+  }
+
+  async function handleCloseTrip() {
+    if (!trip) return
+    
+    const confirmed = window.confirm(t('settings.closeTripConfirm'))
+    if (!confirmed) return
+
+    try {
+      await closeTrip(tripId)
+      toast.success(t('settings.closeTripSuccess'))
+      router.push('/trips')
+    } catch (error) {
+      console.error("Failed to close trip:", error)
+      toast.error(t('settings.closeTripError'))
     }
   }
 
@@ -490,6 +507,35 @@ export default function TripSettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Close Trip Section */}
+      {canManageTrip(trip) && !trip.isClosed && (
+        <div className="p-4 pt-0">
+          <Card className="border-red-200 bg-red-50/50">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <XCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-red-900 mb-1">
+                    {t('settings.closeTrip')}
+                  </h3>
+                  <p className="text-sm text-red-700 mb-3">
+                    {t('settings.closeTripConfirm')}
+                  </p>
+                  <Button
+                    onClick={handleCloseTrip}
+                    variant="outline"
+                    className="border-red-300 text-red-700 hover:bg-red-100 hover:text-red-800"
+                  >
+                    <XCircle className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                    {t('settings.closeTrip')}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <BottomNav tripId={tripId} />
     </div>

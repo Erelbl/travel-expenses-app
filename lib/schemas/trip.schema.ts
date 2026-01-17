@@ -39,6 +39,8 @@ export const TripSchema = z.object({
   adults: z.number().int().min(0).default(1),
   children: z.number().int().min(0).default(0),
   travelStyle: TravelStyleSchema.nullable().optional(),
+  isClosed: z.boolean().default(false),
+  closedAt: z.number().nullable().optional(),
   createdAt: z.number(),
 })
 
