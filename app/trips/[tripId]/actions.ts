@@ -104,6 +104,58 @@ export async function updateTripBasics(
   revalidatePath(`/trips`)
 }
 
+export async function updateInsightsProfile(
+  tripId: string,
+  data: {
+    tripType?: string | null
+    adults?: number
+    children?: number
+    travelStyle?: string | null
+  }
+) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  // Verify user is owner or admin
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    select: {
+      ownerId: true,
+      members: {
+        where: { userId: session.user.id },
+        select: { role: true },
+      },
+    },
+  })
+
+  if (!trip) {
+    throw new Error("Trip not found")
+  }
+
+  const isOwner = trip.ownerId === session.user.id
+  const member = trip.members[0]
+  const isAdmin = member?.role === "OWNER"
+
+  if (!isOwner && !isAdmin) {
+    throw new Error("Only owner/admin can update trip settings")
+  }
+
+  await prisma.trip.update({
+    where: { id: tripId },
+    data: {
+      tripType: data.tripType ? (data.tripType.toUpperCase() as any) : null,
+      adults: data.adults,
+      children: data.children,
+      travelStyle: data.travelStyle ? (data.travelStyle.toUpperCase() as any) : null,
+    },
+  })
+
+  revalidatePath(`/trips/${tripId}`)
+  revalidatePath(`/trips`)
+}
+
 export async function closeTrip(tripId: string) {
   const session = await auth()
   if (!session?.user?.id) {

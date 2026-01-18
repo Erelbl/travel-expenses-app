@@ -15,7 +15,7 @@ import { tripsRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { canManageTrip } from "@/lib/utils/permissions"
-import { updateTripBasics, closeTrip } from "../actions"
+import { updateTripBasics, updateInsightsProfile, closeTrip } from "../actions"
 import { Badge } from "@/components/ui/badge"
 import { CURRENCIES } from "@/lib/utils/currency"
 import { getCountryName } from "@/lib/utils/countries.data"
@@ -42,6 +42,14 @@ export default function TripSettingsPage() {
     currentCurrency: null as string | null,
   })
 
+  // Form state for Insights Profile
+  const [insightsData, setInsightsData] = useState({
+    tripType: null as string | null,
+    adults: 1,
+    children: 0,
+    travelStyle: null as string | null,
+  })
+
   useEffect(() => {
     loadData()
   }, [tripId])
@@ -66,6 +74,14 @@ export default function TripSettingsPage() {
         countries: tripData.countries || [],
         currentCountry: tripData.currentCountry ?? null,
         currentCurrency: tripData.currentCurrency ?? null,
+      })
+
+      // Initialize insights data
+      setInsightsData({
+        tripType: tripData.tripType ?? null,
+        adults: tripData.adults ?? 1,
+        children: tripData.children ?? 0,
+        travelStyle: tripData.travelStyle ?? null,
       })
     } catch (error) {
       console.error("Failed to load trip:", error)
@@ -95,6 +111,30 @@ export default function TripSettingsPage() {
       await loadData()
     } catch (error) {
       console.error("Failed to update trip:", error)
+      toast.error(t('settings.ratesSaveError'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleSaveInsightsProfile() {
+    if (!trip) return
+
+    try {
+      setSaving(true)
+      
+      await updateInsightsProfile(tripId, {
+        tripType: insightsData.tripType,
+        adults: insightsData.adults,
+        children: insightsData.children,
+        travelStyle: insightsData.travelStyle,
+      })
+      
+      toast.success(t('settings.ratesSaved'))
+      router.refresh()
+      await loadData()
+    } catch (error) {
+      console.error("Failed to update insights profile:", error)
       toast.error(t('settings.ratesSaveError'))
     } finally {
       setSaving(false)
@@ -348,11 +388,121 @@ export default function TripSettingsPage() {
             <CardTitle className="text-lg font-semibold text-slate-900">
               Insights Profile
             </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-slate-500">
-              Trip metadata for personalized insights (trip type, travel style, group size, etc.)
+            <p className="text-sm text-slate-500 mt-1">
+              {t('createTrip.metadataSubtitle')}
             </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {canEdit ? (
+              <>
+                {/* Trip Type */}
+                <div className="space-y-2">
+                  <Label htmlFor="tripType" className="text-sm font-medium text-slate-700">
+                    {t('createTrip.tripType')}
+                  </Label>
+                  <Select
+                    id="tripType"
+                    value={insightsData.tripType ?? ""}
+                    onChange={(e) => setInsightsData({ ...insightsData, tripType: e.target.value || null })}
+                    disabled={!canEdit || trip.isClosed}
+                  >
+                    <option value="">{t('createTrip.tripTypeSelect')}</option>
+                    <option value="solo">{t('createTrip.tripTypeSolo')}</option>
+                    <option value="couple">{t('createTrip.tripTypeCouple')}</option>
+                    <option value="family">{t('createTrip.tripTypeFamily')}</option>
+                    <option value="friends">{t('createTrip.tripTypeFriends')}</option>
+                  </Select>
+                </div>
+
+                {/* Adults */}
+                <div className="space-y-2">
+                  <Label htmlFor="adults" className="text-sm font-medium text-slate-700">
+                    {t('createTrip.adults')}
+                  </Label>
+                  <Input
+                    id="adults"
+                    type="number"
+                    min="0"
+                    value={insightsData.adults}
+                    onChange={(e) => setInsightsData({ ...insightsData, adults: Math.max(0, parseInt(e.target.value) || 0) })}
+                    disabled={!canEdit || trip.isClosed}
+                  />
+                </div>
+
+                {/* Children */}
+                <div className="space-y-2">
+                  <Label htmlFor="children" className="text-sm font-medium text-slate-700">
+                    {t('createTrip.children')}
+                  </Label>
+                  <Input
+                    id="children"
+                    type="number"
+                    min="0"
+                    value={insightsData.children}
+                    onChange={(e) => setInsightsData({ ...insightsData, children: Math.max(0, parseInt(e.target.value) || 0) })}
+                    disabled={!canEdit || trip.isClosed}
+                  />
+                </div>
+
+                {/* Travel Style */}
+                <div className="space-y-2">
+                  <Label htmlFor="travelStyle" className="text-sm font-medium text-slate-700">
+                    {t('createTrip.travelStyle')}
+                  </Label>
+                  <Select
+                    id="travelStyle"
+                    value={insightsData.travelStyle ?? ""}
+                    onChange={(e) => setInsightsData({ ...insightsData, travelStyle: e.target.value || null })}
+                    disabled={!canEdit || trip.isClosed}
+                  >
+                    <option value="">{t('createTrip.travelStyleSelect')}</option>
+                    <option value="budget">{t('createTrip.travelStyleBudget')}</option>
+                    <option value="balanced">{t('createTrip.travelStyleBalanced')}</option>
+                    <option value="comfort">{t('createTrip.travelStyleComfort')}</option>
+                    <option value="luxury">{t('createTrip.travelStyleLuxury')}</option>
+                  </Select>
+                </div>
+
+                {/* Save Button */}
+                {!trip.isClosed && (
+                  <Button
+                    onClick={handleSaveInsightsProfile}
+                    disabled={saving}
+                    className="w-full"
+                    size="lg"
+                  >
+                    <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                    {saving ? t('common.saving') : t('settings.saveRates')}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="font-medium text-slate-700">{t('createTrip.tripType')}:</span>
+                  <span className="ml-2 text-slate-900">
+                    {trip.tripType ? t(`createTrip.tripType${trip.tripType.charAt(0).toUpperCase() + trip.tripType.slice(1)}`) : '—'}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-medium text-slate-700">{t('createTrip.adults')}:</span>
+                  <span className="ml-2 text-slate-900">{trip.adults ?? 1}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-slate-700">{t('createTrip.children')}:</span>
+                  <span className="ml-2 text-slate-900">{trip.children ?? 0}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-slate-700">{t('createTrip.travelStyle')}:</span>
+                  <span className="ml-2 text-slate-900">
+                    {trip.travelStyle ? t(`createTrip.travelStyle${trip.travelStyle.charAt(0).toUpperCase() + trip.travelStyle.slice(1)}`) : '—'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 pt-2">
+                  Only owner/admin can edit trip settings
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
