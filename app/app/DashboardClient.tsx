@@ -31,7 +31,7 @@ export function DashboardClient({ trips, userName }: DashboardClientProps) {
   const isRTL = locale === 'he'
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-blue-50/80 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60">
       {/* Hero Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -47,9 +47,14 @@ export function DashboardClient({ trips, userName }: DashboardClientProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.25 }}
           >
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              {t('appDashboard.welcomeBack', { name: userName })}
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-3xl md:text-4xl font-bold text-white">
+                {t('appDashboard.welcomeBack', { name: userName })}
+              </h1>
+              <span className="px-2 py-0.5 text-[10px] font-semibold bg-white/20 text-white rounded-full backdrop-blur-sm border border-white/30">
+                Dashboard UI v2
+              </span>
+            </div>
             <p className="text-sky-50/90 text-base md:text-lg mb-6">
               {t('appDashboard.subtitle')}
             </p>
@@ -103,17 +108,10 @@ export function DashboardClient({ trips, userName }: DashboardClientProps) {
               {t('appDashboard.yourTrips')}
             </motion.h2>
             
-            {/* Cards section with visible gradient overlay */}
-            <div className="relative -mx-4 px-4 py-8 -mb-8">
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-sky-200/30 via-blue-200/20 to-indigo-200/30 rounded-3xl" />
-              
-              {/* Cards grid */}
-              <div className="relative grid gap-5 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {trips.map((trip, index) => (
-                  <TripDashboardCard key={trip.id} trip={trip} index={index} />
-                ))}
-              </div>
+            <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {trips.map((trip, index) => (
+                <TripDashboardCard key={trip.id} trip={trip} index={index} />
+              ))}
             </div>
           </>
         )}
@@ -138,7 +136,7 @@ function TripDashboardCard({ trip, index }: { trip: TripWithStats; index: number
       transition={{ delay: 0.2 + index * 0.05, duration: 0.25 }}
     >
       <Link href={`/trips/${trip.id}`} className="block group">
-        <div className="bg-white border border-slate-300/40 rounded-2xl p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08),0_8px_24px_rgba(15,23,42,0.04)] hover:shadow-[0_4px_16px_rgba(15,23,42,0.12),0_12px_32px_rgba(15,23,42,0.08)] hover:border-sky-400/50 hover:-translate-y-1 transition-all duration-200">
+        <div className="bg-white/95 backdrop-blur-sm border border-slate-200/50 rounded-2xl p-6 shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:shadow-[0_4px_16px_rgba(15,23,42,0.1)] hover:border-sky-300/40 hover:-translate-y-0.5 transition-all duration-200">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-900 group-hover:text-sky-600 transition-colors line-clamp-1">
