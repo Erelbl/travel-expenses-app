@@ -13,7 +13,7 @@ export default auth((req) => {
     const isLoggedIn = !!req.auth
 
     // Public paths that don't require authentication
-    const publicPaths = ["/login", "/auth/login", "/auth/signup", "/auth/verify"]
+    const publicPaths = ["/", "/login", "/auth/login", "/auth/signup", "/auth/verify", "/join"]
     const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
 
     // If accessing protected path without auth, redirect to login
@@ -27,7 +27,15 @@ export default auth((req) => {
       return NextResponse.redirect(new URL("/trips", req.url))
     }
 
-    return NextResponse.next()
+    // Add pathname to headers so layout can access it (for landing page detection)
+    const requestHeaders = new Headers(req.headers)
+    requestHeaders.set("x-pathname", pathname)
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
   } catch (error) {
     // Never crash - always allow request through
     return NextResponse.next()
