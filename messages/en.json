@@ -156,14 +156,14 @@
     "fxRateSuccess": "Exchange rate: {rate} ({from} → {to})"
   },
   "categories": {
-    "Food": "🍔 Food",
-    "Transport": "🚕 Transport",
-    "Flights": "✈️ Flights",
-    "Lodging": "🏨 Lodging",
-    "Activities": "🎟️ Activities",
-    "Shopping": "🛍️ Shopping",
-    "Health": "💊 Health",
-    "Other": "💳 Other"
+    "Food": "Food",
+    "Transport": "Transport",
+    "Flights": "Flights",
+    "Lodging": "Lodging",
+    "Activities": "Activities",
+    "Shopping": "Shopping",
+    "Health": "Health",
+    "Other": "Other"
   },
   "map": {
     "title": "Map",

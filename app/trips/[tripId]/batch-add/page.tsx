@@ -492,7 +492,7 @@ export default function BatchAddPage() {
                         >
                           {CATEGORIES.map((cat) => (
                             <option key={cat} value={cat}>
-                              {t(`categories.${cat}`).replace(/[🍔🚕✈️🏨🎟️🛍️💊💳]\s*/, "")}
+                              {t(`categories.${cat}`)}
                             </option>
                           ))}
                         </Select>
