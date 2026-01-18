@@ -182,6 +182,8 @@
     "baseCurrency": "מטבע בסיס",
     "exchangeRates": "שערי המרה",
     "ratesHelper": "שערים להמרה ממטבע הבסיס",
+    "currenciesUsed": "מטבעות בשימוש בטיול",
+    "noCurrenciesYet": "אין הוצאות עדיין. מטבעות יופיעו כאן לאחר הוספת הוצאות.",
     "saveRates": "שמור שערים",
     "ratesSaved": "שערי ההמרה נשמרו!",
     "ratesSaveError": "שגיאה בשמירת השערים",

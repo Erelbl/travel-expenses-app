@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, XCircle, Save, RotateCcw } from "lucide-react"
+import { ArrowLeft, XCircle, Save, RotateCcw, RefreshCcw } from "lucide-react"
 import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
 import { Button } from "@/components/ui/button"
@@ -11,13 +11,14 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CountryMultiSelect } from "@/components/CountryMultiSelect"
-import { tripsRepository } from "@/lib/data"
+import { tripsRepository, expensesRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
+import { Expense } from "@/lib/schemas/expense.schema"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { canManageTrip } from "@/lib/utils/permissions"
 import { updateTripBasics, updateBudget, updateInsightsProfile, closeTrip, reopenTrip } from "../actions"
 import { Badge } from "@/components/ui/badge"
-import { getCountryName } from "@/lib/utils/countries.data"
+import { getCountryName, COUNTRIES_DATA } from "@/lib/utils/countries.data"
 import { currencyForCountry } from "@/lib/utils/countryCurrency"
 
 export default function TripSettingsPage() {
@@ -28,8 +29,10 @@ export default function TripSettingsPage() {
   const isRTL = locale === 'he'
 
   const [trip, setTrip] = useState<Trip | null>(null)
+  const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
 
   // Form state for Trip Basics
   const [formData, setFormData] = useState({
@@ -54,14 +57,24 @@ export default function TripSettingsPage() {
     ageRange: null as string | null,
   })
 
+  // Track initial values for dirty checking
+  const [initialValues, setInitialValues] = useState<any>(null)
+
   useEffect(() => {
     loadData()
+    // Sanity check: ensure countries list is comprehensive (dev-only)
+    if (process.env.NODE_ENV === 'development' && COUNTRIES_DATA.length < 150) {
+      console.warn(`⚠️ Countries list is too small: ${COUNTRIES_DATA.length} countries. Expected 150+`)
+    }
   }, [tripId])
 
   async function loadData() {
     try {
       setLoading(true)
-      const tripData = await tripsRepository.getTrip(tripId)
+      const [tripData, expensesData] = await Promise.all([
+        tripsRepository.getTrip(tripId),
+        expensesRepository.listExpenses(tripId)
+      ])
 
       if (!tripData) {
         router.push("/trips")
@@ -69,29 +82,41 @@ export default function TripSettingsPage() {
       }
 
       setTrip(tripData)
+      setExpenses(expensesData)
       
       // Initialize form data
-      setFormData({
+      const initialFormData = {
         name: tripData.name,
         startDate: tripData.startDate || "",
         endDate: tripData.endDate || "",
         countries: tripData.countries || [],
         currentCountry: tripData.currentCountry ?? null,
         currentCurrency: tripData.currentCurrency ?? null,
-      })
+      }
+      setFormData(initialFormData)
 
       // Initialize budget data
-      setBudgetData({
+      const initialBudgetData = {
         targetBudget: tripData.targetBudget ?? null,
-      })
+      }
+      setBudgetData(initialBudgetData)
 
       // Initialize insights data
-      setInsightsData({
+      const initialInsightsData = {
         tripType: tripData.tripType ?? null,
         adults: tripData.adults ?? null,
         children: tripData.children ?? null,
         ageRange: tripData.ageRange ?? null,
+      }
+      setInsightsData(initialInsightsData)
+
+      // Store initial values for dirty checking
+      setInitialValues({
+        formData: initialFormData,
+        budgetData: initialBudgetData,
+        insightsData: initialInsightsData,
       })
+      setIsDirty(false)
     } catch (error) {
       console.error("Failed to load trip:", error)
       toast.error(t('common.errorMessage'))
@@ -100,20 +125,33 @@ export default function TripSettingsPage() {
     }
   }
 
-  async function handleSaveTripBasics() {
-    if (!trip) return
+  // Unified save handler
+  async function handleSaveAll() {
+    if (!trip || !isDirty) return
 
     try {
       setSaving(true)
       
-      await updateTripBasics(tripId, {
-        name: formData.name,
-        startDate: formData.startDate || null,
-        endDate: formData.endDate || null,
-        countries: formData.countries,
-        currentCountry: formData.currentCountry,
-        currentCurrency: formData.currentCurrency,
-      })
+      // Save all sections in parallel
+      await Promise.all([
+        updateTripBasics(tripId, {
+          name: formData.name,
+          startDate: formData.startDate || null,
+          endDate: formData.endDate || null,
+          countries: formData.countries,
+          currentCountry: formData.currentCountry,
+          currentCurrency: formData.currentCurrency,
+        }),
+        updateBudget(tripId, {
+          targetBudget: budgetData.targetBudget,
+        }),
+        updateInsightsProfile(tripId, {
+          tripType: insightsData.tripType,
+          adults: insightsData.tripType === 'family' ? insightsData.adults : null,
+          children: insightsData.tripType === 'family' ? insightsData.children : null,
+          ageRange: insightsData.ageRange,
+        })
+      ])
       
       toast.success(t('settings.changesSaved'))
       router.refresh()
@@ -126,53 +164,16 @@ export default function TripSettingsPage() {
     }
   }
 
-  async function handleSaveBudget() {
-    if (!trip) return
-
-    try {
-      setSaving(true)
-      
-      await updateBudget(tripId, {
-        targetBudget: budgetData.targetBudget,
-      })
-      
-      toast.success(t('settings.budgetSaved'))
-      router.refresh()
-      await loadData()
-    } catch (error) {
-      console.error("Failed to update budget:", error)
-      toast.error(t('settings.ratesSaveError'))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function handleSaveInsightsProfile() {
-    if (!trip) return
-
-    try {
-      setSaving(true)
-      
-      // If tripType is not family, clear adults/children
-      const dataToSave = {
-        tripType: insightsData.tripType,
-        adults: insightsData.tripType === 'family' ? insightsData.adults : null,
-        children: insightsData.tripType === 'family' ? insightsData.children : null,
-        ageRange: insightsData.ageRange,
-      }
-      
-      await updateInsightsProfile(tripId, dataToSave)
-      
-      toast.success(t('settings.profileSaved'))
-      router.refresh()
-      await loadData()
-    } catch (error) {
-      console.error("Failed to update insights profile:", error)
-      toast.error(t('settings.ratesSaveError'))
-    } finally {
-      setSaving(false)
-    }
-  }
+  // Check if form is dirty
+  useEffect(() => {
+    if (!initialValues) return
+    
+    const isFormDirty = JSON.stringify(formData) !== JSON.stringify(initialValues.formData)
+    const isBudgetDirty = JSON.stringify(budgetData) !== JSON.stringify(initialValues.budgetData)
+    const isInsightsDirty = JSON.stringify(insightsData) !== JSON.stringify(initialValues.insightsData)
+    
+    setIsDirty(isFormDirty || isBudgetDirty || isInsightsDirty)
+  }, [formData, budgetData, insightsData, initialValues])
 
   async function handleCloseTrip() {
     if (!trip) return
@@ -366,9 +367,9 @@ export default function TripSettingsPage() {
                     }}
                   >
                     <option value="">{t('home.selectLocation')}</option>
-                    {formData.countries.map((country) => (
-                      <option key={country} value={country}>
-                        {getCountryName(country, locale)}
+                    {COUNTRIES_DATA.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {getCountryName(country.code, locale)}
                       </option>
                     ))}
                   </Select>
@@ -388,16 +389,6 @@ export default function TripSettingsPage() {
                   </div>
                 )}
 
-                {/* Save Button */}
-                <Button
-                  onClick={handleSaveTripBasics}
-                  disabled={saving || !formData.name.trim()}
-                  className="w-full"
-                  size="lg"
-                >
-                  <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                  {saving ? t('common.saving') : t('settings.saveChanges')}
-                </Button>
               </>
             ) : (
               <div className="space-y-3 text-sm">
@@ -469,16 +460,6 @@ export default function TripSettingsPage() {
                   </p>
                 </div>
 
-                {/* Save Button */}
-                <Button
-                  onClick={handleSaveBudget}
-                  disabled={saving}
-                  className="w-full"
-                  size="lg"
-                >
-                  <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                  {saving ? t('common.saving') : t('settings.saveBudget')}
-                </Button>
               </>
             ) : (
               <div className="space-y-3 text-sm">
@@ -579,16 +560,6 @@ export default function TripSettingsPage() {
                   </>
                 )}
 
-                {/* Save Button */}
-                <Button
-                  onClick={handleSaveInsightsProfile}
-                  disabled={saving}
-                  className="w-full"
-                  size="lg"
-                >
-                  <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                  {saving ? t('common.saving') : t('settings.saveProfile')}
-                </Button>
               </>
             ) : (
               <div className="space-y-3 text-sm">
@@ -631,16 +602,54 @@ export default function TripSettingsPage() {
               {t('settings.exchangeRates')}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div className="text-sm">
               <span className="font-medium text-slate-700">{t('createTrip.baseCurrency')}:</span>
               <span className="ml-2 text-slate-900">{trip.baseCurrency}</span>
             </div>
-            <p className="text-sm text-slate-500">
-              {t('settings.ratesHelper')} {trip.baseCurrency}
-            </p>
+            
+            {/* Currencies used in expenses */}
+            {(() => {
+              const usedCurrencies = Array.from(new Set(expenses.map(e => e.currency)))
+              return usedCurrencies.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-slate-700">
+                    {t('settings.currenciesUsed')}:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {usedCurrencies.map(currency => (
+                      <Badge key={currency} variant="secondary" className="text-sm">
+                        {currency}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">
+                    {t('settings.ratesHelper')} {trip.baseCurrency}
+                  </p>
+                </div>
+              ) : (
+                <div className="text-sm text-slate-500 bg-slate-50 rounded-lg p-3 border border-slate-200">
+                  {t('settings.noCurrenciesYet')}
+                </div>
+              )
+            })()}
           </CardContent>
         </Card>
+
+        {/* Unified Save Button */}
+        {canEdit && (
+          <div className="sticky bottom-20 z-10">
+            <Button
+              onClick={handleSaveAll}
+              disabled={saving || !isDirty || !formData.name.trim()}
+              className="w-full shadow-lg"
+              size="lg"
+            >
+              <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+              {saving ? t('common.saving') : t('settings.saveChanges')}
+            </Button>
+          </div>
+        )}
 
         {/* Trip Status Section */}
         {canManageTrip(trip) && !trip.isClosed && (

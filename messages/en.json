@@ -182,6 +182,8 @@
     "baseCurrency": "Base Currency",
     "exchangeRates": "Exchange Rates",
     "ratesHelper": "Rates to convert from base currency",
+    "currenciesUsed": "Currencies used in this trip",
+    "noCurrenciesYet": "No expenses yet. Currencies will appear here after you add expenses.",
     "saveRates": "Save Rates",
     "ratesSaved": "Exchange rates saved!",
     "ratesSaveError": "Failed to save rates",
