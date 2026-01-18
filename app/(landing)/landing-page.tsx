@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Zap, Globe2, Sparkles, TrendingUp, Check } from "lucide-react"
+import { Zap, Globe2, Sparkles, TrendingUp, Check, Plane } from "lucide-react"
 
 export function LandingPage() {
   return (
