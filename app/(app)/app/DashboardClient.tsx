@@ -47,14 +47,9 @@ export function DashboardClient({ trips, userName }: DashboardClientProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.25 }}
           >
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl md:text-4xl font-bold text-white">
-                {t('appDashboard.welcomeBack', { name: userName })}
-              </h1>
-              <span className="px-2 py-0.5 text-[10px] font-semibold bg-white/20 text-white rounded-full backdrop-blur-sm border border-white/30">
-                Dashboard UI v2
-              </span>
-            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              {t('appDashboard.welcomeBack', { name: userName })}
+            </h1>
             <p className="text-sky-50/90 text-base md:text-lg mb-6">
               {t('appDashboard.subtitle')}
             </p>
