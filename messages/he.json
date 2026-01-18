@@ -267,6 +267,17 @@
     "locationUpdated": "המיקום עודכן",
     "locationCleared": "המיקום נוקה"
   },
+  "bannerInsights": {
+    "budgetHighPaceHighCost": "מוציאים {actual} {currency} ליום ביעד יקר יחסית — שקלו אם זה מתאים ליעד של {target} {currency} ליום",
+    "budgetHighPaceLowCost": "מוציאים {actual} {currency} ליום — מעל יעד של {target} {currency} ליום גם ביעד זול",
+    "budgetHighPace": "מוציאים {actual} {currency} ליום — מעל יעד של {target} {currency} ליום",
+    "budgetSlightlyAbove": "מוציאים {actual} {currency} ליום, מעט מעל יעד של {target} {currency} ליום",
+    "budgetSlightlyBelow": "מוציאים {actual} {currency} ליום, מעט מתחת ליעד של {target} {currency} ליום",
+    "budgetWellBelow": "מוציאים {actual} {currency} ליום — הרבה מתחת ליעד של {target} {currency} ליום",
+    "budgetWellBelowFamily": "מוציאים {actual} {currency} ליום עם ילדים — בנוחות מתחת ליעד של {target} {currency} ליום",
+    "budgetOnPace": "מוציאים {actual} {currency} ליום, בדיוק לפי יעד של {target} {currency} ליום",
+    "familyHint": "נוסעים עם ילדים? שקלו לעקוב אחר הוצאות ספציפיות לילדים בנפרד לתובנות טובות יותר"
+  },
   "insights": {
     "title": "תובנות טיול",
     "updatedAsYouGo": "מתעדכן ככל שתוסיף הוצאות",

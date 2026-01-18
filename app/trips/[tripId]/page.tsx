@@ -30,6 +30,7 @@ import {
   classifyExpenses,
 } from "@/lib/utils/reports"
 import { generateInsights } from "@/lib/server/insights"
+import { generateBannerInsight } from "@/lib/server/banner-insights"
 
 const MAX_RECENT_EXPENSES = 15
 
@@ -51,15 +52,21 @@ export default function TripHomePage() {
   const [showRates, setShowRates] = useState(false)
   // Expense filter (for shared trips)
   const [showOnlyMine, setShowOnlyMine] = useState(false)
-  // Insight banner dismissal
+  // Insight banner dismissal (old system)
   const [insightDismissed, setInsightDismissed] = useState(false)
+  // Banner insight dismissal (new system)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
 
   useEffect(() => {
     loadData()
-    // Check if insight was dismissed
+    // Check if insight was dismissed (old system)
     if (typeof window !== 'undefined') {
       const dismissed = localStorage.getItem(`tw_insight_dismissed_${tripId}`)
       setInsightDismissed(dismissed === 'true')
+      
+      // Check if banner insight was dismissed (new system)
+      const bannerDismissedVal = localStorage.getItem(`tw_banner_dismissed_${tripId}`)
+      setBannerDismissed(bannerDismissedVal === 'true')
     }
   }, [tripId])
 
@@ -144,10 +151,13 @@ export default function TripHomePage() {
   const summary = calculateSummary(expenses, trip)
   const { realized, future } = classifyExpenses(expenses)
   
-  // Generate insights
+  // Generate insights (old system)
   const insights = generateInsights(trip, expenses)
   
-  // Dismiss insight banner
+  // Generate banner insight (new system)
+  const bannerInsight = generateBannerInsight(trip, expenses)
+  
+  // Dismiss insight banner (old system)
   const dismissInsight = () => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(`tw_insight_dismissed_${tripId}`, 'true')
@@ -155,7 +165,15 @@ export default function TripHomePage() {
     }
   }
   
-  // Get top insight for banner
+  // Dismiss banner insight (new system)
+  const dismissBannerInsight = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`tw_banner_dismissed_${tripId}`, 'true')
+      setBannerDismissed(true)
+    }
+  }
+  
+  // Get top insight for banner (old system)
   const topInsight = insights.length > 0 ? insights[0] : null
 
   // Calculate today's spend
@@ -376,7 +394,30 @@ export default function TripHomePage() {
           </Card>
         </div>
 
-        {/* Trip Insights Banner */}
+        {/* Banner Insight (new system) */}
+        {bannerInsight && !bannerDismissed && (
+          <div className="relative bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+            <button
+              onClick={dismissBannerInsight}
+              className="absolute top-3 right-3 text-amber-600 hover:text-amber-800 transition-colors"
+              aria-label={t('common.close')}
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="flex items-start gap-3 pr-8">
+              <div className="flex-shrink-0 text-2xl">
+                💡
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-amber-800 leading-relaxed">
+                  {t(bannerInsight.textKey, bannerInsight.params || {})}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Trip Insights Banner (old system) */}
         {topInsight && !insightDismissed && (
           <div className="relative bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4 shadow-sm">
             <button

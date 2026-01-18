@@ -267,6 +267,17 @@
     "locationUpdated": "Location updated",
     "locationCleared": "Location cleared"
   },
+  "bannerInsights": {
+    "budgetHighPaceHighCost": "Spending {actual} {currency}/day in a relatively expensive destination — consider if this aligns with your {target} {currency}/day target",
+    "budgetHighPaceLowCost": "Spending {actual} {currency}/day — above your {target} {currency}/day target even in an affordable destination",
+    "budgetHighPace": "Spending {actual} {currency}/day — above your {target} {currency}/day target",
+    "budgetSlightlyAbove": "Spending {actual} {currency}/day, slightly above your {target} {currency}/day target",
+    "budgetSlightlyBelow": "Spending {actual} {currency}/day, slightly under your {target} {currency}/day target",
+    "budgetWellBelow": "Spending {actual} {currency}/day — well under your {target} {currency}/day target",
+    "budgetWellBelowFamily": "Spending {actual} {currency}/day with kids — comfortably under your {target} {currency}/day target",
+    "budgetOnPace": "Spending {actual} {currency}/day, on track with your {target} {currency}/day target",
+    "familyHint": "Traveling with kids? Consider tracking child-specific expenses separately for better insights"
+  },
   "insights": {
     "title": "Trip Insights",
     "updatedAsYouGo": "Updated as you add expenses",
