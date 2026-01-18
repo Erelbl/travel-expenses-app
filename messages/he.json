@@ -429,6 +429,20 @@
     "success": "{count} הוצאות נוספו בהצלחה!",
     "error": "הוספת ההוצאות נכשלה. נסה שוב."
   },
+  "appDashboard": {
+    "welcomeBack": "ברוך שובך, {name}",
+    "subtitle": "הרפתקאות הטיול שלך במבט חטוף",
+    "createTrip": "צור טיול חדש",
+    "noTripsYet": "אין טיולים עדיין",
+    "noTripsMessage": "התחל לתכנן את ההרפתקה הבאה שלך על ידי יצירת הטיול הראשון",
+    "createFirstTrip": "צור את הטיול הראשון שלך",
+    "yourTrips": "הטיולים שלך",
+    "totalSpend": "סה״כ הוצאות",
+    "budget": "תקציב",
+    "expenses": "הוצאות",
+    "openTrip": "פתח טיול",
+    "closed": "סגור"
+  },
   "appSettings": {
     "title": "הגדרות",
     "subtitle": "נהל את הפרופיל וההעדפות שלך",
