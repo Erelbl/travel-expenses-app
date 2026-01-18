@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X, Lightbulb } from "lucide-react"
+import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X, Lightbulb, Settings } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { FloatingAddButton } from "@/components/floating-add-button"
 import { QuickAddExpense } from "@/components/quick-add-expense"
@@ -194,6 +194,12 @@ export default function TripHomePage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {/* Settings link */}
+              <Link href={`/trips/${tripId}/settings`}>
+                <Button variant="ghost" size="icon" className="text-slate-600">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </Link>
               {/* Reports link - secondary */}
               <Link href={`/trips/${tripId}/reports`}>
                 <Button variant="ghost" size="icon" className="text-slate-600">
