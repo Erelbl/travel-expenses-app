@@ -27,15 +27,7 @@ export default auth((req) => {
       return NextResponse.redirect(new URL("/trips", req.url))
     }
 
-    // Add pathname to headers so layout can access it (for landing page detection)
-    const requestHeaders = new Headers(req.headers)
-    requestHeaders.set("x-pathname", pathname)
-
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    })
+    return NextResponse.next()
   } catch (error) {
     // Never crash - always allow request through
     return NextResponse.next()
