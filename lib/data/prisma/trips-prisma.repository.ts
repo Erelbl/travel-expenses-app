@@ -117,6 +117,8 @@ export class PrismaTripsRepository implements TripsRepository {
           adults: trip.adults,
           children: trip.children,
           travelStyle: trip.travelStyle?.toLowerCase() as any ?? undefined,
+          isClosed: trip.isClosed,
+          closedAt: trip.closedAt?.getTime() ?? null,
           itineraryLegs: [],
           members: [
             { id: trip.owner.id, name: trip.owner.name ?? "Owner", role: "owner" as const },
