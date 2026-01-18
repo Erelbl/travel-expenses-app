@@ -27,15 +27,19 @@ interface DashboardClientProps {
 
 export function DashboardClient({ trips, userName }: DashboardClientProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-sky-50/30 to-blue-50/40">
+    <div className="min-h-screen bg-gradient-to-b from-sky-50/40 via-blue-50/20 to-white">
       {/* Hero Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="relative overflow-hidden bg-gradient-to-br from-sky-400/90 via-blue-500/90 to-indigo-500/90"
+        className="relative overflow-visible bg-gradient-to-br from-sky-400/90 via-blue-500/90 to-indigo-500/90"
       >
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptLTEyIDBjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6bTAgMTJjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6bTEyIDBjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMC41IiBvcGFjaXR5PSIwLjEiLz48L2c+PC9zdmc+')] opacity-20" />
+        
+        {/* Gradient fade overlay at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent via-sky-100/30 to-sky-50/40 pointer-events-none" />
+        
         <div className="container mx-auto px-4 py-12 md:py-16 relative">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -122,10 +126,10 @@ function TripDashboardCard({ trip, index }: { trip: TripWithStats; index: number
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 + index * 0.05, duration: 0.25 }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      whileHover={{ y: -2, transition: { duration: 0.2 } }}
     >
       <Link href={`/trips/${trip.id}`} className="block group">
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-200">
+        <div className="bg-white/95 backdrop-blur-sm border border-slate-200/60 rounded-xl p-6 shadow-sm shadow-slate-900/5 hover:shadow-md hover:shadow-slate-900/8 hover:border-slate-300/70 transition-all duration-200">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-900 group-hover:text-sky-600 transition-colors line-clamp-1">
