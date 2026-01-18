@@ -25,6 +25,8 @@ export class PrismaTripsRepository implements TripsRepository {
         adults: true,
         children: true,
         travelStyle: true,
+        isClosed: true,
+        closedAt: true,
         createdAt: true,
         owner: { select: { id: true, name: true } },
         members: {
@@ -49,6 +51,8 @@ export class PrismaTripsRepository implements TripsRepository {
       adults: t.adults,
       children: t.children,
       travelStyle: t.travelStyle?.toLowerCase() as any ?? undefined,
+      isClosed: t.isClosed,
+      closedAt: t.closedAt?.getTime() ?? null,
       itineraryLegs: [],
       members: [
         { id: t.owner.id, name: t.owner.name ?? "Owner", role: "owner" as const },
@@ -84,6 +88,8 @@ export class PrismaTripsRepository implements TripsRepository {
             adults: true,
             children: true,
             travelStyle: true,
+            isClosed: true,
+            closedAt: true,
             createdAt: true,
             owner: { select: { id: true, name: true } },
             members: {
@@ -152,6 +158,8 @@ export class PrismaTripsRepository implements TripsRepository {
         adults: true,
         children: true,
         travelStyle: true,
+        isClosed: true,
+        closedAt: true,
         createdAt: true,
         owner: { select: { id: true, name: true } },
         members: {
@@ -179,6 +187,8 @@ export class PrismaTripsRepository implements TripsRepository {
           adults: trip.adults,
           children: trip.children,
           travelStyle: trip.travelStyle?.toLowerCase() as any ?? undefined,
+          isClosed: trip.isClosed,
+          closedAt: trip.closedAt?.getTime() ?? null,
           itineraryLegs: [],
           members: [
             { id: trip.owner.id, name: trip.owner.name ?? "Owner", role: "owner" as const },
@@ -221,6 +231,8 @@ export class PrismaTripsRepository implements TripsRepository {
         adults: true,
         children: true,
         travelStyle: true,
+        isClosed: true,
+        closedAt: true,
         createdAt: true,
         owner: { select: { id: true, name: true } }
       }
@@ -238,6 +250,8 @@ export class PrismaTripsRepository implements TripsRepository {
       adults: created.adults,
       children: created.children,
       travelStyle: created.travelStyle?.toLowerCase() as any ?? undefined,
+      isClosed: created.isClosed,
+      closedAt: created.closedAt?.getTime() ?? null,
       itineraryLegs: [],
       members: [{ id: created.owner.id, name: created.owner.name ?? "Me", role: "owner" as const }],
       createdAt: created.createdAt.getTime(),
@@ -273,6 +287,8 @@ export class PrismaTripsRepository implements TripsRepository {
         adults: true,
         children: true,
         travelStyle: true,
+        isClosed: true,
+        closedAt: true,
         createdAt: true,
         owner: { select: { id: true, name: true } },
         members: {
@@ -298,6 +314,8 @@ export class PrismaTripsRepository implements TripsRepository {
       adults: updated.adults,
       children: updated.children,
       travelStyle: updated.travelStyle?.toLowerCase() as any ?? undefined,
+      isClosed: updated.isClosed,
+      closedAt: updated.closedAt?.getTime() ?? null,
       itineraryLegs: [],
       members: [
         { id: updated.owner.id, name: updated.owner.name ?? "Owner", role: "owner" as const },

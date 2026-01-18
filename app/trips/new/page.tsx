@@ -87,6 +87,8 @@ export default function NewTripPage() {
         adults: formData.adults,
         children: formData.children,
         travelStyle: formData.travelStyle || undefined,
+        isClosed: false,
+        closedAt: null,
         members: [
           {
             id: crypto.randomUUID(),
