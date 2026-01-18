@@ -182,6 +182,12 @@
     "profileSaved": "Profile saved!",
     "saveBudget": "Save Budget",
     "budgetSaved": "Budget saved!",
+    "saveChanges": "Save Changes",
+    "changesSaved": "Changes saved!",
+    "tripBasics": "Trip Basics",
+    "budget": "Budget",
+    "insightsProfile": "Insights Profile",
+    "dangerZone": "Danger Zone",
     "targetBudget": "Target Budget",
     "targetBudgetPlaceholder": "Enter target budget (optional)",
     "targetBudgetHelper": "Set an optional spending target for this trip",
@@ -199,7 +205,13 @@
     "closeTrip": "Close Trip",
     "closeTripConfirm": "Are you sure you want to close this trip? This marks it as finished.",
     "closeTripSuccess": "Trip closed successfully",
-    "closeTripError": "Failed to close trip"
+    "closeTripError": "Failed to close trip",
+    "reopenTrip": "Reopen Trip",
+    "reopenTripConfirm": "Are you sure you want to reopen this trip? You'll be able to add and edit expenses again.",
+    "reopenTripSuccess": "Trip reopened successfully",
+    "reopenTripError": "Failed to reopen trip",
+    "tripClosed": "Trip Closed",
+    "tripClosedDesc": "This trip has been closed and is read-only for expenses"
   },
   "reports": {
     "title": "Reports",

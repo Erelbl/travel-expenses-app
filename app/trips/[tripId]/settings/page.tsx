@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, XCircle, Save } from "lucide-react"
+import { ArrowLeft, XCircle, Save, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
 import { Button } from "@/components/ui/button"
@@ -15,9 +15,8 @@ import { tripsRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { canManageTrip } from "@/lib/utils/permissions"
-import { updateTripBasics, updateInsightsProfile, closeTrip } from "../actions"
+import { updateTripBasics, updateBudget, updateInsightsProfile, closeTrip, reopenTrip } from "../actions"
 import { Badge } from "@/components/ui/badge"
-import { CURRENCIES } from "@/lib/utils/currency"
 import { getCountryName } from "@/lib/utils/countries.data"
 import { currencyForCountry } from "@/lib/utils/countryCurrency"
 
@@ -42,12 +41,16 @@ export default function TripSettingsPage() {
     currentCurrency: null as string | null,
   })
 
+  // Form state for Budget
+  const [budgetData, setBudgetData] = useState({
+    targetBudget: null as number | null,
+  })
+
   // Form state for Insights Profile
   const [insightsData, setInsightsData] = useState({
     tripType: null as string | null,
     adults: 1,
     children: 0,
-    targetBudget: null as number | null,
   })
 
   useEffect(() => {
@@ -76,12 +79,16 @@ export default function TripSettingsPage() {
         currentCurrency: tripData.currentCurrency ?? null,
       })
 
+      // Initialize budget data
+      setBudgetData({
+        targetBudget: tripData.targetBudget ?? null,
+      })
+
       // Initialize insights data
       setInsightsData({
         tripType: tripData.tripType ?? null,
         adults: tripData.adults ?? 1,
         children: tripData.children ?? 0,
-        targetBudget: tripData.targetBudget ?? null,
       })
     } catch (error) {
       console.error("Failed to load trip:", error)
@@ -106,11 +113,32 @@ export default function TripSettingsPage() {
         currentCurrency: formData.currentCurrency,
       })
       
-      toast.success(t('settings.ratesSaved'))
+      toast.success(t('settings.changesSaved'))
       router.refresh()
       await loadData()
     } catch (error) {
       console.error("Failed to update trip:", error)
+      toast.error(t('settings.ratesSaveError'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleSaveBudget() {
+    if (!trip) return
+
+    try {
+      setSaving(true)
+      
+      await updateBudget(tripId, {
+        targetBudget: budgetData.targetBudget,
+      })
+      
+      toast.success(t('settings.budgetSaved'))
+      router.refresh()
+      await loadData()
+    } catch (error) {
+      console.error("Failed to update budget:", error)
       toast.error(t('settings.ratesSaveError'))
     } finally {
       setSaving(false)
@@ -127,7 +155,6 @@ export default function TripSettingsPage() {
         tripType: insightsData.tripType,
         adults: insightsData.adults,
         children: insightsData.children,
-        targetBudget: insightsData.targetBudget,
       })
       
       toast.success(t('settings.profileSaved'))
@@ -151,10 +178,27 @@ export default function TripSettingsPage() {
       await closeTrip(tripId)
       toast.success(t('settings.closeTripSuccess'))
       router.refresh()
-      router.push(`/trips/${tripId}`)
+      await loadData()
     } catch (error) {
       console.error("Failed to close trip:", error)
       toast.error(t('settings.closeTripError'))
+    }
+  }
+
+  async function handleReopenTrip() {
+    if (!trip) return
+    
+    const confirmed = window.confirm(t('settings.reopenTripConfirm'))
+    if (!confirmed) return
+
+    try {
+      await reopenTrip(tripId)
+      toast.success(t('settings.reopenTripSuccess'))
+      router.refresh()
+      await loadData()
+    } catch (error) {
+      console.error("Failed to reopen trip:", error)
+      toast.error(t('settings.reopenTripError'))
     }
   }
 
@@ -205,11 +249,39 @@ export default function TripSettingsPage() {
       </div>
 
       <div className="container mx-auto max-w-4xl px-4 py-6 space-y-6">
+        {/* Trip Closed Notice */}
+        {trip.isClosed && (
+          <Card className="border-slate-300 bg-slate-50 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-slate-900 mb-1">
+                    {t('settings.tripClosed')}
+                  </h3>
+                  <p className="text-sm text-slate-600">
+                    {t('settings.tripClosedDesc')}
+                  </p>
+                </div>
+                {canEdit && (
+                  <Button
+                    onClick={handleReopenTrip}
+                    variant="outline"
+                    className="shrink-0"
+                  >
+                    <RotateCcw className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                    {t('settings.reopenTrip')}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Trip Basics Section */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold text-slate-900">
-              Trip Basics
+              {t('settings.tripBasics')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -225,7 +297,6 @@ export default function TripSettingsPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder={t('createTrip.tripNamePlaceholder')}
-                    disabled={!canEdit || trip.isClosed}
                   />
                 </div>
 
@@ -239,7 +310,6 @@ export default function TripSettingsPage() {
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    disabled={!canEdit || trip.isClosed}
                   />
                 </div>
 
@@ -253,7 +323,6 @@ export default function TripSettingsPage() {
                     type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    disabled={!canEdit || trip.isClosed}
                   />
                 </div>
 
@@ -289,7 +358,6 @@ export default function TripSettingsPage() {
                         currentCurrency: currency
                       })
                     }}
-                    disabled={!canEdit || trip.isClosed}
                   >
                     <option value="">{t('home.selectLocation')}</option>
                     {formData.countries.map((country) => (
@@ -304,7 +372,7 @@ export default function TripSettingsPage() {
                 {formData.currentCurrency && (
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-slate-700">
-                      Current Currency
+                      {t('createTrip.baseCurrency')}
                     </Label>
                     <Input
                       value={formData.currentCurrency ?? ""}
@@ -315,17 +383,15 @@ export default function TripSettingsPage() {
                 )}
 
                 {/* Save Button */}
-                {!trip.isClosed && (
-                  <Button
-                    onClick={handleSaveTripBasics}
-                    disabled={saving || !formData.name.trim()}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                    {saving ? t('common.saving') : t('settings.saveRates')}
-                  </Button>
-                )}
+                <Button
+                  onClick={handleSaveTripBasics}
+                  disabled={saving || !formData.name.trim()}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                  {saving ? t('common.saving') : t('settings.saveChanges')}
+                </Button>
               </>
             ) : (
               <div className="space-y-3 text-sm">
@@ -361,7 +427,7 @@ export default function TripSettingsPage() {
                   </div>
                 )}
                 <p className="text-xs text-slate-500 pt-2">
-                  Only owner/admin can edit trip settings
+                  {t('settings.subtitle')}
                 </p>
               </div>
             )}
@@ -372,13 +438,55 @@ export default function TripSettingsPage() {
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold text-slate-900">
-              Budget
+              {t('settings.budget')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-slate-500">
-              Budget target is managed in the Insights Profile section above
-            </p>
+          <CardContent className="space-y-4">
+            {canEdit ? (
+              <>
+                {/* Target Budget */}
+                <div className="space-y-2">
+                  <Label htmlFor="targetBudget" className="text-sm font-medium text-slate-700">
+                    {t('settings.targetBudget')}
+                  </Label>
+                  <Input
+                    id="targetBudget"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={budgetData.targetBudget ?? ""}
+                    onChange={(e) => setBudgetData({ targetBudget: e.target.value ? parseFloat(e.target.value) : null })}
+                    placeholder={t('settings.targetBudgetPlaceholder')}
+                  />
+                  <p className="text-xs text-slate-500">
+                    {t('settings.targetBudgetHelper')}
+                  </p>
+                </div>
+
+                {/* Save Button */}
+                <Button
+                  onClick={handleSaveBudget}
+                  disabled={saving}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                  {saving ? t('common.saving') : t('settings.saveBudget')}
+                </Button>
+              </>
+            ) : (
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="font-medium text-slate-700">{t('settings.targetBudget')}:</span>
+                  <span className="ml-2 text-slate-900">
+                    {trip.targetBudget ? `${trip.baseCurrency} ${trip.targetBudget.toFixed(2)}` : '—'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 pt-2">
+                  {t('settings.subtitle')}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -386,7 +494,7 @@ export default function TripSettingsPage() {
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold text-slate-900">
-              Insights Profile
+              {t('settings.insightsProfile')}
             </CardTitle>
             <p className="text-sm text-slate-500 mt-1">
               {t('createTrip.metadataSubtitle')}
@@ -404,7 +512,6 @@ export default function TripSettingsPage() {
                     id="tripType"
                     value={insightsData.tripType ?? ""}
                     onChange={(e) => setInsightsData({ ...insightsData, tripType: e.target.value || null })}
-                    disabled={!canEdit || trip.isClosed}
                   >
                     <option value="">{t('createTrip.tripTypeSelect')}</option>
                     <option value="solo">{t('createTrip.tripTypeSolo')}</option>
@@ -425,7 +532,6 @@ export default function TripSettingsPage() {
                     min="0"
                     value={insightsData.adults}
                     onChange={(e) => setInsightsData({ ...insightsData, adults: Math.max(0, parseInt(e.target.value) || 0) })}
-                    disabled={!canEdit || trip.isClosed}
                   />
                 </div>
 
@@ -440,42 +546,19 @@ export default function TripSettingsPage() {
                     min="0"
                     value={insightsData.children}
                     onChange={(e) => setInsightsData({ ...insightsData, children: Math.max(0, parseInt(e.target.value) || 0) })}
-                    disabled={!canEdit || trip.isClosed}
                   />
-                </div>
-
-                {/* Target Budget */}
-                <div className="space-y-2">
-                  <Label htmlFor="targetBudget" className="text-sm font-medium text-slate-700">
-                    {t('settings.targetBudget')}
-                  </Label>
-                  <Input
-                    id="targetBudget"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={insightsData.targetBudget ?? ""}
-                    onChange={(e) => setInsightsData({ ...insightsData, targetBudget: e.target.value ? parseFloat(e.target.value) : null })}
-                    placeholder={t('settings.targetBudgetPlaceholder')}
-                    disabled={!canEdit || trip.isClosed}
-                  />
-                  <p className="text-xs text-slate-500">
-                    {t('settings.targetBudgetHelper')}
-                  </p>
                 </div>
 
                 {/* Save Button */}
-                {!trip.isClosed && (
-                  <Button
-                    onClick={handleSaveInsightsProfile}
-                    disabled={saving}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                    {saving ? t('common.saving') : t('settings.saveProfile')}
-                  </Button>
-                )}
+                <Button
+                  onClick={handleSaveInsightsProfile}
+                  disabled={saving}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                  {saving ? t('common.saving') : t('settings.saveProfile')}
+                </Button>
               </>
             ) : (
               <div className="space-y-3 text-sm">
@@ -493,14 +576,8 @@ export default function TripSettingsPage() {
                   <span className="font-medium text-slate-700">{t('createTrip.children')}:</span>
                   <span className="ml-2 text-slate-900">{trip.children ?? 0}</span>
                 </div>
-                <div>
-                  <span className="font-medium text-slate-700">{t('settings.targetBudget')}:</span>
-                  <span className="ml-2 text-slate-900">
-                    {trip.targetBudget ? `${trip.baseCurrency} ${trip.targetBudget.toFixed(2)}` : '—'}
-                  </span>
-                </div>
                 <p className="text-xs text-slate-500 pt-2">
-                  Only owner/admin can edit trip settings
+                  {t('settings.subtitle')}
                 </p>
               </div>
             )}
@@ -511,12 +588,12 @@ export default function TripSettingsPage() {
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold text-slate-900">
-              FX & Conversions
+              {t('settings.exchangeRates')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-500">
-              Exchange rate configuration will be available here
+              {t('settings.ratesHelper')} {trip.baseCurrency}
             </p>
           </CardContent>
         </Card>
@@ -526,7 +603,7 @@ export default function TripSettingsPage() {
           <Card className="border-red-200 bg-red-50/50 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold text-red-900">
-                Danger Zone
+                {t('settings.dangerZone')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -536,7 +613,7 @@ export default function TripSettingsPage() {
                     {t('settings.closeTrip')}
                   </h3>
                   <p className="text-sm text-red-700 mb-3">
-                    Mark this trip as finished. You won't be able to add or edit expenses after closing.
+                    {t('settings.closeTripConfirm')}
                   </p>
                   <Button
                     onClick={handleCloseTrip}
@@ -547,22 +624,6 @@ export default function TripSettingsPage() {
                     {t('settings.closeTrip')}
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Closed Trip Badge */}
-        {trip.isClosed && (
-          <Card className="border-slate-200 bg-slate-50 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="bg-slate-100 text-slate-700">
-                  {t('trips.finished')}
-                </Badge>
-                <p className="text-sm text-slate-600">
-                  This trip has been closed and is read-only
-                </p>
               </div>
             </CardContent>
           </Card>

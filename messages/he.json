@@ -182,6 +182,12 @@
     "profileSaved": "הפרופיל נשמר!",
     "saveBudget": "שמור תקציב",
     "budgetSaved": "התקציב נשמר!",
+    "saveChanges": "שמור שינויים",
+    "changesSaved": "השינויים נשמרו!",
+    "tripBasics": "פרטי טיול בסיסיים",
+    "budget": "תקציב",
+    "insightsProfile": "פרופיל תובנות",
+    "dangerZone": "אזור מסוכן",
     "targetBudget": "תקציב יעד",
     "targetBudgetPlaceholder": "הזן תקציב יעד (אופציונלי)",
     "targetBudgetHelper": "הגדר יעד הוצאות אופציונלי לטיול זה",
@@ -199,7 +205,13 @@
     "closeTrip": "סגור טיול",
     "closeTripConfirm": "האם אתה בטוח שברצונך לסגור את הטיול הזה? זה מסמן אותו כמסתיים.",
     "closeTripSuccess": "הטיול נסגר בהצלחה",
-    "closeTripError": "שגיאה בסגירת הטיול"
+    "closeTripError": "שגיאה בסגירת הטיול",
+    "reopenTrip": "פתח טיול מחדש",
+    "reopenTripConfirm": "האם אתה בטוח שברצונך לפתוח את הטיול מחדש? תוכל להוסיף ולערוך הוצאות שוב.",
+    "reopenTripSuccess": "הטיול נפתח מחדש בהצלחה",
+    "reopenTripError": "שגיאה בפתיחת הטיול מחדש",
+    "tripClosed": "הטיול סגור",
+    "tripClosedDesc": "טיול זה נסגר והוא לקריאה בלבד עבור הוצאות"
   },
   "reports": {
     "title": "דוחות",
