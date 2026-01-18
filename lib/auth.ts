@@ -97,5 +97,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session
     },
+    async redirect({ url, baseUrl }) {
+      // Handle callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Redirect to /app after login unless explicitly specified
+      if (url === baseUrl) return `${baseUrl}/app`
+      // Handle deep links - allow redirect to any path on the same domain
+      if (url.startsWith(baseUrl)) return url
+      // Default to /app
+      return `${baseUrl}/app`
+    },
   },
 })
