@@ -126,11 +126,11 @@ export default function BatchAddPage() {
       return newRows
     })
 
-    // Focus the amount field of the new row after render
+    // Focus the description field of the new row after render
     setTimeout(() => {
-      const newAmountInput = inputRefs.current.get(`${newRow.tempId}-amount`)
-      newAmountInput?.focus()
-      newAmountInput?.select()
+      const newMerchantInput = inputRefs.current.get(`${newRow.tempId}-merchant`)
+      newMerchantInput?.focus()
+      newMerchantInput?.select()
     }, 50)
   }
 
@@ -173,14 +173,14 @@ export default function BatchAddPage() {
       const rowIndex = rows.findIndex((r) => r.tempId === tempId)
       if (rowIndex === rows.length - 1) {
         addRow()
-        // Focus will be set when the new row is added
+        // Focus description field of new row after render
         setTimeout(() => {
           const newRows = rows
           if (newRows.length > rowIndex + 1) {
             const nextRowId = rows[rows.length - 1]?.tempId
             if (nextRowId) {
-              const nextAmountInput = inputRefs.current.get(`${nextRowId}-amount`)
-              nextAmountInput?.focus()
+              const nextMerchantInput = inputRefs.current.get(`${nextRowId}-merchant`)
+              nextMerchantInput?.focus()
             }
           }
         }, 50)
@@ -426,7 +426,23 @@ export default function BatchAddPage() {
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                      {/* Amount */}
+                      {/* Description - First field */}
+                      <div className="md:col-span-4">
+                        <Input
+                          ref={(el) => {
+                            if (el) inputRefs.current.set(`${row.tempId}-merchant`, el)
+                          }}
+                          placeholder={t("batchAdd.description")}
+                          value={row.merchant}
+                          onChange={(e) =>
+                            updateRow(row.tempId, { merchant: e.target.value })
+                          }
+                          className="h-10"
+                          required
+                        />
+                      </div>
+
+                      {/* Amount - Second field */}
                       <div className="md:col-span-3">
                         <Input
                           ref={(el) => {
@@ -446,7 +462,7 @@ export default function BatchAddPage() {
                         />
                       </div>
 
-                      {/* Currency */}
+                      {/* Currency - Third field */}
                       <div className="md:col-span-2">
                         <Select
                           value={row.currency}
@@ -480,19 +496,6 @@ export default function BatchAddPage() {
                             </option>
                           ))}
                         </Select>
-                      </div>
-
-                      {/* Merchant */}
-                      <div className="md:col-span-4">
-                        <Input
-                          placeholder={t("batchAdd.description")}
-                          value={row.merchant}
-                          onChange={(e) =>
-                            updateRow(row.tempId, { merchant: e.target.value })
-                          }
-                          className="h-10"
-                          required
-                        />
                       </div>
 
                       {/* Note (optional) */}
