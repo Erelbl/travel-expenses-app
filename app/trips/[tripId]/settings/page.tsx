@@ -38,8 +38,8 @@ export default function TripSettingsPage() {
     startDate: "",
     endDate: "",
     countries: [] as string[],
-    currentCountry: "",
-    currentCurrency: "",
+    currentCountry: null as string | null,
+    currentCurrency: null as string | null,
   })
 
   useEffect(() => {
@@ -64,8 +64,8 @@ export default function TripSettingsPage() {
         startDate: tripData.startDate || "",
         endDate: tripData.endDate || "",
         countries: tripData.countries || [],
-        currentCountry: tripData.currentCountry || "",
-        currentCurrency: tripData.currentCurrency || "",
+        currentCountry: tripData.currentCountry ?? null,
+        currentCurrency: tripData.currentCurrency ?? null,
       })
     } catch (error) {
       console.error("Failed to load trip:", error)
@@ -86,8 +86,8 @@ export default function TripSettingsPage() {
         startDate: formData.startDate || null,
         endDate: formData.endDate || null,
         countries: formData.countries,
-        currentCountry: formData.currentCountry || null,
-        currentCurrency: formData.currentCurrency || null,
+        currentCountry: formData.currentCountry,
+        currentCurrency: formData.currentCurrency,
       })
       
       toast.success(t('settings.ratesSaved'))
@@ -239,10 +239,10 @@ export default function TripSettingsPage() {
                   </Label>
                   <Select
                     id="currentCountry"
-                    value={formData.currentCountry}
+                    value={formData.currentCountry ?? ""}
                     onChange={(e) => {
-                      const country = e.target.value
-                      const currency = country ? currencyForCountry(country) : ""
+                      const country = e.target.value || null
+                      const currency = country ? currencyForCountry(country) : null
                       setFormData({ 
                         ...formData, 
                         currentCountry: country,
@@ -267,7 +267,7 @@ export default function TripSettingsPage() {
                       Current Currency
                     </Label>
                     <Input
-                      value={formData.currentCurrency}
+                      value={formData.currentCurrency ?? ""}
                       disabled
                       className="bg-slate-50"
                     />
