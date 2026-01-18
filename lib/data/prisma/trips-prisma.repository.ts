@@ -25,6 +25,7 @@ export class PrismaTripsRepository implements TripsRepository {
         adults: true,
         children: true,
         travelStyle: true,
+        targetBudget: true,
         isClosed: true,
         closedAt: true,
         createdAt: true,
