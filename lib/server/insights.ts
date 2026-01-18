@@ -147,16 +147,17 @@ const categorySkewInsight: InsightEvaluator = {
 const costPerAdultInsight: InsightEvaluator = {
   isEligible: (trip, expenses) => {
     const days = getExpenseDays(expenses)
-    return trip.adults >= 1 && days.length >= 3
+    return (trip.adults ?? 0) >= 1 && days.length >= 3
   },
   calculate: (trip, expenses) => {
     const dailyAvg = calculateDailyAverage(expenses)
-    const perAdult = dailyAvg / (trip.adults || 1)
+    const adults = trip.adults ?? 1
+    const perAdult = dailyAvg / adults
     
     // Medium-high score by default
     const score = 75
     
-    const comparisonKey = trip.adults > 1 ? "insights.basedOnAdultsPlural" : "insights.basedOnAdults"
+    const comparisonKey = adults > 1 ? "insights.basedOnAdultsPlural" : "insights.basedOnAdults"
     
     return {
       id: "cost_per_adult",
@@ -165,7 +166,7 @@ const costPerAdultInsight: InsightEvaluator = {
       value: `${perAdult.toFixed(0)} ${trip.baseCurrency}`,
       comparisonKey,
       comparisonParams: {
-        adults: trip.adults.toString(),
+        adults: adults.toString(),
       },
       score,
     }

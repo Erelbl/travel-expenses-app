@@ -43,6 +43,14 @@ enum TravelStyle {
   LUXURY
 }
 
+enum AgeRange {
+  AGE_18_25
+  AGE_26_35
+  AGE_36_45
+  AGE_46_60
+  AGE_60_PLUS
+}
+
 model Trip {
   id         String    @id @default(cuid())
   ownerId    String
@@ -54,9 +62,10 @@ model Trip {
   currentCountry String?
   currentCurrency String?
   tripType   TripType?
-  adults     Int       @default(1)
-  children   Int       @default(0)
+  adults     Int?
+  children   Int?
   travelStyle TravelStyle?
+  ageRange   AgeRange?
   targetBudget Float?
   isClosed   Boolean   @default(false)
   closedAt   DateTime?

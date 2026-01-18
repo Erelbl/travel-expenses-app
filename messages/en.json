@@ -62,7 +62,14 @@
     "travelStyleLuxury": "Luxury",
     "travelStyleSelect": "Select style",
     "adults": "Adults",
-    "children": "Children"
+    "children": "Children",
+    "ageRange": "Age Range",
+    "ageRangeSelect": "Select age range",
+    "ageRange18_25": "18-25",
+    "ageRange26_35": "26-35",
+    "ageRange36_45": "36-45",
+    "ageRange46_60": "46-60",
+    "ageRange60_plus": "60+"
   },
   "dashboard": {
     "totalSpent": "Total Spent",
@@ -188,6 +195,7 @@
     "budget": "Budget",
     "insightsProfile": "Insights Profile",
     "dangerZone": "Danger Zone",
+    "tripStatus": "Trip Status",
     "targetBudget": "Target Budget",
     "targetBudgetPlaceholder": "Enter target budget (optional)",
     "targetBudgetHelper": "Set an optional spending target for this trip",

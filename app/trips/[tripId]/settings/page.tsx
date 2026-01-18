@@ -49,8 +49,9 @@ export default function TripSettingsPage() {
   // Form state for Insights Profile
   const [insightsData, setInsightsData] = useState({
     tripType: null as string | null,
-    adults: 1,
-    children: 0,
+    adults: null as number | null,
+    children: null as number | null,
+    ageRange: null as string | null,
   })
 
   useEffect(() => {
@@ -87,8 +88,9 @@ export default function TripSettingsPage() {
       // Initialize insights data
       setInsightsData({
         tripType: tripData.tripType ?? null,
-        adults: tripData.adults ?? 1,
-        children: tripData.children ?? 0,
+        adults: tripData.adults ?? null,
+        children: tripData.children ?? null,
+        ageRange: tripData.ageRange ?? null,
       })
     } catch (error) {
       console.error("Failed to load trip:", error)
@@ -151,11 +153,15 @@ export default function TripSettingsPage() {
     try {
       setSaving(true)
       
-      await updateInsightsProfile(tripId, {
+      // If tripType is not family, clear adults/children
+      const dataToSave = {
         tripType: insightsData.tripType,
-        adults: insightsData.adults,
-        children: insightsData.children,
-      })
+        adults: insightsData.tripType === 'family' ? insightsData.adults : null,
+        children: insightsData.tripType === 'family' ? insightsData.children : null,
+        ageRange: insightsData.ageRange,
+      }
+      
+      await updateInsightsProfile(tripId, dataToSave)
       
       toast.success(t('settings.profileSaved'))
       router.refresh()
@@ -521,33 +527,57 @@ export default function TripSettingsPage() {
                   </Select>
                 </div>
 
-                {/* Adults */}
+                {/* Age Range */}
                 <div className="space-y-2">
-                  <Label htmlFor="adults" className="text-sm font-medium text-slate-700">
-                    {t('createTrip.adults')}
+                  <Label htmlFor="ageRange" className="text-sm font-medium text-slate-700">
+                    {t('createTrip.ageRange')}
                   </Label>
-                  <Input
-                    id="adults"
-                    type="number"
-                    min="0"
-                    value={insightsData.adults}
-                    onChange={(e) => setInsightsData({ ...insightsData, adults: Math.max(0, parseInt(e.target.value) || 0) })}
-                  />
+                  <Select
+                    id="ageRange"
+                    value={insightsData.ageRange ?? ""}
+                    onChange={(e) => setInsightsData({ ...insightsData, ageRange: e.target.value || null })}
+                  >
+                    <option value="">{t('createTrip.ageRangeSelect')}</option>
+                    <option value="18_25">{t('createTrip.ageRange18_25')}</option>
+                    <option value="26_35">{t('createTrip.ageRange26_35')}</option>
+                    <option value="36_45">{t('createTrip.ageRange36_45')}</option>
+                    <option value="46_60">{t('createTrip.ageRange46_60')}</option>
+                    <option value="60_plus">{t('createTrip.ageRange60_plus')}</option>
+                  </Select>
                 </div>
 
-                {/* Children */}
-                <div className="space-y-2">
-                  <Label htmlFor="children" className="text-sm font-medium text-slate-700">
-                    {t('createTrip.children')}
-                  </Label>
-                  <Input
-                    id="children"
-                    type="number"
-                    min="0"
-                    value={insightsData.children}
-                    onChange={(e) => setInsightsData({ ...insightsData, children: Math.max(0, parseInt(e.target.value) || 0) })}
-                  />
-                </div>
+                {/* Adults & Children - Only for Family trips */}
+                {insightsData.tripType === 'family' && (
+                  <>
+                    {/* Adults */}
+                    <div className="space-y-2">
+                      <Label htmlFor="adults" className="text-sm font-medium text-slate-700">
+                        {t('createTrip.adults')}
+                      </Label>
+                      <Input
+                        id="adults"
+                        type="number"
+                        min="0"
+                        value={insightsData.adults ?? ""}
+                        onChange={(e) => setInsightsData({ ...insightsData, adults: e.target.value ? Math.max(0, parseInt(e.target.value)) : null })}
+                      />
+                    </div>
+
+                    {/* Children */}
+                    <div className="space-y-2">
+                      <Label htmlFor="children" className="text-sm font-medium text-slate-700">
+                        {t('createTrip.children')}
+                      </Label>
+                      <Input
+                        id="children"
+                        type="number"
+                        min="0"
+                        value={insightsData.children ?? ""}
+                        onChange={(e) => setInsightsData({ ...insightsData, children: e.target.value ? Math.max(0, parseInt(e.target.value)) : null })}
+                      />
+                    </div>
+                  </>
+                )}
 
                 {/* Save Button */}
                 <Button
@@ -569,13 +599,23 @@ export default function TripSettingsPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="font-medium text-slate-700">{t('createTrip.adults')}:</span>
-                  <span className="ml-2 text-slate-900">{trip.adults ?? 1}</span>
+                  <span className="font-medium text-slate-700">{t('createTrip.ageRange')}:</span>
+                  <span className="ml-2 text-slate-900">
+                    {trip.ageRange ? t(`createTrip.ageRange${trip.ageRange.charAt(0).toUpperCase() + trip.ageRange.slice(1).replace('_', '_')}`) : '—'}
+                  </span>
                 </div>
-                <div>
-                  <span className="font-medium text-slate-700">{t('createTrip.children')}:</span>
-                  <span className="ml-2 text-slate-900">{trip.children ?? 0}</span>
-                </div>
+                {trip.tripType === 'family' && (
+                  <>
+                    <div>
+                      <span className="font-medium text-slate-700">{t('createTrip.adults')}:</span>
+                      <span className="ml-2 text-slate-900">{trip.adults ?? '—'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-slate-700">{t('createTrip.children')}:</span>
+                      <span className="ml-2 text-slate-900">{trip.children ?? '—'}</span>
+                    </div>
+                  </>
+                )}
                 <p className="text-xs text-slate-500 pt-2">
                   {t('settings.subtitle')}
                 </p>
@@ -591,34 +631,38 @@ export default function TripSettingsPage() {
               {t('settings.exchangeRates')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            <div className="text-sm">
+              <span className="font-medium text-slate-700">{t('createTrip.baseCurrency')}:</span>
+              <span className="ml-2 text-slate-900">{trip.baseCurrency}</span>
+            </div>
             <p className="text-sm text-slate-500">
               {t('settings.ratesHelper')} {trip.baseCurrency}
             </p>
           </CardContent>
         </Card>
 
-        {/* Danger Zone Section */}
+        {/* Trip Status Section */}
         {canManageTrip(trip) && !trip.isClosed && (
-          <Card className="border-red-200 bg-red-50/50 shadow-sm">
+          <Card className="border-slate-300 bg-slate-50 shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-red-900">
-                {t('settings.dangerZone')}
+              <CardTitle className="text-lg font-semibold text-slate-900">
+                {t('settings.tripStatus')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold text-red-900 mb-1">
+                  <h3 className="font-semibold text-slate-900 mb-1">
                     {t('settings.closeTrip')}
                   </h3>
-                  <p className="text-sm text-red-700 mb-3">
+                  <p className="text-sm text-slate-600 mb-3">
                     {t('settings.closeTripConfirm')}
                   </p>
                   <Button
                     onClick={handleCloseTrip}
                     variant="outline"
-                    className="border-red-300 text-red-700 hover:bg-red-100 hover:text-red-800"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-100"
                   >
                     <XCircle className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                     {t('settings.closeTrip')}

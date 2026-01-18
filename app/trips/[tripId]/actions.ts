@@ -154,8 +154,9 @@ export async function updateInsightsProfile(
   tripId: string,
   data: {
     tripType?: string | null
-    adults?: number
-    children?: number
+    adults?: number | null
+    children?: number | null
+    ageRange?: string | null
   }
 ) {
   const session = await auth()
@@ -187,12 +188,19 @@ export async function updateInsightsProfile(
     throw new Error("Only owner/admin can update trip settings")
   }
 
+  // Convert ageRange from schema format (18_25) to Prisma enum (AGE_18_25)
+  let ageRangeEnum = null
+  if (data.ageRange) {
+    ageRangeEnum = `AGE_${data.ageRange}`.toUpperCase() as any
+  }
+
   await prisma.trip.update({
     where: { id: tripId },
     data: {
       tripType: data.tripType ? (data.tripType.toUpperCase() as any) : null,
       adults: data.adults,
       children: data.children,
+      ageRange: ageRangeEnum,
     },
   })
 

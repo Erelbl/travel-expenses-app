@@ -19,6 +19,7 @@ export const ItineraryLegSchema = z.object({
 // Trip metadata for insights
 export const TripTypeSchema = z.enum(["solo", "couple", "family", "friends"])
 export const TravelStyleSchema = z.enum(["budget", "balanced", "comfort", "luxury"])
+export const AgeRangeSchema = z.enum(["18_25", "26_35", "36_45", "46_60", "60_plus"])
 
 export const TripSchema = z.object({
   id: z.string(),
@@ -36,9 +37,10 @@ export const TripSchema = z.object({
   members: z.array(TripMemberSchema).min(1, "Trip must have at least one member"),
   // Trip metadata for insights
   tripType: TripTypeSchema.nullable().optional(),
-  adults: z.number().int().min(0).default(1),
-  children: z.number().int().min(0).default(0),
+  adults: z.number().int().min(0).nullable().optional(),
+  children: z.number().int().min(0).nullable().optional(),
   travelStyle: TravelStyleSchema.nullable().optional(),
+  ageRange: AgeRangeSchema.nullable().optional(),
   targetBudget: z.number().min(0).nullable().optional(),
   isClosed: z.boolean().optional().default(false),
   closedAt: z.number().nullable().optional(),
@@ -54,4 +56,5 @@ export type MemberRole = z.infer<typeof MemberRoleSchema>
 export type ItineraryLeg = z.infer<typeof ItineraryLegSchema>
 export type TripType = z.infer<typeof TripTypeSchema>
 export type TravelStyle = z.infer<typeof TravelStyleSchema>
+export type AgeRange = z.infer<typeof AgeRangeSchema>
 
