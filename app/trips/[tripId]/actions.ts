@@ -110,7 +110,7 @@ export async function updateInsightsProfile(
     tripType?: string | null
     adults?: number
     children?: number
-    travelStyle?: string | null
+    targetBudget?: number | null
   }
 ) {
   const session = await auth()
@@ -148,7 +148,7 @@ export async function updateInsightsProfile(
       tripType: data.tripType ? (data.tripType.toUpperCase() as any) : null,
       adults: data.adults,
       children: data.children,
-      travelStyle: data.travelStyle ? (data.travelStyle.toUpperCase() as any) : null,
+      targetBudget: data.targetBudget,
     },
   })
 

@@ -47,7 +47,7 @@ export default function TripSettingsPage() {
     tripType: null as string | null,
     adults: 1,
     children: 0,
-    travelStyle: null as string | null,
+    targetBudget: null as number | null,
   })
 
   useEffect(() => {
@@ -81,7 +81,7 @@ export default function TripSettingsPage() {
         tripType: tripData.tripType ?? null,
         adults: tripData.adults ?? 1,
         children: tripData.children ?? 0,
-        travelStyle: tripData.travelStyle ?? null,
+        targetBudget: tripData.targetBudget ?? null,
       })
     } catch (error) {
       console.error("Failed to load trip:", error)
@@ -127,10 +127,10 @@ export default function TripSettingsPage() {
         tripType: insightsData.tripType,
         adults: insightsData.adults,
         children: insightsData.children,
-        travelStyle: insightsData.travelStyle,
+        targetBudget: insightsData.targetBudget,
       })
       
-      toast.success(t('settings.ratesSaved'))
+      toast.success(t('settings.profileSaved'))
       router.refresh()
       await loadData()
     } catch (error) {
@@ -377,7 +377,7 @@ export default function TripSettingsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-500">
-              Budget planning features coming soon
+              Budget target is managed in the Insights Profile section above
             </p>
           </CardContent>
         </Card>
@@ -444,23 +444,24 @@ export default function TripSettingsPage() {
                   />
                 </div>
 
-                {/* Travel Style */}
+                {/* Target Budget */}
                 <div className="space-y-2">
-                  <Label htmlFor="travelStyle" className="text-sm font-medium text-slate-700">
-                    {t('createTrip.travelStyle')}
+                  <Label htmlFor="targetBudget" className="text-sm font-medium text-slate-700">
+                    {t('settings.targetBudget')}
                   </Label>
-                  <Select
-                    id="travelStyle"
-                    value={insightsData.travelStyle ?? ""}
-                    onChange={(e) => setInsightsData({ ...insightsData, travelStyle: e.target.value || null })}
+                  <Input
+                    id="targetBudget"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={insightsData.targetBudget ?? ""}
+                    onChange={(e) => setInsightsData({ ...insightsData, targetBudget: e.target.value ? parseFloat(e.target.value) : null })}
+                    placeholder={t('settings.targetBudgetPlaceholder')}
                     disabled={!canEdit || trip.isClosed}
-                  >
-                    <option value="">{t('createTrip.travelStyleSelect')}</option>
-                    <option value="budget">{t('createTrip.travelStyleBudget')}</option>
-                    <option value="balanced">{t('createTrip.travelStyleBalanced')}</option>
-                    <option value="comfort">{t('createTrip.travelStyleComfort')}</option>
-                    <option value="luxury">{t('createTrip.travelStyleLuxury')}</option>
-                  </Select>
+                  />
+                  <p className="text-xs text-slate-500">
+                    {t('settings.targetBudgetHelper')}
+                  </p>
                 </div>
 
                 {/* Save Button */}
@@ -472,7 +473,7 @@ export default function TripSettingsPage() {
                     size="lg"
                   >
                     <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-                    {saving ? t('common.saving') : t('settings.saveRates')}
+                    {saving ? t('common.saving') : t('settings.saveProfile')}
                   </Button>
                 )}
               </>
@@ -493,9 +494,9 @@ export default function TripSettingsPage() {
                   <span className="ml-2 text-slate-900">{trip.children ?? 0}</span>
                 </div>
                 <div>
-                  <span className="font-medium text-slate-700">{t('createTrip.travelStyle')}:</span>
+                  <span className="font-medium text-slate-700">{t('settings.targetBudget')}:</span>
                   <span className="ml-2 text-slate-900">
-                    {trip.travelStyle ? t(`createTrip.travelStyle${trip.travelStyle.charAt(0).toUpperCase() + trip.travelStyle.slice(1)}`) : '—'}
+                    {trip.targetBudget ? `${trip.baseCurrency} ${trip.targetBudget.toFixed(2)}` : '—'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 pt-2">
