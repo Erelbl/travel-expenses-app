@@ -2,17 +2,24 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, XCircle } from "lucide-react"
+import { ArrowLeft, XCircle, Save } from "lucide-react"
 import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { CountryMultiSelect } from "@/components/CountryMultiSelect"
 import { tripsRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { canManageTrip } from "@/lib/utils/permissions"
-import { closeTrip } from "../actions"
+import { updateTripBasics, closeTrip } from "../actions"
 import { Badge } from "@/components/ui/badge"
+import { CURRENCIES } from "@/lib/utils/currency"
+import { getCountryName } from "@/lib/utils/countries.data"
+import { currencyForCountry } from "@/lib/utils/countryCurrency"
 
 export default function TripSettingsPage() {
   const { t, locale } = useI18n()
@@ -23,6 +30,17 @@ export default function TripSettingsPage() {
 
   const [trip, setTrip] = useState<Trip | null>(null)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  // Form state for Trip Basics
+  const [formData, setFormData] = useState({
+    name: "",
+    startDate: "",
+    endDate: "",
+    countries: [] as string[],
+    currentCountry: "",
+    currentCurrency: "",
+  })
 
   useEffect(() => {
     loadData()
@@ -39,11 +57,47 @@ export default function TripSettingsPage() {
       }
 
       setTrip(tripData)
+      
+      // Initialize form data
+      setFormData({
+        name: tripData.name,
+        startDate: tripData.startDate || "",
+        endDate: tripData.endDate || "",
+        countries: tripData.countries || [],
+        currentCountry: tripData.currentCountry || "",
+        currentCurrency: tripData.currentCurrency || "",
+      })
     } catch (error) {
       console.error("Failed to load trip:", error)
       toast.error(t('common.errorMessage'))
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleSaveTripBasics() {
+    if (!trip) return
+
+    try {
+      setSaving(true)
+      
+      await updateTripBasics(tripId, {
+        name: formData.name,
+        startDate: formData.startDate || null,
+        endDate: formData.endDate || null,
+        countries: formData.countries,
+        currentCountry: formData.currentCountry || null,
+        currentCurrency: formData.currentCurrency || null,
+      })
+      
+      toast.success(t('settings.ratesSaved'))
+      router.refresh()
+      await loadData()
+    } catch (error) {
+      console.error("Failed to update trip:", error)
+      toast.error(t('settings.ratesSaveError'))
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -63,6 +117,8 @@ export default function TripSettingsPage() {
       toast.error(t('settings.closeTripError'))
     }
   }
+
+  const canEdit = trip ? canManageTrip(trip) : false
 
   if (loading || !trip) {
     return (
@@ -116,10 +172,159 @@ export default function TripSettingsPage() {
               Trip Basics
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-slate-500">
-              Basic trip settings will be available here (name, dates, countries, etc.)
-            </p>
+          <CardContent className="space-y-4">
+            {canEdit ? (
+              <>
+                {/* Trip Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium text-slate-700">
+                    {t('createTrip.tripName')}
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder={t('createTrip.tripNamePlaceholder')}
+                    disabled={!canEdit || trip.isClosed}
+                  />
+                </div>
+
+                {/* Start Date */}
+                <div className="space-y-2">
+                  <Label htmlFor="startDate" className="text-sm font-medium text-slate-700">
+                    {t('createTrip.startDate')}
+                  </Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    disabled={!canEdit || trip.isClosed}
+                  />
+                </div>
+
+                {/* End Date */}
+                <div className="space-y-2">
+                  <Label htmlFor="endDate" className="text-sm font-medium text-slate-700">
+                    {t('createTrip.endDateOptional')}
+                  </Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    disabled={!canEdit || trip.isClosed}
+                  />
+                </div>
+
+                {/* Countries */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-slate-700">
+                    {t('createTrip.plannedCountries')}
+                  </Label>
+                  <CountryMultiSelect
+                    value={formData.countries}
+                    onChange={(countries) => setFormData({ ...formData, countries })}
+                    placeholder={t('createTrip.searchCountries')}
+                  />
+                  <p className="text-xs text-slate-500">
+                    {t('createTrip.selectCountriesHelp')}
+                  </p>
+                </div>
+
+                {/* Current Country */}
+                <div className="space-y-2">
+                  <Label htmlFor="currentCountry" className="text-sm font-medium text-slate-700">
+                    {t('home.currentLocation')}
+                  </Label>
+                  <Select
+                    id="currentCountry"
+                    value={formData.currentCountry}
+                    onChange={(e) => {
+                      const country = e.target.value
+                      const currency = country ? currencyForCountry(country) : ""
+                      setFormData({ 
+                        ...formData, 
+                        currentCountry: country,
+                        currentCurrency: currency
+                      })
+                    }}
+                    disabled={!canEdit || trip.isClosed}
+                  >
+                    <option value="">{t('home.selectLocation')}</option>
+                    {formData.countries.map((country) => (
+                      <option key={country} value={country}>
+                        {getCountryName(country, locale)}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* Current Currency (auto-filled) */}
+                {formData.currentCurrency && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-700">
+                      Current Currency
+                    </Label>
+                    <Input
+                      value={formData.currentCurrency}
+                      disabled
+                      className="bg-slate-50"
+                    />
+                  </div>
+                )}
+
+                {/* Save Button */}
+                {!trip.isClosed && (
+                  <Button
+                    onClick={handleSaveTripBasics}
+                    disabled={saving || !formData.name.trim()}
+                    className="w-full"
+                    size="lg"
+                  >
+                    <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                    {saving ? t('common.saving') : t('settings.saveRates')}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="font-medium text-slate-700">{t('createTrip.tripName')}:</span>
+                  <span className="ml-2 text-slate-900">{trip.name}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-slate-700">{t('createTrip.startDate')}:</span>
+                  <span className="ml-2 text-slate-900">{trip.startDate || '—'}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-slate-700">{t('createTrip.endDate')}:</span>
+                  <span className="ml-2 text-slate-900">{trip.endDate || '—'}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-slate-700">{t('createTrip.plannedCountries')}:</span>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {(trip.countries || []).map((country) => (
+                      <Badge key={country} variant="outline">
+                        {getCountryName(country, locale)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                {trip.currentCountry && (
+                  <div>
+                    <span className="font-medium text-slate-700">{t('home.currentLocation')}:</span>
+                    <span className="ml-2 text-slate-900">
+                      {getCountryName(trip.currentCountry, locale)}
+                      {trip.currentCurrency && ` (${trip.currentCurrency})`}
+                    </span>
+                  </div>
+                )}
+                <p className="text-xs text-slate-500 pt-2">
+                  Only owner/admin can edit trip settings
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -132,7 +337,7 @@ export default function TripSettingsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-500">
-              Budget planning and limits will be available here
+              Budget planning features coming soon
             </p>
           </CardContent>
         </Card>
