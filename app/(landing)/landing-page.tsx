@@ -196,9 +196,9 @@ export function LandingPage() {
       </section>
 
       {/* Screens Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto max-w-5xl space-y-24">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+      <section className="py-16 px-6">
+        <div className="container mx-auto max-w-5xl space-y-14">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="order-2 md:order-1 max-w-xs mx-auto">
               <PhoneFrame>
                 <div className="h-full bg-gradient-to-b from-sky-50 to-slate-50 p-4 overflow-auto">
@@ -234,7 +234,7 @@ export function LandingPage() {
               </PhoneFrame>
             </div>
             <div className="order-1 md:order-2">
-              <h3 className="text-3xl font-extrabold text-slate-900 mb-4">
+              <h3 className="text-3xl font-extrabold text-slate-900 mb-3">
                 Dashboard
               </h3>
               <p className="text-lg text-slate-600 leading-relaxed">
@@ -243,9 +243,9 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
             <div>
-              <h3 className="text-3xl font-extrabold text-slate-900 mb-4">
+              <h3 className="text-3xl font-extrabold text-slate-900 mb-3">
                 Add expense
               </h3>
               <p className="text-lg text-slate-600 leading-relaxed">
@@ -300,7 +300,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="order-2 md:order-1 max-w-xs mx-auto">
               <PhoneFrame>
                 <div className="h-full bg-gradient-to-b from-violet-50 via-sky-50 to-white p-4">
@@ -358,7 +358,7 @@ export function LandingPage() {
               </PhoneFrame>
             </div>
             <div className="order-1 md:order-2">
-              <h3 className="text-3xl font-extrabold text-slate-900 mb-4">
+              <h3 className="text-3xl font-extrabold text-slate-900 mb-3">
                 FX & insights
               </h3>
               <p className="text-lg text-slate-600 leading-relaxed">
