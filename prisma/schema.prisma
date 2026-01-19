@@ -72,9 +72,10 @@ model Trip {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  owner      User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  members    TripMember[]
-  expenses   Expense[]
+  owner       User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members     TripMember[]
+  expenses    Expense[]
+  invitations TripInvitation[]
 
   @@index([ownerId])
 }
@@ -190,4 +191,18 @@ model ExchangeRateCache {
   @@unique([baseCurrency, date])
   @@index([baseCurrency])
   @@index([date])
+}
+
+model TripInvitation {
+  id           String     @id @default(cuid())
+  tripId       String
+  invitedEmail String
+  role         MemberRole
+  createdAt    DateTime   @default(now())
+  expiresAt    DateTime
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@index([invitedEmail])
 }

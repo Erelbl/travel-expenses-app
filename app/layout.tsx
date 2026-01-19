@@ -3,6 +3,7 @@ import { Manrope, Heebo } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
+import { SessionProvider } from "@/components/SessionProvider";
 
 // Font for Latin characters
 const manrope = Manrope({ 
@@ -33,10 +34,12 @@ export default async function RootLayout({
     // Default to Hebrew (RTL) - I18nProvider will adjust dynamically
     <html lang="he" dir="rtl" className={`${manrope.variable} ${heebo.variable}`} suppressHydrationWarning>
       <body className="min-h-screen font-sans antialiased">
-        <I18nProvider>
-          <main className="relative z-10">{children}</main>
-          <Toaster position="top-center" richColors />
-        </I18nProvider>
+        <SessionProvider>
+          <I18nProvider>
+            <main className="relative z-10">{children}</main>
+            <Toaster position="top-center" richColors />
+          </I18nProvider>
+        </SessionProvider>
       </body>
     </html>
   );

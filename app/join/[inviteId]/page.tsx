@@ -2,18 +2,26 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Users, CheckCircle, XCircle, Loader2 } from "lucide-react"
+import { Users, CheckCircle, XCircle, Loader2, Mail, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { TripInvite, invitesRepository } from "@/lib/data/local/invites-local.repository"
-import { tripsRepository } from "@/lib/data"
-import { Trip, MemberRole } from "@/lib/schemas/trip.schema"
-import { setCurrentUserMemberId } from "@/lib/utils/permissions"
+import { MemberRole } from "@/lib/schemas/trip.schema"
 import { useI18n } from "@/lib/i18n/I18nProvider"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
+
+interface InvitationData {
+  id: string
+  tripId: string
+  tripName: string
+  invitedEmail: string
+  invitedBy: string
+  role: string
+  createdAt: number
+  expiresAt: number
+}
 
 export default function JoinTripPage() {
   const { t, locale } = useI18n()
@@ -21,40 +29,36 @@ export default function JoinTripPage() {
   const router = useRouter()
   const inviteId = params.inviteId as string
   const isRTL = locale === "he"
+  const { data: session, status: sessionStatus } = useSession()
 
-  const [invite, setInvite] = useState<TripInvite | null>(null)
-  const [trip, setTrip] = useState<Trip | null>(null)
+  const [invitation, setInvitation] = useState<InvitationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [name, setName] = useState("")
+  const [emailMismatch, setEmailMismatch] = useState(false)
 
   useEffect(() => {
-    loadInvite()
+    loadInvitation()
   }, [inviteId])
 
-  async function loadInvite() {
+  async function loadInvitation() {
     setLoading(true)
     try {
-      const inviteData = await invitesRepository.getInvite(inviteId)
+      const res = await fetch(`/api/invitations/${inviteId}`)
       
-      if (!inviteData) {
-        setError("expired")
+      if (!res.ok) {
+        if (res.status === 404 || res.status === 410) {
+          setError("expired")
+        } else {
+          setError("error")
+        }
         return
       }
 
-      setInvite(inviteData)
-
-      // Load the trip
-      const tripData = await tripsRepository.getTrip(inviteData.tripId)
-      if (!tripData) {
-        setError("tripNotFound")
-        return
-      }
-
-      setTrip(tripData)
+      const data = await res.json()
+      setInvitation(data)
     } catch (err) {
-      console.error("Failed to load invite:", err)
+      console.error("Failed to load invitation:", err)
       setError("error")
     } finally {
       setLoading(false)
@@ -62,44 +66,35 @@ export default function JoinTripPage() {
   }
 
   async function handleJoin() {
-    if (!invite || !trip || !name.trim()) {
-      toast.error(t("join.nameRequired"))
-      return
-    }
+    if (!invitation) return
 
     setJoining(true)
     try {
-      // Check if already a member
-      const existingMember = trip.members.find(
-        (m) => m.name.toLowerCase() === name.trim().toLowerCase()
-      )
+      const res = await fetch(`/api/invitations/${inviteId}/accept`, {
+        method: "POST",
+      })
 
-      if (existingMember) {
-        // Already a member, just set as current user and redirect
-        setCurrentUserMemberId(trip.id, existingMember.id)
-        toast.success(t("join.welcomeBack"))
-        router.push(`/trips/${trip.id}`)
+      if (!res.ok) {
+        const errorData = await res.json()
+        
+        if (res.status === 403 && errorData.error === "Email mismatch") {
+          setEmailMismatch(true)
+          toast.error(errorData.message)
+        } else {
+          toast.error(t("join.error"))
+        }
         return
       }
 
-      // Add as new member
-      const newMemberId = crypto.randomUUID()
-      const updatedMembers = [
-        ...trip.members,
-        {
-          id: newMemberId,
-          name: name.trim(),
-          role: invite.role,
-        },
-      ]
-
-      await tripsRepository.updateTrip(trip.id, { members: updatedMembers })
+      const data = await res.json()
       
-      // Set as current user
-      setCurrentUserMemberId(trip.id, newMemberId)
+      if (data.alreadyMember) {
+        toast.success(t("join.welcomeBack"))
+      } else {
+        toast.success(t("join.success"))
+      }
       
-      toast.success(t("join.success"))
-      router.push(`/trips/${trip.id}`)
+      router.push(`/app/trips/${data.tripId}`)
     } catch (err) {
       console.error("Failed to join trip:", err)
       toast.error(t("join.error"))
@@ -132,7 +127,7 @@ export default function JoinTripPage() {
     }
   }
 
-  if (loading) {
+  if (loading || sessionStatus === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50" dir={isRTL ? "rtl" : "ltr"}>
         <div className="text-center">
@@ -155,7 +150,7 @@ export default function JoinTripPage() {
             <p className="text-slate-600 mb-6">
               {error === "expired" ? t("join.linkExpiredDesc") : t("join.linkInvalidDesc")}
             </p>
-            <Button onClick={() => router.push("/trips")} variant="outline">
+            <Button onClick={() => router.push("/app")} variant="outline">
               {t("join.goToTrips")}
             </Button>
           </CardContent>
@@ -164,8 +159,97 @@ export default function JoinTripPage() {
     )
   }
 
-  if (!invite || !trip) return null
+  if (!invitation) return null
 
+  // Not authenticated - show sign in prompt
+  if (sessionStatus === "unauthenticated") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4" dir={isRTL ? "rtl" : "ltr"}>
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center pb-2">
+            <div className="w-14 h-14 rounded-full bg-sky-100 flex items-center justify-center mx-auto mb-4">
+              <Users className="h-7 w-7 text-sky-600" />
+            </div>
+            <CardTitle className="text-xl">{t("join.title")}</CardTitle>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
+            <div className="text-center p-4 bg-slate-50 rounded-xl">
+              <p className="text-sm text-slate-500 mb-1">{t("join.invitedTo")}</p>
+              <p className="text-xl font-bold text-slate-900">{invitation.tripName}</p>
+              <p className="text-sm text-slate-500 mt-2">
+                {t("join.invitedBy")} {invitation.invitedBy}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-2">
+              <Mail className="h-5 w-5 text-slate-500" />
+              <span className="text-sm font-medium text-slate-700">{invitation.invitedEmail}</span>
+            </div>
+
+            <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <p className="text-sm text-slate-700 text-center">
+                You must sign in with <strong>{invitation.invitedEmail}</strong> to accept this invitation.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Link href={`/auth/login?callbackUrl=/join/${inviteId}`}>
+                <Button size="lg" className="w-full">
+                  {t("auth.signIn")}
+                </Button>
+              </Link>
+              
+              <Button
+                variant="ghost"
+                onClick={() => router.push("/app")}
+                className="text-slate-500"
+              >
+                {t("join.decline")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Authenticated but email doesn't match
+  if (emailMismatch || (session?.user?.email && 
+      session.user.email.toLowerCase() !== invitation.invitedEmail.toLowerCase())) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4" dir={isRTL ? "rtl" : "ltr"}>
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center">
+            <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-slate-900 mb-2">
+              Email Address Mismatch
+            </h2>
+            <div className="space-y-4 text-left">
+              <p className="text-slate-600">
+                This invitation is for <strong>{invitation.invitedEmail}</strong>, but you are signed in as <strong>{session?.user?.email}</strong>.
+              </p>
+              <p className="text-slate-600">
+                To accept this invitation, please sign out and sign in with the invited email address.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 mt-6">
+              <Link href="/auth/signout">
+                <Button variant="outline" className="w-full">
+                  Sign Out & Try Again
+                </Button>
+              </Link>
+              <Button variant="ghost" onClick={() => router.push("/app")} className="text-slate-500">
+                Go to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Authenticated with correct email - show accept screen
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4" dir={isRTL ? "rtl" : "ltr"}>
       <Card className="max-w-md w-full">
@@ -180,9 +264,9 @@ export default function JoinTripPage() {
           {/* Trip Info */}
           <div className="text-center p-4 bg-slate-50 rounded-xl">
             <p className="text-sm text-slate-500 mb-1">{t("join.invitedTo")}</p>
-            <p className="text-xl font-bold text-slate-900">{trip.name}</p>
+            <p className="text-xl font-bold text-slate-900">{invitation.tripName}</p>
             <p className="text-sm text-slate-500 mt-2">
-              {t("join.invitedBy")} {invite.createdByName}
+              {t("join.invitedBy")} {invitation.invitedBy}
             </p>
           </div>
 
@@ -190,33 +274,18 @@ export default function JoinTripPage() {
           <div className="flex items-center justify-center gap-2">
             <span className="text-sm text-slate-600">{t("join.yourRole")}:</span>
             <Badge variant="secondary" className="text-sm">
-              {getRoleLabel(invite.role)}
+              {getRoleLabel(invitation.role as MemberRole)}
             </Badge>
           </div>
           <p className="text-sm text-slate-500 text-center">
-            {getRoleDescription(invite.role)}
+            {getRoleDescription(invitation.role as MemberRole)}
           </p>
-
-          {/* Name Input */}
-          <div className="space-y-2">
-            <Label htmlFor="join-name" className="font-semibold">
-              {t("join.yourName")}
-            </Label>
-            <Input
-              id="join-name"
-              placeholder={t("join.namePlaceholder")}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="h-12"
-              autoFocus
-            />
-          </div>
 
           {/* Actions */}
           <div className="flex flex-col gap-3">
             <Button
               onClick={handleJoin}
-              disabled={joining || !name.trim()}
+              disabled={joining}
               size="lg"
               className="w-full"
             >
@@ -230,7 +299,7 @@ export default function JoinTripPage() {
             
             <Button
               variant="ghost"
-              onClick={() => router.push("/trips")}
+              onClick={() => router.push("/app")}
               className="text-slate-500"
             >
               {t("join.decline")}
