@@ -109,7 +109,8 @@
     "subtitle": "Edit expense in",
     "save": "Save Changes",
     "success": "Expense updated!",
-    "error": "Failed to update expense. Please try again."
+    "error": "Failed to update expense. Please try again.",
+    "calmNote": "You can update this as many times as needed"
   },
   "addExpense": {
     "title": "Add Expense",
@@ -132,6 +133,7 @@
     "currencyAutoUpdate": "Currency will auto-update based on country",
     "noRateFound": "⚠️ No exchange rate for {currency}. Update in Settings or use {baseCurrency}.",
     "invalidAmount": "Please enter a valid amount",
+    "calmNote": "Doesn't need to be exact, you can update this later",
     "willConvertTo": "Will be converted to",
     "fxError": "Currency conversion failed. Please check your connection and try again.",
     "save": "Save Expense",
@@ -182,6 +184,7 @@
     "baseCurrency": "Base Currency",
     "exchangeRates": "Exchange Rates",
     "ratesHelper": "Rates to convert from base currency",
+    "budgetCalmNote": "For personal awareness only, you can always change this",
     "currenciesUsed": "Currencies used in this trip",
     "noCurrenciesYet": "No expenses yet. Currencies will appear here after you add expenses.",
     "saveRates": "Save Rates",
@@ -235,6 +238,7 @@
     "filtersTitle": "Filter Reports",
     "totalSpent": "Total Spent",
     "perDay": "Per Day",
+    "calmNote": "Just to understand the overall picture",
     "future": "Future",
     "futureLabel": "pre-paid commitments",
     "expenses": "expenses",

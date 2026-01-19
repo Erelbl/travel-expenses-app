@@ -479,6 +479,9 @@ export default function TripSettingsPage() {
                   <p className="text-xs text-slate-500">
                     {t('settings.targetBudgetHelper')}
                   </p>
+                  <p className="text-xs text-slate-600">
+                    {t('settings.budgetCalmNote')}
+                  </p>
                 </div>
 
               </>

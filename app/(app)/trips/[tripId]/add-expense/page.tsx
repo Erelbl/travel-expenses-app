@@ -641,31 +641,39 @@ export default function AddExpensePage() {
 
       {/* Sticky Bottom Actions for Mobile - With proper spacing */}
       <div className="fixed bottom-16 left-0 right-0 glass-effect border-t border-white/20 p-4 shadow-2xl md:hidden">
-        <div className="container mx-auto flex max-w-2xl gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={loading}
-            className="h-14 flex-1 rounded-xl border-2 border-slate-300 bg-white text-base font-semibold text-slate-900 hover:bg-slate-50"
-          >
-            {t('common.cancel')}
-          </Button>
-          <PrimaryButton
-            onClick={handleSubmit}
-            disabled={loading || rateWarning}
-            loading={loading}
-            size="xl"
-            className="flex-[2] h-14 text-base font-semibold"
-          >
-            {t('addExpense.save')}
-          </PrimaryButton>
+        <div className="container mx-auto max-w-2xl space-y-2">
+          <p className="text-xs text-slate-600 text-center">
+            {t('addExpense.calmNote')}
+          </p>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={loading}
+              className="h-14 flex-1 rounded-xl border-2 border-slate-300 bg-white text-base font-semibold text-slate-900 hover:bg-slate-50"
+            >
+              {t('common.cancel')}
+            </Button>
+            <PrimaryButton
+              onClick={handleSubmit}
+              disabled={loading || rateWarning}
+              loading={loading}
+              size="xl"
+              className="flex-[2] h-14 text-base font-semibold"
+            >
+              {t('addExpense.save')}
+            </PrimaryButton>
+          </div>
         </div>
       </div>
 
       {/* Desktop Actions - Non-sticky, natural flow */}
       <div className="hidden md:block">
         <div className="container mx-auto max-w-2xl px-4 py-6">
+          <p className="text-xs text-slate-600 text-center mb-3">
+            {t('addExpense.calmNote')}
+          </p>
           <div className="flex justify-end gap-4">
             <Button
               type="button"
