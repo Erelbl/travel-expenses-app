@@ -5,7 +5,7 @@ import { invitationsRepository } from "@/lib/data/prisma/invitations-prisma.repo
 
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ tripId: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { tripId } = await context.params
+    const { id: tripId } = await context.params
 
     // Verify user has access to this trip
     const trip = await prisma.trip.findFirst({
@@ -40,7 +40,7 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ tripId: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -48,7 +48,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { tripId } = await context.params
+    const { id: tripId } = await context.params
     const body = await req.json()
     const { invitedEmail, role } = body
 

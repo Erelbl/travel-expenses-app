@@ -5,7 +5,7 @@ import { invitationsRepository } from "@/lib/data/prisma/invitations-prisma.repo
 
 export async function DELETE(
   req: NextRequest,
-  context: { params: Promise<{ tripId: string; invitationId: string }> }
+  context: { params: Promise<{ id: string; invitationId: string }> }
 ) {
   try {
     const session = await auth()
@@ -13,7 +13,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { tripId, invitationId } = await context.params
+    const { id: tripId, invitationId } = await context.params
 
     // Verify user is owner or editor of this trip
     const trip = await prisma.trip.findFirst({
