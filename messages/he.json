@@ -295,6 +295,8 @@
   },
   "home": {
     "today": "היום",
+    "todayContext": "היום",
+    "dayOfTrip": "יום {current} מתוך {total}",
     "viewReports": "תובנות ופילוחים",
     "recentExpenses": "הוצאות אחרונות",
     "addFirstExpenseDesc": "התחל לעקוב אחר הוצאות הטיול שלך",

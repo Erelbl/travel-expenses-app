@@ -32,6 +32,7 @@ import {
   getTodayString,
   classifyExpenses,
 } from "@/lib/utils/reports"
+import { formatDateShort, getTripDayInfo } from "@/lib/utils/date"
 import { generateInsights } from "@/lib/server/insights"
 import { generateBannerInsight } from "@/lib/server/banner-insights"
 
@@ -236,6 +237,13 @@ export default function TripHomePage() {
   // Check if filters are active
   const hasActiveFilters = filterCategory !== "" || filterCurrency !== ""
 
+  // Calculate trip day info for time context
+  const tripDayInfo = getTripDayInfo(trip.startDate, trip.endDate)
+  const todayDateString = new Date().toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
+    month: "short",
+    day: "numeric",
+  })
+
   return (
     <div className="min-h-screen pb-20 md:pb-6 bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60" dir={isRTL ? "rtl" : "ltr"}>
       {/* Offline Banner */}
@@ -275,6 +283,17 @@ export default function TripHomePage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Today Context Indicator */}
+      <div className="container mx-auto max-w-4xl px-4 pt-3">
+        <p className="text-xs text-slate-500">
+          {t("home.todayContext")}: {todayDateString}
+          {tripDayInfo && (
+            <span className="text-slate-400 mx-1.5">•</span>
+          )}
+          {tripDayInfo && t("home.dayOfTrip", { current: tripDayInfo.currentDay, total: tripDayInfo.totalDays })}
+        </p>
       </div>
 
       <div className="container mx-auto max-w-4xl px-4 py-5 space-y-6">

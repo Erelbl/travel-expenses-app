@@ -295,6 +295,8 @@
   },
   "home": {
     "today": "Today",
+    "todayContext": "Today",
+    "dayOfTrip": "Day {current} of {total}",
     "viewReports": "Insights & breakdowns",
     "recentExpenses": "Recent Expenses",
     "addFirstExpenseDesc": "Start tracking your travel spending",

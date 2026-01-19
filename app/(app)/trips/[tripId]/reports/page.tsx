@@ -31,6 +31,7 @@ import {
   calculateDailySpend,
   getTopCategories,
 } from "@/lib/utils/reports"
+import { getTripDayInfo } from "@/lib/utils/date"
 
 const CATEGORIES: ExpenseCategory[] = [
   "Food", "Transport", "Flights", "Lodging", "Activities", "Shopping", "Health", "Other",
@@ -233,6 +234,13 @@ export default function ReportsPage() {
   // Get trip countries for filter
   const tripCountries = trip.plannedCountries || trip.countries || []
   
+  // Calculate trip day info for time context
+  const tripDayInfo = getTripDayInfo(trip.startDate, trip.endDate)
+  const todayDateString = new Date().toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
+    month: "short",
+    day: "numeric",
+  })
+  
   // Calculate budget status
   const hasBudget = trip.targetBudget && trip.targetBudget > 0
   const budgetUsed = hasBudget ? (summary.totalRealized / trip.targetBudget!) * 100 : 0
@@ -387,6 +395,17 @@ export default function ReportsPage() {
           />
         ) : (
           <>
+        {/* Today Context Indicator */}
+        <div className="pb-2">
+          <p className="text-xs text-slate-500">
+            {t("home.todayContext")}: {todayDateString}
+            {tripDayInfo && (
+              <span className="text-slate-400 mx-1.5">•</span>
+            )}
+            {tripDayInfo && t("home.dayOfTrip", { current: tripDayInfo.currentDay, total: tripDayInfo.totalDays })}
+          </p>
+        </div>
+
         {/* EXECUTIVE SUMMARY - Top Section */}
         <div className="space-y-6">
           <div>
