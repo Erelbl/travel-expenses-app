@@ -120,6 +120,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [hoveredCategory, setHoveredCategory] = useState<ExpenseCategory | null>(null)
 
   const [filters, setFilters] = useState<ReportFilters>({
     dateRange: "all",
@@ -235,6 +236,50 @@ export default function ReportsPage() {
   const hasBudget = trip.targetBudget && trip.targetBudget > 0
   const budgetUsed = hasBudget ? (summary.totalRealized / trip.targetBudget!) * 100 : 0
   const budgetRemaining = hasBudget ? trip.targetBudget! - summary.totalRealized : 0
+
+  // Calculate dominant category per day for hover interaction
+  const dominantCategoryByDate = new Map<string, ExpenseCategory>()
+  filteredExpenses.forEach((expense) => {
+    if (!expense.convertedAmount) return
+    const date = expense.usageDate || expense.date
+    const currentDominant = dominantCategoryByDate.get(date)
+    if (!currentDominant) {
+      dominantCategoryByDate.set(date, expense.category)
+    }
+  })
+  
+  // Calculate category spending by date for more accurate dominance
+  const categoryByDate = new Map<string, Map<ExpenseCategory, number>>()
+  filteredExpenses.forEach((expense) => {
+    if (!expense.convertedAmount) return
+    const date = expense.usageDate || expense.date
+    if (!categoryByDate.has(date)) {
+      categoryByDate.set(date, new Map())
+    }
+    const dateCategories = categoryByDate.get(date)!
+    dateCategories.set(
+      expense.category,
+      (dateCategories.get(expense.category) || 0) + expense.convertedAmount
+    )
+  })
+  
+  categoryByDate.forEach((categories, date) => {
+    let maxAmount = 0
+    let dominant: ExpenseCategory = "Other"
+    categories.forEach((amount, category) => {
+      if (amount > maxAmount) {
+        maxAmount = amount
+        dominant = category
+      }
+    })
+    dominantCategoryByDate.set(date, dominant)
+  })
+
+  const highlightDates = hoveredCategory
+    ? Array.from(dominantCategoryByDate.entries())
+        .filter(([_, cat]) => cat === hoveredCategory)
+        .map(([date]) => date)
+    : null
 
   const hasActiveFilters =
     filters.dateRange !== "all" ||
@@ -417,6 +462,7 @@ export default function ReportsPage() {
                 height={280}
                 currency={trip.baseCurrency}
                 formatCurrency={formatCurrency}
+                highlightDates={highlightDates}
               />
             )}
           </CardContent>
@@ -442,7 +488,12 @@ export default function ReportsPage() {
                   {topCategories.map((item) => {
                     const colors = getCategoryColors(item.category)
                     return (
-                      <div key={item.category} className="space-y-2">
+                      <div 
+                        key={item.category} 
+                        className="space-y-2 cursor-pointer transition-opacity"
+                        onMouseEnter={() => setHoveredCategory(item.category)}
+                        onMouseLeave={() => setHoveredCategory(null)}
+                      >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div

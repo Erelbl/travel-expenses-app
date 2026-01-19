@@ -13,6 +13,7 @@ interface TimeSeriesChartProps {
   height?: number
   currency: string
   formatCurrency: (amount: number, currency: string) => string
+  highlightDates?: string[] | null
 }
 
 export function TimeSeriesChart({
@@ -20,6 +21,7 @@ export function TimeSeriesChart({
   height = 240,
   currency,
   formatCurrency,
+  highlightDates = null,
 }: TimeSeriesChartProps) {
   const chartData = useMemo(() => {
     if (data.length === 0) return null
@@ -165,6 +167,8 @@ export function TimeSeriesChart({
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
+            opacity={highlightDates && highlightDates.length > 0 ? 0.3 : 1}
+            style={{ transition: "opacity 0.3s ease" }}
           />
         )}
 
@@ -178,22 +182,30 @@ export function TimeSeriesChart({
             strokeDasharray="6 4"
             strokeLinecap="round"
             strokeLinejoin="round"
+            opacity={highlightDates && highlightDates.length > 0 ? 0.3 : 1}
+            style={{ transition: "opacity 0.3s ease" }}
           />
         )}
 
         {/* Data points */}
-        {points.map((point, i) => (
-          <g key={i}>
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r={point.isFuture ? 3 : 4}
-              fill={point.isFuture ? "#cbd5e1" : "#0ea5e9"}
-              stroke="white"
-              strokeWidth="2"
-            />
-          </g>
-        ))}
+        {points.map((point, i) => {
+          const isHighlighted = !highlightDates || highlightDates.includes(point.date)
+          const opacity = highlightDates && highlightDates.length > 0 && !isHighlighted ? 0.2 : 1
+          return (
+            <g key={i}>
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={point.isFuture ? 3 : 4}
+                fill={point.isFuture ? "#cbd5e1" : "#0ea5e9"}
+                stroke="white"
+                strokeWidth="2"
+                opacity={opacity}
+                style={{ transition: "opacity 0.3s ease" }}
+              />
+            </g>
+          )
+        })}
 
         {/* Y-axis labels */}
         {yTicks.map((tick, i) => (
