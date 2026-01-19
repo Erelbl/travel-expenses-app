@@ -281,6 +281,30 @@ export default function ReportsPage() {
         .map(([date]) => date)
     : null
 
+  // Generate spending pattern insight
+  const getSpendingInsight = () => {
+    const pastSpending = dailySpend.filter((d) => !d.isFuture)
+    if (pastSpending.length < 3) return t("reports.insights.steadySpending")
+    
+    const midPoint = Math.floor(pastSpending.length / 2)
+    const firstHalf = pastSpending.slice(0, midPoint)
+    const secondHalf = pastSpending.slice(midPoint)
+    
+    const firstTotal = firstHalf.reduce((sum, d) => sum + d.amount, 0)
+    const secondTotal = secondHalf.reduce((sum, d) => sum + d.amount, 0)
+    const total = firstTotal + secondTotal
+    
+    if (total === 0) return t("reports.insights.steadySpending")
+    
+    const firstRatio = firstTotal / total
+    
+    if (firstRatio > 0.65) return t("reports.insights.earlySpending")
+    if (firstRatio < 0.35) return t("reports.insights.lateSpending")
+    return t("reports.insights.steadySpending")
+  }
+  
+  const spendingInsight = getSpendingInsight()
+
   const hasActiveFilters =
     filters.dateRange !== "all" ||
     !filters.includeRealized ||
@@ -432,6 +456,7 @@ export default function ReportsPage() {
               <div>
                 <CardTitle className="text-xl font-bold text-slate-900">{t("reports.spendingOverTime")}</CardTitle>
                 <p className="text-sm text-slate-600 mt-1">{t("reports.experienceDateBased")}</p>
+                <p className="text-sm text-slate-500 mt-2 italic">{spendingInsight}</p>
               </div>
               {summary.totalFuture > 0 && (
                 <div className="flex items-center gap-4 text-sm">

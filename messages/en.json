@@ -281,7 +281,10 @@
       "trendUp": "Spending increased later in the trip",
       "trendDown": "Spending decreased later in the trip",
       "accommodation": "Accommodation",
-      "futureImpact": "Future Commitments"
+      "futureImpact": "Future Commitments",
+      "steadySpending": "Your spending was spread evenly throughout the journey",
+      "earlySpending": "Most spending happened early in your trip",
+      "lateSpending": "Spending picked up later in your journey"
     }
   },
   "home": {
