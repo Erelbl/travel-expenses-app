@@ -5,7 +5,7 @@ import { invitationsRepository } from "@/lib/data/prisma/invitations-prisma.repo
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { invitationId: string } }
+  context: { params: Promise<{ invitationId: string }> }
 ) {
   try {
     const session = await auth()
@@ -13,7 +13,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { invitationId } = params
+    const { invitationId } = await context.params
 
     // Get invitation
     const invitation = await invitationsRepository.getInvitation(invitationId)

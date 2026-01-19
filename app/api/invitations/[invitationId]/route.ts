@@ -3,10 +3,10 @@ import { prisma } from "@/lib/db"
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { invitationId: string } }
+  context: { params: Promise<{ invitationId: string }> }
 ) {
   try {
-    const { invitationId } = params
+    const { invitationId } = await context.params
 
     const invitation = await prisma.tripInvitation.findUnique({
       where: { id: invitationId },
