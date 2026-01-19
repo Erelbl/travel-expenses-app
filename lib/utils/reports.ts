@@ -47,6 +47,7 @@ export interface DailySpend {
   date: string
   amount: number
   count: number
+  isFuture?: boolean
 }
 
 export interface AccommodationStats {
@@ -306,17 +307,21 @@ export function calculateCurrencyBreakdown(expenses: Expense[]): CurrencyBreakdo
 }
 
 /**
- * Calculate daily spending
+ * Calculate daily spending by EXPERIENCE DATE (usageDate or date)
  */
 export function calculateDailySpend(expenses: Expense[]): DailySpend[] {
-  const byDate = new Map<string, { amount: number; count: number }>()
+  const byDate = new Map<string, { amount: number; count: number; isFuture: boolean }>()
+  const today = getTodayString()
 
   for (const expense of expenses) {
     if (!hasConvertedAmount(expense)) continue
-    const existing = byDate.get(expense.date) || { amount: 0, count: 0 }
-    byDate.set(expense.date, {
+    // Use experience date (usageDate) if available, otherwise payment date
+    const experienceDate = expense.usageDate || expense.date
+    const existing = byDate.get(experienceDate) || { amount: 0, count: 0, isFuture: experienceDate > today }
+    byDate.set(experienceDate, {
       amount: existing.amount + (expense.convertedAmount || 0),
       count: existing.count + 1,
+      isFuture: experienceDate > today,
     })
   }
 
@@ -325,8 +330,38 @@ export function calculateDailySpend(expenses: Expense[]): DailySpend[] {
       date,
       amount: data.amount,
       count: data.count,
+      isFuture: data.isFuture,
     }))
     .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+/**
+ * Get top N categories (with "Other" for remaining)
+ */
+export function getTopCategories(
+  breakdown: CategoryBreakdown[],
+  topN: number = 5
+): CategoryBreakdown[] {
+  if (breakdown.length <= topN) return breakdown
+
+  const top = breakdown.slice(0, topN)
+  const rest = breakdown.slice(topN)
+  
+  if (rest.length === 0) return top
+
+  const otherAmount = rest.reduce((sum, item) => sum + item.amount, 0)
+  const otherCount = rest.reduce((sum, item) => sum + item.count, 0)
+  const total = breakdown.reduce((sum, item) => sum + item.amount, 0)
+
+  return [
+    ...top,
+    {
+      category: "Other" as ExpenseCategory,
+      amount: otherAmount,
+      count: otherCount,
+      percentage: total > 0 ? (otherAmount / total) * 100 : 0,
+    },
+  ]
 }
 
 /**

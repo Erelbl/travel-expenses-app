@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Filter, TrendingUp, Calendar, DollarSign, Globe, Tag, Lightbulb, BarChart3, Plus } from "lucide-react"
+import { ArrowLeft, Filter, TrendingUp, Calendar, DollarSign, Tag, BarChart3, Plus, Target } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,11 +15,11 @@ import { Modal, ModalHeader, ModalTitle, ModalContent, ModalClose } from "@/comp
 import { StatCardSkeleton, ReportCardSkeleton } from "@/components/ui/skeleton"
 import { ErrorState } from "@/components/ui/error-state"
 import { EmptyState } from "@/components/ui/empty-state"
+import { TimeSeriesChart } from "@/components/charts/TimeSeriesChart"
 import { tripsRepository, expensesRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
 import { Expense, ExpenseCategory } from "@/lib/schemas/expense.schema"
 import { formatCurrency } from "@/lib/utils/currency"
-import { getCountryName } from "@/lib/utils/countries.data"
 import { getCategoryColors } from "@/lib/utils/categoryColors"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import {
@@ -27,9 +27,8 @@ import {
   filterExpenses,
   calculateSummary,
   calculateCategoryBreakdown,
-  calculateCountryBreakdown,
-  calculateCurrencyBreakdown,
-  generateInsights,
+  calculateDailySpend,
+  getTopCategories,
 } from "@/lib/utils/reports"
 
 const CATEGORIES: ExpenseCategory[] = [
@@ -226,19 +225,19 @@ export default function ReportsPage() {
   // Calculate metrics
   const summary = calculateSummary(filteredExpenses, trip)
   const categoryBreakdown = calculateCategoryBreakdown(filteredExpenses)
-  const countryBreakdown = calculateCountryBreakdown(filteredExpenses)
-  const currencyBreakdown = calculateCurrencyBreakdown(filteredExpenses)
-  const insights = generateInsights(
-    filteredExpenses,
-    summary,
-    categoryBreakdown,
-    trip,
-    t,
-    formatCurrency
-  )
-
+  const topCategories = getTopCategories(categoryBreakdown, 5)
+  const dailySpend = calculateDailySpend(filteredExpenses)
+  
+  // Get top category
+  const topCategory = categoryBreakdown[0]
+  
   // Get trip countries for filter
   const tripCountries = trip.plannedCountries || trip.countries || []
+  
+  // Calculate budget status
+  const hasBudget = trip.targetBudget && trip.targetBudget > 0
+  const budgetUsed = hasBudget ? (summary.totalRealized / trip.targetBudget!) * 100 : 0
+  const budgetRemaining = hasBudget ? trip.targetBudget! - summary.totalRealized : 0
 
   const hasActiveFilters =
     filters.dateRange !== "all" ||
@@ -296,7 +295,7 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <div className="container mx-auto max-w-4xl px-4 py-6 space-y-8">
+      <div className="container mx-auto max-w-5xl px-4 py-8 space-y-10">
         {/* Empty state */}
         {expenses.length === 0 ? (
           <EmptyState
@@ -318,147 +317,147 @@ export default function ReportsPage() {
           />
         ) : (
           <>
-        {/* Summary Cards - 3 cards, aligned grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Total Realized */}
-          <Card className="border-slate-200 shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 text-slate-500 mb-2">
-                <DollarSign className="h-5 w-5" />
-                <span className="text-sm font-semibold uppercase tracking-wide">{t("reports.totalSpent")}</span>
-              </div>
-              <p className="text-3xl font-bold text-slate-900">
-                {formatCurrency(summary.totalRealized, trip.baseCurrency)}
-              </p>
-              <p className="text-sm text-slate-500 mt-1">
-                {summary.expenseCount} {t("reports.expenses")}
-              </p>
-            </CardContent>
-          </Card>
+        {/* EXECUTIVE SUMMARY - Top Section */}
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-1">{t("reports.travelSummary")}</h2>
+            <p className="text-slate-600">{t("reports.travelSummaryDesc")}</p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Total Spent */}
+            <Card className="border-slate-200 shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 text-slate-500 mb-3">
+                  <DollarSign className="h-5 w-5" />
+                  <span className="text-sm font-medium uppercase tracking-wide">{t("reports.totalSpent")}</span>
+                </div>
+                <p className="text-4xl font-bold text-slate-900 mb-1">
+                  {formatCurrency(summary.totalRealized, trip.baseCurrency)}
+                </p>
+                <p className="text-sm text-slate-500">
+                  {summary.expenseCount} {t("reports.expenses")}
+                </p>
+              </CardContent>
+            </Card>
 
-          {/* Average Per Day */}
-          <Card className="border-slate-200 shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 text-slate-500 mb-2">
-                <TrendingUp className="h-5 w-5" />
-                <span className="text-sm font-semibold uppercase tracking-wide">{t("reports.perDay")}</span>
-              </div>
-              <p className="text-3xl font-bold text-slate-900">
-                {formatCurrency(summary.averagePerDay, trip.baseCurrency)}
-              </p>
-              <p className="text-sm text-slate-500 mt-1">
-                {summary.tripDays} {t("reports.days")}
-              </p>
-            </CardContent>
-          </Card>
+            {/* Average Per Day */}
+            <Card className="border-slate-200 shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 text-slate-500 mb-3">
+                  <Calendar className="h-5 w-5" />
+                  <span className="text-sm font-medium uppercase tracking-wide">{t("reports.perDay")}</span>
+                </div>
+                <p className="text-4xl font-bold text-slate-900 mb-1">
+                  {formatCurrency(summary.averagePerDay, trip.baseCurrency)}
+                </p>
+                <p className="text-sm text-slate-500">
+                  {summary.tripDays} {t("reports.days")}
+                </p>
+              </CardContent>
+            </Card>
 
-          {/* Future Commitments */}
-          <Card className="border-amber-200 bg-amber-50/30 shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 text-amber-600 mb-2">
-                <Calendar className="h-5 w-5" />
-                <span className="text-sm font-semibold uppercase tracking-wide">{t("reports.future")}</span>
-              </div>
-              <p className="text-3xl font-bold text-amber-700">
-                {formatCurrency(summary.totalFuture, trip.baseCurrency)}
-              </p>
-              <p className="text-sm text-amber-600/80 mt-1">
-                {t("reports.futureLabel")}
-              </p>
-            </CardContent>
-          </Card>
+            {/* Top Category */}
+            {topCategory && (
+              <Card className="border-slate-200 shadow-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 text-slate-500 mb-3">
+                    <Tag className="h-5 w-5" />
+                    <span className="text-sm font-medium uppercase tracking-wide">{t("reports.topCategory")}</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-900 mb-1">
+                    {t(`categories.${topCategory.category}`)}
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {formatCurrency(topCategory.amount, trip.baseCurrency)} ({topCategory.percentage.toFixed(0)}%)
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Budget Status (only if budget exists) */}
+            {hasBudget && (
+              <Card className={`border-slate-200 shadow-sm ${budgetUsed > 90 ? 'bg-rose-50/50' : budgetUsed > 70 ? 'bg-amber-50/50' : 'bg-emerald-50/50'}`}>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 text-slate-500 mb-3">
+                    <Target className="h-5 w-5" />
+                    <span className="text-sm font-medium uppercase tracking-wide">{t("reports.budget")}</span>
+                  </div>
+                  <p className="text-4xl font-bold text-slate-900 mb-1">
+                    {budgetUsed.toFixed(0)}%
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {formatCurrency(budgetRemaining, trip.baseCurrency)} {t("reports.remaining")}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
 
-        {/* Unconverted Warning */}
-        {summary.unconvertedExpenses.length > 0 && (
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="p-4">
-              <p className="text-sm font-semibold text-amber-800 mb-2">
-                {t("reports.unconvertedWarning")}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {summary.unconvertedExpenses.map((item) => (
-                  <Badge key={item.currency} variant="outline" className="bg-white text-sm">
-                    {formatCurrency(item.amount, item.currency)} ({item.count})
-                  </Badge>
-                ))}
+        {/* MAIN HERO GRAPH - Time-based spending */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-bold text-slate-900">{t("reports.spendingOverTime")}</CardTitle>
+                <p className="text-sm text-slate-600 mt-1">{t("reports.experienceDateBased")}</p>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Smart Insights */}
-        {insights.length > 0 && (
-          <Card className="border-slate-200">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Lightbulb className="h-5 w-5 text-amber-500" />
-                {t("reports.insights.title")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {insights.map((insight, index) => (
-                <div
-                  key={index}
-                  className="flex items-start justify-between p-4 rounded-xl bg-slate-50"
-                >
-                  <div>
-                    <p className="font-semibold text-base text-slate-900">{insight.title}</p>
-                    <p className="text-sm text-slate-600 mt-0.5">{insight.description}</p>
+              {summary.totalFuture > 0 && (
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-0.5 bg-sky-500" />
+                    <span className="text-slate-600">{t("reports.past")}</span>
                   </div>
-                  {insight.value && (
-                    <Badge variant="secondary" className="shrink-0 text-sm font-semibold">
-                      {insight.value}
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-0.5 border-t-2 border-dashed border-slate-400" />
+                    <span className="text-slate-600">{t("reports.planned")}</span>
+                  </div>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Category Breakdown with Donut Chart */}
-        <Card className="border-slate-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Tag className="h-5 w-5 text-sky-500" />
-              {t("reports.byCategory")}
-            </CardTitle>
+              )}
+            </div>
           </CardHeader>
-          <CardContent>
-            {categoryBreakdown.length === 0 ? (
-              <p className="text-base text-slate-500 text-center py-6">
+          <CardContent className="pt-4">
+            {dailySpend.length === 0 ? (
+              <p className="text-base text-slate-500 text-center py-12">
                 {t("reports.noData")}
               </p>
             ) : (
-              <div className="flex flex-col md:flex-row gap-6 items-center">
-                {/* Donut Chart */}
-                <div className="relative shrink-0">
-                  <DonutChart
-                    data={categoryBreakdown.map((item) => ({
-                      category: item.category,
-                      percentage: item.percentage,
-                    }))}
-                    size={180}
-                    strokeWidth={32}
-                  />
-                  {/* Center label */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-slate-900">
-                      {categoryBreakdown.length}
-                    </span>
-                    <span className="text-xs text-slate-500 uppercase tracking-wide">
-                      {t("reports.categoriesLabel")}
-                    </span>
-                  </div>
-                </div>
+              <TimeSeriesChart
+                data={dailySpend.map((d) => ({
+                  date: d.date,
+                  amount: d.amount,
+                  isFuture: d.isFuture,
+                }))}
+                height={280}
+                currency={trip.baseCurrency}
+                formatCurrency={formatCurrency}
+              />
+            )}
+          </CardContent>
+        </Card>
 
-                {/* Category List */}
-                <div className="flex-1 w-full space-y-3">
-                  {categoryBreakdown.map((item) => {
+        {/* VISUAL BREAKDOWNS - Supporting charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Category Breakdown */}
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
+                <Tag className="h-5 w-5 text-sky-500" />
+                {t("reports.byCategory")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {topCategories.length === 0 ? (
+                <p className="text-base text-slate-500 text-center py-8">
+                  {t("reports.noData")}
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {topCategories.map((item) => {
                     const colors = getCategoryColors(item.category)
                     return (
-                      <div key={item.category} className="space-y-1.5">
+                      <div key={item.category} className="space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div
@@ -469,7 +468,7 @@ export default function ReportsPage() {
                                   CATEGORY_CHART_COLORS.Other,
                               }}
                             />
-                            <span className={`font-semibold text-base ${colors.text}`}>
+                            <span className="font-semibold text-base text-slate-700">
                               {t(`categories.${item.category}`)}
                             </span>
                           </div>
@@ -477,8 +476,8 @@ export default function ReportsPage() {
                             {formatCurrency(item.amount, trip.baseCurrency)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all duration-500"
                               style={{
@@ -489,7 +488,7 @@ export default function ReportsPage() {
                               }}
                             />
                           </div>
-                          <span className="text-sm font-medium text-slate-500 w-12 text-end">
+                          <span className="text-sm font-semibold text-slate-600 w-12 text-end">
                             {item.percentage.toFixed(0)}%
                           </span>
                         </div>
@@ -497,210 +496,144 @@ export default function ReportsPage() {
                     )
                   })}
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
 
-        {/* By Country */}
-        <Card className="border-slate-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Globe className="h-5 w-5 text-emerald-500" />
-              {t("reports.byCountry")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {countryBreakdown.length === 0 ? (
-              <p className="text-base text-slate-500 text-center py-6">
-                {t("reports.noData")}
-              </p>
-            ) : (
-              countryBreakdown.map((item) => (
-                <div key={item.country} className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-base text-slate-700">
-                      {getCountryName(item.country, locale)}
-                    </span>
-                    <span className="text-base text-slate-900 font-bold">
-                      {formatCurrency(item.amount, trip.baseCurrency)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-400 rounded-full transition-all duration-500"
-                        style={{ width: `${item.percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-slate-500 w-12 text-end">
-                      {item.percentage.toFixed(0)}%
-                    </span>
-                  </div>
+          {/* Top Days */}
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
+                <TrendingUp className="h-5 w-5 text-emerald-500" />
+                {t("reports.topDays")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {dailySpend.length === 0 ? (
+                <p className="text-base text-slate-500 text-center py-8">
+                  {t("reports.noData")}
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {dailySpend
+                    .filter((d) => !d.isFuture)
+                    .sort((a, b) => b.amount - a.amount)
+                    .slice(0, 5)
+                    .map((day, index) => (
+                      <div key={day.date} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                              <span className="text-sm font-bold text-emerald-700">#{index + 1}</span>
+                            </div>
+                            <span className="font-semibold text-base text-slate-700">
+                              {new Date(day.date).toLocaleDateString(locale, {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </span>
+                          </div>
+                          <span className="text-base text-slate-900 font-bold">
+                            {formatCurrency(day.amount, trip.baseCurrency)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                              style={{
+                                width: `${(day.amount / dailySpend[0].amount) * 100}%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-sm text-slate-500 w-12 text-end">
+                            {day.count} {day.count === 1 ? t("reports.expense") : t("reports.expenses")}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                 </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* By Currency */}
-        <Card className="border-slate-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <DollarSign className="h-5 w-5 text-violet-500" />
-              {t("reports.byCurrency")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {currencyBreakdown.length === 0 ? (
-              <p className="text-base text-slate-500 text-center py-6">
-                {t("reports.noData")}
-              </p>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {currencyBreakdown.map((item) => (
-                  <div
-                    key={item.currency}
-                    className="p-4 rounded-xl bg-slate-50 border border-slate-100"
-                  >
-                    <p className="text-xl font-bold text-slate-900">
-                      {formatCurrency(item.amount, item.currency)}
-                    </p>
-                    <p className="text-sm font-medium text-slate-500 mt-1">
-                      {item.count} {t("reports.expenses")}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-      {/* Filters Modal (Centered Popup) */}
-      <Modal open={showFilters} onOpenChange={setShowFilters} size="lg">
-        <ModalHeader>
-          <ModalTitle className="text-lg">{t("reports.filtersTitle")}</ModalTitle>
-          <ModalClose onClick={() => setShowFilters(false)} />
-        </ModalHeader>
-        <ModalContent className="space-y-5 max-h-[60vh] overflow-y-auto">
-          {/* Date Range */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">{t("reports.dateRange")}</Label>
-            <Select
-              value={filters.dateRange}
-              onChange={(e) =>
-                setFilters({ ...filters, dateRange: e.target.value as ReportFilters["dateRange"] })
-              }
-              className="text-base"
-            >
-              <option value="all">{t("reports.allTime")}</option>
-              <option value="week">{t("reports.thisWeek")}</option>
-              <option value="custom">{t("reports.custom")}</option>
-            </Select>
-          </div>
-
-          {filters.dateRange === "custom" && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">{t("reports.startDate")}</Label>
-                <Input
-                  type="date"
-                  value={filters.startDate || ""}
-                  onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                  className="text-base"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">{t("reports.endDate")}</Label>
-                <Input
-                  type="date"
-                  value={filters.endDate || ""}
-                  onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                  className="text-base"
-                />
-              </div>
+        {/* Filters Modal (Centered Popup) */}
+        <Modal open={showFilters} onOpenChange={setShowFilters} size="lg">
+          <ModalHeader>
+            <ModalTitle className="text-lg">{t("reports.filtersTitle")}</ModalTitle>
+            <ModalClose onClick={() => setShowFilters(false)} />
+          </ModalHeader>
+          <ModalContent className="space-y-5 max-h-[60vh] overflow-y-auto">
+            {/* Date Range */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">{t("reports.dateRange")}</Label>
+              <Select
+                value={filters.dateRange}
+                onChange={(e) =>
+                  setFilters({ ...filters, dateRange: e.target.value as ReportFilters["dateRange"] })
+                }
+                className="text-base"
+              >
+                <option value="all">{t("reports.allTime")}</option>
+                <option value="week">{t("reports.thisWeek")}</option>
+                <option value="custom">{t("reports.custom")}</option>
+              </Select>
             </div>
-          )}
 
-          {/* Include Toggles */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">{t("reports.include")}</Label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.includeRealized}
-                onChange={(e) => setFilters({ ...filters, includeRealized: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-300"
-              />
-              <span className="text-base">{t("reports.includeRealized")}</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.includeFuture}
-                onChange={(e) => setFilters({ ...filters, includeFuture: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-300"
-              />
-              <span className="text-base">{t("reports.includeFuture")}</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.showOnlyUnconverted}
-                onChange={(e) => setFilters({ ...filters, showOnlyUnconverted: e.target.checked })}
-                className="h-5 w-5 rounded border-slate-300"
-              />
-              <span className="text-base">{t("reports.showUnconverted")}</span>
-            </label>
-          </div>
+            {filters.dateRange === "custom" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">{t("reports.startDate")}</Label>
+                  <Input
+                    type="date"
+                    value={filters.startDate || ""}
+                    onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                    className="text-base"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold">{t("reports.endDate")}</Label>
+                  <Input
+                    type="date"
+                    value={filters.endDate || ""}
+                    onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                    className="text-base"
+                  />
+                </div>
+              </div>
+            )}
 
-          {/* Country Filter */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">{t("reports.country")}</Label>
-            <Select
-              value={filters.country || ""}
-              onChange={(e) => setFilters({ ...filters, country: e.target.value })}
-              className="text-base"
-            >
-              <option value="">{t("reports.allCountries")}</option>
-              {tripCountries.map((code) => (
-                <option key={code} value={code}>
-                  {getCountryName(code, locale)}
-                </option>
-              ))}
-            </Select>
-          </div>
+            {/* Category Filter */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">{t("reports.category")}</Label>
+              <Select
+                value={filters.category || ""}
+                onChange={(e) =>
+                  setFilters({ ...filters, category: e.target.value as ExpenseCategory | "" })
+                }
+                className="text-base"
+              >
+                <option value="">{t("reports.allCategories")}</option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {t(`categories.${cat}`)}
+                  </option>
+                ))}
+              </Select>
+            </div>
 
-          {/* Category Filter */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold">{t("reports.category")}</Label>
-            <Select
-              value={filters.category || ""}
-              onChange={(e) =>
-                setFilters({ ...filters, category: e.target.value as ExpenseCategory | "" })
-              }
-              className="text-base"
-            >
-              <option value="">{t("reports.allCategories")}</option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {t(`categories.${cat}`)}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-3 border-t border-slate-100">
-            <Button variant="outline" onClick={clearFilters} className="flex-1 text-base py-2.5">
-              {t("reports.clearFilters")}
-            </Button>
-            <Button onClick={() => setShowFilters(false)} className="flex-1 text-base py-2.5">
-              {t("reports.apply")}
-            </Button>
-          </div>
-        </ModalContent>
-      </Modal>
+            {/* Actions */}
+            <div className="flex gap-3 pt-3 border-t border-slate-100">
+              <Button variant="outline" onClick={clearFilters} className="flex-1 text-base py-2.5">
+                {t("reports.clearFilters")}
+              </Button>
+              <Button onClick={() => setShowFilters(false)} className="flex-1 text-base py-2.5">
+                {t("reports.apply")}
+              </Button>
+            </div>
+          </ModalContent>
+        </Modal>
 
       </>
         )}
