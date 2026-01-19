@@ -517,6 +517,34 @@
     "privacySharingDesc": "Share individual trips via invite links (coming soon)",
     "privacyExport": "Export Data",
     "privacyExportDesc": "Download your data (coming soon)"
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "subtitle": "System statistics",
+    "updatedAgo": "Updated {seconds}s ago",
+    "users": "Users",
+    "trips": "Trips",
+    "expenses": "Expenses",
+    "totalUsers": "Total Users",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "last7Days": "Last 7 Days",
+    "newUsers": "New users",
+    "totalTrips": "Total Trips",
+    "newTrips": "New trips",
+    "totalExpenses": "Total Expenses",
+    "newExpenses": "New expenses",
+    "userSignupTrend": "User Signup Trend",
+    "last30Days": "Last 30 days",
+    "signupsPerDay": "Signups per day",
+    "noSignups": "No signups in this period",
+    "allUsers": "All Users",
+    "name": "Name",
+    "email": "Email",
+    "plan": "Plan",
+    "planFree": "Free",
+    "planTraveler": "Traveler",
+    "planPro": "PRO"
   }
 }
 

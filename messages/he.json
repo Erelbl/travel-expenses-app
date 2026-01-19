@@ -517,6 +517,34 @@
     "privacySharingDesc": "שתף טיולים בודדים באמצעות קישורי הזמנה (בקרוב)",
     "privacyExport": "ייצוא נתונים",
     "privacyExportDesc": "הורד את הנתונים שלך (בקרוב)"
+  },
+  "admin": {
+    "title": "לוח בקרה ניהולי",
+    "subtitle": "סטטיסטיקות מערכת",
+    "updatedAgo": "עודכן לפני {seconds} שניות",
+    "users": "משתמשים",
+    "trips": "טיולים",
+    "expenses": "הוצאות",
+    "totalUsers": "סה״כ משתמשים",
+    "verified": "מאומתים",
+    "unverified": "לא מאומתים",
+    "last7Days": "7 ימים אחרונים",
+    "newUsers": "משתמשים חדשים",
+    "totalTrips": "סה״כ טיולים",
+    "newTrips": "טיולים חדשים",
+    "totalExpenses": "סה״כ הוצאות",
+    "newExpenses": "הוצאות חדשות",
+    "userSignupTrend": "מגמת הרשמות משתמשים",
+    "last30Days": "30 ימים אחרונים",
+    "signupsPerDay": "הרשמות ליום",
+    "noSignups": "אין הרשמות בתקופה זו",
+    "allUsers": "כל המשתמשים",
+    "name": "שם",
+    "email": "אימייל",
+    "plan": "תוכנית",
+    "planFree": "חינמית",
+    "planTraveler": "נוסע",
+    "planPro": "PRO"
   }
 }
 
