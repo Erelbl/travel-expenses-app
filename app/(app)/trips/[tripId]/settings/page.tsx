@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, XCircle, Save, RotateCcw, RefreshCcw } from "lucide-react"
+import { ArrowLeft, XCircle, Save, RotateCcw, RefreshCcw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,7 @@ import { Trip } from "@/lib/schemas/trip.schema"
 import { Expense } from "@/lib/schemas/expense.schema"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { canManageTrip } from "@/lib/utils/permissions"
-import { updateTripBasics, updateBudget, updateInsightsProfile, closeTrip, reopenTrip } from "../actions"
+import { updateTripBasics, updateBudget, updateInsightsProfile, closeTrip, reopenTrip, deleteTrip } from "../actions"
 import { Badge } from "@/components/ui/badge"
 import { getCountryName, COUNTRIES_DATA } from "@/lib/utils/countries.data"
 import { currencyForCountry } from "@/lib/utils/countryCurrency"
@@ -206,6 +206,27 @@ export default function TripSettingsPage() {
     } catch (error) {
       console.error("Failed to reopen trip:", error)
       toast.error(t('settings.reopenTripError'))
+    }
+  }
+
+  async function handleDeleteTrip() {
+    if (!trip) return
+    
+    const confirmed = window.confirm(t('settings.deleteTripConfirm'))
+    if (!confirmed) return
+
+    try {
+      await deleteTrip(tripId)
+      toast.success(t('settings.deleteTripSuccess'))
+      router.push('/trips')
+    } catch (error) {
+      console.error("Failed to delete trip:", error)
+      const errorMessage = (error as Error).message
+      if (errorMessage.includes('owner')) {
+        toast.error(t('settings.deleteTripPermissionError'))
+      } else {
+        toast.error(t('settings.deleteTripError'))
+      }
     }
   }
 
@@ -675,6 +696,37 @@ export default function TripSettingsPage() {
                   >
                     <XCircle className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                     {t('settings.closeTrip')}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Danger Zone Section */}
+        {canManageTrip(trip) && (
+          <Card className="border-red-200 bg-red-50 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-semibold text-red-900">
+                {t('settings.dangerZone')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-red-900 mb-1">
+                    {t('settings.deleteTrip')}
+                  </h3>
+                  <p className="text-sm text-red-700 mb-3">
+                    {t('settings.deleteTripDesc')}
+                  </p>
+                  <Button
+                    onClick={handleDeleteTrip}
+                    variant="outline"
+                    className="border-red-300 text-red-700 hover:bg-red-100 hover:border-red-400"
+                  >
+                    <Trash2 className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                    {t('settings.deleteTrip')}
                   </Button>
                 </div>
               </div>

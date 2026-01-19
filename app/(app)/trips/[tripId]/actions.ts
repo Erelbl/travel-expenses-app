@@ -292,3 +292,35 @@ export async function reopenTrip(tripId: string) {
   revalidatePath(`/trips`)
 }
 
+export async function deleteTrip(tripId: string) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  // Verify user is owner
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    select: {
+      ownerId: true,
+    },
+  })
+
+  if (!trip) {
+    throw new Error("Trip not found")
+  }
+
+  const isOwner = trip.ownerId === session.user.id
+
+  if (!isOwner) {
+    throw new Error("Only the trip owner can delete this trip")
+  }
+
+  // Delete trip (cascades to expenses, members, invitations)
+  await prisma.trip.delete({
+    where: { id: tripId },
+  })
+
+  revalidatePath(`/trips`)
+}
+

@@ -221,6 +221,12 @@
     "reopenTripSuccess": "Trip reopened successfully",
     "reopenTripError": "Failed to reopen trip",
     "tripClosed": "Trip Closed",
+    "deleteTrip": "Delete Trip",
+    "deleteTripDesc": "Permanently delete this trip and all its data. This action cannot be undone.",
+    "deleteTripConfirm": "Are you sure you want to delete this trip? This will permanently delete the trip and all expenses, members, and invitations. This action cannot be undone.",
+    "deleteTripSuccess": "Trip deleted successfully",
+    "deleteTripError": "Failed to delete trip",
+    "deleteTripPermissionError": "Only the trip owner can delete this trip",
     "tripClosedDesc": "This trip has been closed and is read-only for expenses"
   },
   "reports": {
