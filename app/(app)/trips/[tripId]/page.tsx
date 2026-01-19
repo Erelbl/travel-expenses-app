@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X, Lightbulb, Settings } from "lucide-react"
+import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X, Lightbulb, Settings, ArrowUpDown } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { FloatingAddButton } from "@/components/floating-add-button"
 import { QuickAddExpense } from "@/components/quick-add-expense"
@@ -16,9 +16,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatCardSkeleton, ExpenseRowSkeleton } from "@/components/ui/skeleton"
 import { ErrorState } from "@/components/ui/error-state"
 import { EmptyState } from "@/components/ui/empty-state"
+import { Select } from "@/components/ui/select"
 import { tripsRepository, expensesRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
-import { Expense } from "@/lib/schemas/expense.schema"
+import { Expense, ExpenseCategory } from "@/lib/schemas/expense.schema"
 import { formatCurrency } from "@/lib/utils/currency"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { currencyForCountry } from "@/lib/utils/countryCurrency"
@@ -34,6 +35,10 @@ import { generateInsights } from "@/lib/server/insights"
 import { generateBannerInsight } from "@/lib/server/banner-insights"
 
 const MAX_RECENT_EXPENSES = 15
+
+const CATEGORIES: ExpenseCategory[] = [
+  "Food", "Transport", "Flights", "Lodging", "Activities", "Shopping", "Health", "Other",
+]
 
 export default function TripHomePage() {
   const { t, locale } = useI18n()
@@ -57,6 +62,11 @@ export default function TripHomePage() {
   const [insightDismissed, setInsightDismissed] = useState(false)
   // Banner insight dismissal (new system)
   const [bannerDismissed, setBannerDismissed] = useState(false)
+  
+  // Filters and sorting
+  const [filterCategory, setFilterCategory] = useState<ExpenseCategory | "">("")
+  const [filterCurrency, setFilterCurrency] = useState<string>("")
+  const [sortDirection, setSortDirection] = useState<"newest" | "oldest">("newest")
 
   useEffect(() => {
     loadData()
@@ -188,19 +198,42 @@ export default function TripHomePage() {
   const currentUser = getCurrentUserMember(trip)
   const isSharedTrip = trip.members.length > 1
 
-  // Filter expenses by current user if enabled
-  const filteredExpenses = showOnlyMine && currentUser
-    ? expenses.filter((e) => e.createdByMemberId === currentUser.id)
-    : expenses
+  // Apply all filters
+  let filteredExpenses = expenses
 
-  // Sort expenses by date (most recent first) for recent list
+  // Filter by current user if enabled
+  if (showOnlyMine && currentUser) {
+    filteredExpenses = filteredExpenses.filter((e) => e.createdByMemberId === currentUser.id)
+  }
+
+  // Filter by category
+  if (filterCategory) {
+    filteredExpenses = filteredExpenses.filter((e) => e.category === filterCategory)
+  }
+
+  // Filter by currency
+  if (filterCurrency) {
+    filteredExpenses = filteredExpenses.filter((e) => e.currency === filterCurrency)
+  }
+
+  // Get unique currencies from all expenses for filter dropdown
+  const availableCurrencies = Array.from(new Set(expenses.map((e) => e.currency))).sort()
+
+  // Apply sorting and limit for recent list
   const recentExpenses = [...filteredExpenses]
     .sort((a, b) => {
-      // Sort by date descending, then by createdAt descending
-      if (a.date !== b.date) return b.date.localeCompare(a.date)
-      return b.createdAt - a.createdAt
+      const dateCompare = sortDirection === "newest" 
+        ? b.date.localeCompare(a.date) 
+        : a.date.localeCompare(b.date)
+      if (a.date !== b.date) return dateCompare
+      return sortDirection === "newest" 
+        ? b.createdAt - a.createdAt 
+        : a.createdAt - b.createdAt
     })
     .slice(0, MAX_RECENT_EXPENSES)
+  
+  // Check if filters are active
+  const hasActiveFilters = filterCategory !== "" || filterCurrency !== ""
 
   return (
     <div className="min-h-screen pb-20 md:pb-6 bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60" dir={isRTL ? "rtl" : "ltr"}>
@@ -542,7 +575,7 @@ export default function TripHomePage() {
         >
           <Card className="border-slate-200/60 overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.08)] bg-white/80 backdrop-blur-sm">
           <CardHeader className="py-4 px-5 border-b border-slate-100">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <CardTitle className="text-lg font-semibold">
                 {t("home.recentExpenses")}
               </CardTitle>
@@ -566,6 +599,66 @@ export default function TripHomePage() {
                 </span>
               </div>
             </div>
+            
+            {/* Filter and Sort Controls */}
+            {expenses.length > 0 && (
+              <div className="flex flex-col md:flex-row gap-2">
+                {/* Category Filter */}
+                <Select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value as ExpenseCategory | "")}
+                  className="flex-1 text-sm"
+                >
+                  <option value="">{t("filters.allCategories")}</option>
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {t(`categories.${cat}`)}
+                    </option>
+                  ))}
+                </Select>
+
+                {/* Currency Filter */}
+                <Select
+                  value={filterCurrency}
+                  onChange={(e) => setFilterCurrency(e.target.value)}
+                  className="flex-1 text-sm"
+                >
+                  <option value="">{t("filters.allCurrencies")}</option>
+                  {availableCurrencies.map((curr) => (
+                    <option key={curr} value={curr}>
+                      {curr}
+                    </option>
+                  ))}
+                </Select>
+
+                {/* Sort Direction */}
+                <button
+                  onClick={() => setSortDirection(sortDirection === "newest" ? "oldest" : "newest")}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-medium text-slate-700 transition-colors whitespace-nowrap"
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                  <span className="hidden md:inline">
+                    {sortDirection === "newest" ? t("home.newestFirst") : t("home.oldestFirst")}
+                  </span>
+                  <span className="md:hidden">
+                    {sortDirection === "newest" ? t("home.newest") : t("home.oldest")}
+                  </span>
+                </button>
+
+                {/* Clear Filters Button */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={() => {
+                      setFilterCategory("")
+                      setFilterCurrency("")
+                    }}
+                    className="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-medium text-slate-600 transition-colors whitespace-nowrap"
+                  >
+                    {t("filters.clear")}
+                  </button>
+                )}
+              </div>
+            )}
           </CardHeader>
           <CardContent className="p-0">
             {expenses.length === 0 ? (

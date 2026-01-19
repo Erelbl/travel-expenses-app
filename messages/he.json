@@ -287,7 +287,11 @@
     "currentLocation": "מיקום נוכחי",
     "selectLocation": "בחר מיקום...",
     "locationUpdated": "המיקום עודכן",
-    "locationCleared": "המיקום נוקה"
+    "locationCleared": "המיקום נוקה",
+    "newestFirst": "החדש ביותר תחילה",
+    "oldestFirst": "הישן ביותר תחילה",
+    "newest": "החדש",
+    "oldest": "הישן"
   },
   "bannerInsights": {
     "budgetHighPaceHighCost": "מוציאים {actual} {currency} ליום ביעד יקר יחסית — שקלו אם זה מתאים ליעד של {target} {currency} ליום",

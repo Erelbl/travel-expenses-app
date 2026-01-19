@@ -287,7 +287,11 @@
     "currentLocation": "Current location",
     "selectLocation": "Select location...",
     "locationUpdated": "Location updated",
-    "locationCleared": "Location cleared"
+    "locationCleared": "Location cleared",
+    "newestFirst": "Newest First",
+    "oldestFirst": "Oldest First",
+    "newest": "Newest",
+    "oldest": "Oldest"
   },
   "bannerInsights": {
     "budgetHighPaceHighCost": "Spending {actual} {currency}/day in a relatively expensive destination — consider if this aligns with your {target} {currency}/day target",
