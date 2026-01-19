@@ -519,10 +519,8 @@ export function LandingPage() {
               <span className="font-bold text-lg">TravelWise</span>
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm">
-              <a href="#" className="hover:text-white transition-colors">About</a>
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-white transition-colors">Accessibility</a>
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
             </div>
           </div>
           <div className="text-center mt-8 text-sm text-slate-500">

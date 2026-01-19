@@ -439,6 +439,21 @@ export function SettingsClient({ isAdmin }: SettingsClientProps) {
               </div>
             </CardContent>
           </Card>
+
+          <div className="text-center space-y-2 pb-4">
+            <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-500">
+              <Link href="/privacy" className="hover:text-slate-900 transition-colors">
+                Privacy Policy
+              </Link>
+              <span className="text-slate-300">•</span>
+              <Link href="/terms" className="hover:text-slate-900 transition-colors">
+                Terms of Service
+              </Link>
+            </div>
+            <p className="text-xs text-slate-400">
+              © {new Date().getFullYear()} TravelWise. All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
 
