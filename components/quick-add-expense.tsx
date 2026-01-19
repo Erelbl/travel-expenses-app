@@ -46,6 +46,7 @@ export function QuickAddExpense({
   const isRTL = locale === 'he'
   
   const [loading, setLoading] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   const [lastUsedCurrency, setLastUsedCurrency] = useState<string | null>(null)
   const [manualRate, setManualRate] = useState("")
   const [showManualRate, setShowManualRate] = useState(false)
@@ -118,6 +119,7 @@ export function QuickAddExpense({
     }
 
     setLoading(true)
+    setSaveError(false)
 
     try {
       // Get current user for createdByMemberId
@@ -154,14 +156,7 @@ export function QuickAddExpense({
       }
     } catch (error) {
       console.error("Failed to create expense:", error)
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      
-      // Show specific error if FX conversion failed
-      if (message.includes('Currency conversion failed')) {
-        toast.error(t('addExpense.fxError') || 'Currency conversion failed. Please try again.')
-      } else {
-        toast.error(t('addExpense.error'))
-      }
+      setSaveError(true)
     } finally {
       setLoading(false)
     }
@@ -176,6 +171,18 @@ export function QuickAddExpense({
         </ModalHeader>
         
         <ModalContent className="space-y-6 pb-6">
+          {/* Save Error Banner */}
+          {saveError && (
+            <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">
+              <p className="text-sm font-medium text-rose-900 mb-1">
+                {t('common.saveFailed')}
+              </p>
+              <p className="text-xs text-rose-700">
+                {t('common.saveFailedMessage')}
+              </p>
+            </div>
+          )}
+          
           {/* What did I spend on? */}
           <div className="space-y-2">
             <Label htmlFor="qa-merchant" className="font-semibold text-slate-800">

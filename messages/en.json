@@ -430,7 +430,11 @@
     "retry": "Try Again",
     "errorTitle": "Something went wrong",
     "errorMessage": "We couldn't load the data. Please try again.",
-    "loadingData": "Loading data..."
+    "loadingData": "Loading data...",
+    "offline": "You're offline",
+    "offlineMessage": "Some actions may not save until you're back online",
+    "saveFailed": "Couldn't save your changes",
+    "saveFailedMessage": "Your information is safe. Try saving again when your connection is better."
   },
   "batchAdd": {
     "title": "Batch Add",

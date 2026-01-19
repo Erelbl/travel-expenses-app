@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
+import { OfflineBanner } from "@/components/OfflineBanner"
 import { Button } from "@/components/ui/button"
 import { PrimaryButton } from "@/components/ui/primary-button"
 import { Input } from "@/components/ui/input"
@@ -43,6 +44,7 @@ export default function EditExpensePage() {
   const [trip, setTrip] = useState<Trip | null>(null)
   const [originalExpense, setOriginalExpense] = useState<Expense | null>(null)
   const [loading, setLoading] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
   
   // FX Rate state
@@ -231,6 +233,7 @@ export default function EditExpensePage() {
     }
 
     setLoading(true)
+    setSaveError(false)
 
     try {
       const nights = formData.numberOfNights ? parseInt(formData.numberOfNights) : undefined
@@ -289,7 +292,7 @@ export default function EditExpensePage() {
       router.push(`/trips/${tripId}`)
     } catch (error) {
       console.error("Failed to update expense:", error)
-      toast.error(t('editExpense.error'))
+      setSaveError(true)
     } finally {
       setLoading(false)
     }
@@ -305,6 +308,9 @@ export default function EditExpensePage() {
 
   return (
     <div className="min-h-screen pb-32 md:pb-8" dir={locale === 'he' ? 'rtl' : 'ltr'}>
+      {/* Offline Banner */}
+      <OfflineBanner />
+      
       {/* Mobile Header */}
       <div className="sticky top-0 z-20 flex items-center gap-4 glass-effect border-b border-white/20 p-4 shadow-lg md:hidden">
         <Button
@@ -332,6 +338,18 @@ export default function EditExpensePage() {
       </div>
 
       <div className="container mx-auto max-w-2xl px-4 py-8">
+        {/* Save Error Banner */}
+        {saveError && (
+          <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 mb-6">
+            <p className="text-sm font-medium text-rose-900 mb-1">
+              {t('common.saveFailed')}
+            </p>
+            <p className="text-xs text-rose-700">
+              {t('common.saveFailedMessage')}
+            </p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* 1. WHAT WAS THIS FOR? */}
           <div className="space-y-2">

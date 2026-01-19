@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Filter, TrendingUp, Calendar, DollarSign, BarChart3, Plus, Target, Tag } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
+import { OfflineBanner } from "@/components/OfflineBanner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -326,6 +327,9 @@ export default function ReportsPage() {
 
   return (
     <div className="min-h-screen pb-20 md:pb-6" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Offline Banner */}
+      <OfflineBanner />
+      
       {/* Header */}
       <div className="sticky top-0 z-10 border-b bg-white">
         <div className="container mx-auto max-w-4xl">
