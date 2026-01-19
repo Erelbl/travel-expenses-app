@@ -448,8 +448,9 @@
     "error": "Failed to add expenses. Please try again."
   },
   "appDashboard": {
-    "welcomeBack": "Welcome back, {name}",
-    "subtitle": "Your travel adventures at a glance",
+    "welcome": "Welcome",
+    "welcomeBack": "Welcome, {name}",
+    "subtitle": "",
     "createTrip": "Create New Trip",
     "noTripsYet": "No trips yet",
     "noTripsMessage": "Start planning your next adventure by creating your first trip",

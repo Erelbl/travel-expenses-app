@@ -448,8 +448,9 @@
     "error": "הוספת ההוצאות נכשלה. נסה שוב."
   },
   "appDashboard": {
-    "welcomeBack": "ברוך שובך, {name}",
-    "subtitle": "הרפתקאות הטיול שלך במבט חטוף",
+    "welcome": "ברוך הבא",
+    "welcomeBack": "ברוך הבא, {name}",
+    "subtitle": "",
     "createTrip": "צור טיול חדש",
     "noTripsYet": "אין טיולים עדיין",
     "noTripsMessage": "התחל לתכנן את ההרפתקה הבאה שלך על ידי יצירת הטיול הראשון",

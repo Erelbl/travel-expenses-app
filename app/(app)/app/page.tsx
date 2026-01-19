@@ -63,6 +63,6 @@ export default async function AppDashboardPage() {
 
   const trips = await getTripsWithStats(session.user.id)
 
-  return <DashboardClient trips={trips} userName={session.user.name || "Traveler"} />
+  return <DashboardClient trips={trips} userName={session.user.name || null} />
 }
 

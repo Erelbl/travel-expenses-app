@@ -23,7 +23,7 @@ interface TripWithStats {
 
 interface DashboardClientProps {
   trips: TripWithStats[]
-  userName: string
+  userName: string | null
 }
 
 export function DashboardClient({ trips, userName }: DashboardClientProps) {
@@ -48,11 +48,11 @@ export function DashboardClient({ trips, userName }: DashboardClientProps) {
             transition={{ delay: 0.1, duration: 0.25 }}
           >
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              {t('appDashboard.welcomeBack', { name: userName })}
+              {userName ? t('appDashboard.welcomeBack', { name: userName }) : t('appDashboard.welcome')}
             </h1>
-            <p className="text-sky-50/90 text-base md:text-lg mb-6">
-              {t('appDashboard.subtitle')}
-            </p>
+            <div className="text-sky-50/90 text-base md:text-lg mb-6">
+              {/* Subtitle removed per UX requirements */}
+            </div>
             <Link href="/trips/new">
               <Button
                 size="lg"
