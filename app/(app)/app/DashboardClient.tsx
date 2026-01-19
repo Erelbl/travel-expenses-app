@@ -31,32 +31,32 @@ export function DashboardClient({ trips, userName }: DashboardClientProps) {
   const isRTL = locale === 'he'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50/30 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60">
       {/* Hero Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="relative overflow-hidden"
+        transition={{ duration: 0.25 }}
+        className="relative overflow-hidden bg-gradient-to-br from-sky-400/90 via-blue-500/90 to-indigo-500/90"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-400/10 via-blue-500/5 to-transparent" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptLTEyIDBjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6bTAgMTJjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6bTEyIDBjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMC41IiBvcGFjaXR5PSIwLjEiLz48L2c+PC9zdmc+')] opacity-20" />
         
         <div className="container mx-auto px-4 py-12 md:py-16 relative">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ delay: 0.1, duration: 0.25 }}
           >
-            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
               {t('appDashboard.welcomeBack', { name: userName })}
             </h1>
-            <p className="text-slate-600 text-base md:text-lg mb-6">
+            <p className="text-sky-50/90 text-base md:text-lg mb-6">
               {t('appDashboard.subtitle')}
             </p>
             <Link href="/trips/new">
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-600 hover:to-blue-700 shadow-sm hover:shadow-md transition-all"
+                className="bg-white text-sky-600 hover:bg-sky-50 shadow-lg hover:shadow-xl transition-all"
               >
                 <Package className={`${isRTL ? 'ml-2' : 'mr-2'} h-5 w-5`} />
                 {t('appDashboard.createTrip')}
@@ -72,7 +72,7 @@ export function DashboardClient({ trips, userName }: DashboardClientProps) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ delay: 0.15, duration: 0.25 }}
           >
             <EmptyState
               title={t('appDashboard.noTripsYet')}
@@ -95,15 +95,15 @@ export function DashboardClient({ trips, userName }: DashboardClientProps) {
         ) : (
           <>
             <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="text-2xl font-extrabold text-slate-900 mb-6"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15, duration: 0.2 }}
+              className="text-2xl font-bold text-slate-900 mb-6"
             >
               {t('appDashboard.yourTrips')}
             </motion.h2>
             
-            <div className="grid gap-5 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
               {trips.map((trip, index) => (
                 <TripDashboardCard key={trip.id} trip={trip} index={index} />
               ))}
@@ -126,15 +126,15 @@ function TripDashboardCard({ trip, index }: { trip: TripWithStats; index: number
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + index * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ delay: 0.2 + index * 0.05, duration: 0.25 }}
     >
       <Link href={`/trips/${trip.id}`} className="block group">
-        <div className="bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-2xl p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_16px_rgba(15,23,42,0.08)] hover:border-sky-200/80 hover:-translate-y-1 transition-all duration-300 ease-out">
+        <div className="bg-white/95 backdrop-blur-sm border border-slate-200/50 rounded-2xl p-6 shadow-[0_2px_8px_rgba(15,23,42,0.06)] hover:shadow-[0_4px_16px_rgba(15,23,42,0.1)] hover:border-sky-300/40 hover:-translate-y-0.5 transition-all duration-200">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">
-            <h3 className="text-lg font-bold text-slate-900 group-hover:text-sky-600 transition-colors line-clamp-1">
+            <h3 className="text-lg font-semibold text-slate-900 group-hover:text-sky-600 transition-colors line-clamp-1">
               {trip.name}
             </h3>
             {trip.isClosed && (
@@ -146,7 +146,7 @@ function TripDashboardCard({ trip, index }: { trip: TripWithStats; index: number
 
           {/* Date Range */}
           {trip.startDate && (
-            <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
+            <div className="flex items-center gap-2 text-sm text-slate-600 mb-4">
               <Calendar className="h-4 w-4 text-slate-400 shrink-0" />
               <span>
                 {formatDate(trip.startDate)}
@@ -158,17 +158,17 @@ function TripDashboardCard({ trip, index }: { trip: TripWithStats; index: number
           {/* Stats */}
           <div className="space-y-3 mb-5">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-500">{t('appDashboard.totalSpend')}</span>
-              <span className="font-bold text-slate-900">
+              <span className="text-slate-600">{t('appDashboard.totalSpend')}</span>
+              <span className="font-semibold text-slate-900">
                 {trip.baseCurrency} {trip.totalSpend.toFixed(2)}
               </span>
             </div>
 
             {trip.targetBudget && budgetProgress !== null && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-slate-500">
+                <div className="flex items-center justify-between text-xs text-slate-600">
                   <span>{t('appDashboard.budget')}</span>
-                  <span className={isOverBudget ? "text-amber-600 font-semibold" : "font-medium"}>
+                  <span className={isOverBudget ? "text-amber-600 font-medium" : ""}>
                     {trip.totalSpend.toFixed(0)} of {trip.targetBudget.toFixed(0)}
                   </span>
                 </div>
@@ -176,13 +176,13 @@ function TripDashboardCard({ trip, index }: { trip: TripWithStats; index: number
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${budgetProgress}%` }}
-                    transition={{ delay: 0.3 + index * 0.04, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ delay: 0.3 + index * 0.05, duration: 0.5 }}
                     className={`h-full rounded-full ${
                       isOverBudget
                         ? "bg-amber-500"
                         : budgetProgress > 80
                         ? "bg-orange-500"
-                        : "bg-gradient-to-r from-sky-500 to-blue-500"
+                        : "bg-sky-500"
                     }`}
                   />
                 </div>
@@ -196,9 +196,9 @@ function TripDashboardCard({ trip, index }: { trip: TripWithStats; index: number
           </div>
 
           {/* Action */}
-          <div className={`flex items-center ${isRTL ? 'justify-start' : 'justify-end'} text-sm font-semibold text-sky-600 group-hover:text-sky-700`}>
+          <div className={`flex items-center ${isRTL ? 'justify-start' : 'justify-end'} text-sm font-medium text-sky-600 group-hover:text-sky-700`}>
             <span>{t('appDashboard.openTrip')}</span>
-            <ArrowRight className={`${isRTL ? 'mr-1 group-hover:-translate-x-1' : 'ml-1 group-hover:translate-x-1'} h-4 w-4 transition-transform duration-300`} />
+            <ArrowRight className={`${isRTL ? 'mr-1 group-hover:-translate-x-1' : 'ml-1 group-hover:translate-x-1'} h-4 w-4 transition-transform`} />
           </div>
         </div>
       </Link>
