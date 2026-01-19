@@ -337,29 +337,48 @@ export function calculateDailySpend(expenses: Expense[]): DailySpend[] {
 
 /**
  * Get top N categories (with "Other" for remaining)
+ * Prevents "Other" duplication by excluding existing "Other" from top selection
  */
 export function getTopCategories(
   breakdown: CategoryBreakdown[],
   topN: number = 5
 ): CategoryBreakdown[] {
-  if (breakdown.length <= topN) return breakdown
-
-  const top = breakdown.slice(0, topN)
-  const rest = breakdown.slice(topN)
+  if (breakdown.length === 0) return []
   
-  if (rest.length === 0) return top
+  // Separate "Other" if it exists in the breakdown
+  const existingOther = breakdown.find(item => item.category === "Other")
+  const nonOtherCategories = breakdown.filter(item => item.category !== "Other")
+  
+  // If we have fewer non-Other categories than topN, return all + existing Other
+  if (nonOtherCategories.length <= topN) {
+    return existingOther 
+      ? [...nonOtherCategories, existingOther]
+      : nonOtherCategories
+  }
 
-  const otherAmount = rest.reduce((sum, item) => sum + item.amount, 0)
-  const otherCount = rest.reduce((sum, item) => sum + item.count, 0)
+  // Take top N non-Other categories
+  const top = nonOtherCategories.slice(0, topN)
+  const rest = nonOtherCategories.slice(topN)
+  
+  // Aggregate remaining categories into "Other"
+  const remainingAmount = rest.reduce((sum, item) => sum + item.amount, 0)
+  const remainingCount = rest.reduce((sum, item) => sum + item.count, 0)
+  
+  // Add existing "Other" amount if present
+  const totalOtherAmount = remainingAmount + (existingOther?.amount || 0)
+  const totalOtherCount = remainingCount + (existingOther?.count || 0)
+  
+  if (totalOtherAmount === 0) return top
+
   const total = breakdown.reduce((sum, item) => sum + item.amount, 0)
 
   return [
     ...top,
     {
       category: "Other" as ExpenseCategory,
-      amount: otherAmount,
-      count: otherCount,
-      percentage: total > 0 ? (otherAmount / total) * 100 : 0,
+      amount: totalOtherAmount,
+      count: totalOtherCount,
+      percentage: total > 0 ? (totalOtherAmount / total) * 100 : 0,
     },
   ]
 }

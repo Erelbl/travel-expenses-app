@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Filter, TrendingUp, Calendar, DollarSign, Tag, BarChart3, Plus, Target } from "lucide-react"
+import { ArrowLeft, Filter, TrendingUp, Calendar, DollarSign, BarChart3, Plus, Target, Tag } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -228,9 +228,6 @@ export default function ReportsPage() {
   const topCategories = getTopCategories(categoryBreakdown, 5)
   const dailySpend = calculateDailySpend(filteredExpenses)
   
-  // Get top category
-  const topCategory = categoryBreakdown[0]
-  
   // Get trip countries for filter
   const tripCountries = trip.plannedCountries || trip.countries || []
   
@@ -324,20 +321,20 @@ export default function ReportsPage() {
             <p className="text-slate-600">{t("reports.travelSummaryDesc")}</p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Total Spent */}
             <Card className="border-slate-200 shadow-sm h-full">
-              <CardContent className="p-6 flex flex-col h-full">
-                <div className="flex items-center gap-2 text-slate-500 mb-3">
-                  <DollarSign className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-medium uppercase tracking-wide">{t("reports.totalSpent")}</span>
+              <CardContent className="p-4 flex flex-col h-full">
+                <div className="flex items-center gap-2 text-slate-500 mb-2">
+                  <DollarSign className="h-4 w-4 shrink-0" />
+                  <span className="text-xs font-medium uppercase tracking-wide">{t("reports.totalSpent")}</span>
                 </div>
                 <div className="flex-1 flex flex-col justify-center">
-                  <p className="text-3xl font-bold text-slate-900 leading-tight mb-2">
+                  <p className="text-2xl font-bold text-slate-900 leading-tight mb-1">
                     {formatCurrency(summary.totalRealized, trip.baseCurrency)}
                   </p>
                 </div>
-                <p className="text-sm text-slate-500 mt-auto">
+                <p className="text-xs text-slate-500 mt-auto">
                   {summary.expenseCount} {t("reports.expenses")}
                 </p>
               </CardContent>
@@ -345,56 +342,36 @@ export default function ReportsPage() {
 
             {/* Average Per Day */}
             <Card className="border-slate-200 shadow-sm h-full">
-              <CardContent className="p-6 flex flex-col h-full">
-                <div className="flex items-center gap-2 text-slate-500 mb-3">
-                  <Calendar className="h-5 w-5 shrink-0" />
-                  <span className="text-sm font-medium uppercase tracking-wide">{t("reports.perDay")}</span>
+              <CardContent className="p-4 flex flex-col h-full">
+                <div className="flex items-center gap-2 text-slate-500 mb-2">
+                  <Calendar className="h-4 w-4 shrink-0" />
+                  <span className="text-xs font-medium uppercase tracking-wide">{t("reports.perDay")}</span>
                 </div>
                 <div className="flex-1 flex flex-col justify-center">
-                  <p className="text-3xl font-bold text-slate-900 leading-tight mb-2">
+                  <p className="text-2xl font-bold text-slate-900 leading-tight mb-1">
                     {formatCurrency(summary.averagePerDay, trip.baseCurrency)}
                   </p>
                 </div>
-                <p className="text-sm text-slate-500 mt-auto">
+                <p className="text-xs text-slate-500 mt-auto">
                   {summary.tripDays} {t("reports.days")}
                 </p>
               </CardContent>
             </Card>
 
-            {/* Top Category */}
-            {topCategory && (
-              <Card className="border-slate-200 shadow-sm h-full">
-                <CardContent className="p-6 flex flex-col h-full">
-                  <div className="flex items-center gap-2 text-slate-500 mb-3">
-                    <Tag className="h-5 w-5 shrink-0" />
-                    <span className="text-sm font-medium uppercase tracking-wide">{t("reports.topCategory")}</span>
-                  </div>
-                  <div className="flex-1 flex flex-col justify-center">
-                    <p className="text-3xl font-bold text-slate-900 leading-tight mb-2">
-                      {t(`categories.${topCategory.category}`)}
-                    </p>
-                  </div>
-                  <p className="text-sm text-slate-500 mt-auto">
-                    {formatCurrency(topCategory.amount, trip.baseCurrency)} ({topCategory.percentage.toFixed(0)}%)
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Budget Status (only if budget exists) */}
             {hasBudget && (
               <Card className={`border-slate-200 shadow-sm h-full ${budgetUsed > 90 ? 'bg-rose-50/50' : budgetUsed > 70 ? 'bg-amber-50/50' : 'bg-emerald-50/50'}`}>
-                <CardContent className="p-6 flex flex-col h-full">
-                  <div className="flex items-center gap-2 text-slate-500 mb-3">
-                    <Target className="h-5 w-5 shrink-0" />
-                    <span className="text-sm font-medium uppercase tracking-wide">{t("reports.budget")}</span>
+                <CardContent className="p-4 flex flex-col h-full">
+                  <div className="flex items-center gap-2 text-slate-500 mb-2">
+                    <Target className="h-4 w-4 shrink-0" />
+                    <span className="text-xs font-medium uppercase tracking-wide">{t("reports.budget")}</span>
                   </div>
                   <div className="flex-1 flex flex-col justify-center">
-                    <p className="text-3xl font-bold text-slate-900 leading-tight mb-2">
+                    <p className="text-2xl font-bold text-slate-900 leading-tight mb-1">
                       {budgetUsed.toFixed(0)}%
                     </p>
                   </div>
-                  <p className="text-sm text-slate-500 mt-auto">
+                  <p className="text-xs text-slate-500 mt-auto">
                     {formatCurrency(budgetRemaining, trip.baseCurrency)} {t("reports.remaining")}
                   </p>
                 </CardContent>
