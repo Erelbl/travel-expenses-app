@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Zap, Globe2, TrendingUp, Check, Plane, CreditCard, BarChart3 } from "lucide-react"
+import { Zap, Globe2, TrendingUp, Check, Plane, CreditCard, BarChart3, Users } from "lucide-react"
 import { PhoneFrame } from "@/components/phone-frame"
 
 export function LandingPage() {
@@ -148,14 +148,14 @@ export function LandingPage() {
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="w-14 h-14 bg-sky-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl">✨</span>
+              <div className="w-14 h-14 bg-rose-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                <Users className="w-7 h-7 text-rose-600" />
               </div>
               <h3 className="font-bold text-lg text-slate-900 mb-2">
-                No splitting. No debts.
+                Travel together, effortlessly
               </h3>
               <p className="text-slate-600 text-sm">
-                Track your own spending without the complexity of group payments.
+                Traveling with your partner or someone else? Share the trip and let everyone add expenses — no coordination, no calculations later.
               </p>
             </div>
             <div className="text-center">
@@ -427,6 +427,10 @@ export function LandingPage() {
                 </li>
                 <li className="flex items-start gap-2 text-white">
                   <Check className="w-5 h-5 text-sky-200 flex-shrink-0 mt-0.5" />
+                  <span>Share trips with partners</span>
+                </li>
+                <li className="flex items-start gap-2 text-white">
+                  <Check className="w-5 h-5 text-sky-200 flex-shrink-0 mt-0.5" />
                   <span>All currencies</span>
                 </li>
                 <li className="flex items-start gap-2 text-white">
@@ -457,6 +461,10 @@ export function LandingPage() {
                 <li className="flex items-start gap-2 text-slate-700">
                   <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
                   <span>Everything in Traveler</span>
+                </li>
+                <li className="flex items-start gap-2 text-slate-700">
+                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                  <span>Advanced trip sharing</span>
                 </li>
                 <li className="flex items-start gap-2 text-slate-700">
                   <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
