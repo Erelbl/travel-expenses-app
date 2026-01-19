@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import { motion } from "framer-motion"
 import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X, Lightbulb, Settings } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { FloatingAddButton } from "@/components/floating-add-button"
@@ -242,7 +243,12 @@ export default function TripHomePage() {
       <div className="container mx-auto max-w-4xl px-4 py-5 space-y-6">
         {/* Current Location Selector */}
         {canAddExpense(trip) && (
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl border border-slate-200/50 p-3 shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/60 p-3 shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+          >
             <div className="flex items-center gap-3">
               <MapPin className="h-4 w-4 text-slate-500 shrink-0" />
               <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide shrink-0">
@@ -295,12 +301,15 @@ export default function TripHomePage() {
                 </button>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Quick Add CTA - Primary Action (only for owners/editors) */}
         {canAddExpense(trip) && (
-          <button
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
             onClick={() => setShowQuickAdd(true)}
             className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white rounded-2xl shadow-lg shadow-sky-500/25 transition-all active:scale-[0.98]"
           >
@@ -314,28 +323,39 @@ export default function TripHomePage() {
               </div>
             </div>
             <Plus className="h-6 w-6" />
-          </button>
+          </motion.button>
         )}
 
         {/* Batch Add Link */}
         {canAddExpense(trip) && (
-          <Link href={`/trips/${tripId}/batch-add`} className="block">
-            <div className="flex items-center gap-3 p-4 bg-white/90 hover:bg-white backdrop-blur-sm border border-slate-200/50 rounded-xl transition-colors shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
-              <div className="w-9 h-9 rounded-lg bg-slate-200 flex items-center justify-center shrink-0">
-                <Plus className="h-4 w-4 text-slate-600" />
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <Link href={`/trips/${tripId}/batch-add`} className="block group">
+              <div className="flex items-center gap-3 p-4 bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-xl transition-all duration-300 shadow-[0_1px_3px_rgba(15,23,42,0.08)] group-hover:shadow-[0_8px_16px_rgba(15,23,42,0.08)] group-hover:-translate-y-0.5 group-hover:border-sky-200/80">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                  <Plus className="h-4 w-4 text-slate-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 text-sm">{t("batchAdd.title")}</p>
+                  <p className="text-xs text-slate-500 truncate">{t("batchAdd.subtitle")}</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-slate-900 text-sm">{t("batchAdd.title")}</p>
-                <p className="text-xs text-slate-500 truncate">{t("batchAdd.subtitle")}</p>
-              </div>
-            </div>
-          </Link>
+            </Link>
+          </motion.div>
         )}
 
         {/* Compact Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+        >
           {/* Total Spent */}
-          <Card className="border-slate-200/50 shadow-[0_2px_8px_rgba(15,23,42,0.06)] bg-white/95 backdrop-blur-sm">
+          <Card className="border-slate-200/60 shadow-[0_1px_3px_rgba(15,23,42,0.08)] bg-white/80 backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-slate-500 mb-1">
                 <DollarSign className="h-4 w-4" />
@@ -350,7 +370,7 @@ export default function TripHomePage() {
           </Card>
 
           {/* Today's Spend */}
-          <Card className="border-slate-200/50 shadow-[0_2px_8px_rgba(15,23,42,0.06)] bg-white/95 backdrop-blur-sm">
+          <Card className="border-slate-200/60 shadow-[0_1px_3px_rgba(15,23,42,0.08)] bg-white/80 backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-slate-500 mb-1">
                 <Calendar className="h-4 w-4" />
@@ -365,7 +385,7 @@ export default function TripHomePage() {
           </Card>
 
           {/* Average Per Day */}
-          <Card className="border-slate-200/50 shadow-[0_2px_8px_rgba(15,23,42,0.06)] bg-white/95 backdrop-blur-sm">
+          <Card className="border-slate-200/60 shadow-[0_1px_3px_rgba(15,23,42,0.08)] bg-white/80 backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-slate-500 mb-1">
                 <TrendingUp className="h-4 w-4" />
@@ -380,7 +400,7 @@ export default function TripHomePage() {
           </Card>
 
           {/* Future Commitments */}
-          <Card className={`shadow-[0_2px_8px_rgba(15,23,42,0.06)] backdrop-blur-sm ${summary.totalFuture > 0 ? "border-amber-200/50 bg-amber-50/50" : "border-slate-200/50 bg-white/95"}`}>
+          <Card className={`shadow-[0_1px_3px_rgba(15,23,42,0.08)] backdrop-blur-sm ${summary.totalFuture > 0 ? "border-amber-200/60 bg-amber-50/50" : "border-slate-200/60 bg-white/80"}`}>
             <CardContent className="p-4">
               <div className={`flex items-center gap-2 mb-1 ${summary.totalFuture > 0 ? "text-amber-600" : "text-slate-500"}`}>
                 <Calendar className="h-4 w-4" />
@@ -395,11 +415,16 @@ export default function TripHomePage() {
               </p>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
         {/* Banner Insight (new system) */}
         {bannerInsight && !bannerDismissed && (
-          <div className="relative bg-gradient-to-r from-amber-50/95 to-yellow-50/95 backdrop-blur-sm border border-amber-200/50 rounded-xl p-4 shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="relative bg-gradient-to-r from-amber-50/80 to-yellow-50/80 backdrop-blur-sm border border-amber-200/60 rounded-xl p-4 shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+          >
             <button
               onClick={dismissBannerInsight}
               className="absolute top-3 right-3 text-amber-600 hover:text-amber-800 transition-colors"
@@ -417,12 +442,17 @@ export default function TripHomePage() {
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Trip Insights Banner (old system) */}
         {topInsight && !insightDismissed && (
-          <div className="relative bg-gradient-to-r from-amber-50/95 to-yellow-50/95 backdrop-blur-sm border border-amber-200/50 rounded-xl p-4 shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="relative bg-gradient-to-r from-amber-50/80 to-yellow-50/80 backdrop-blur-sm border border-amber-200/60 rounded-xl p-4 shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+          >
             <button
               onClick={dismissInsight}
               className="absolute top-3 right-3 text-amber-600 hover:text-amber-800 transition-colors"
@@ -466,15 +496,20 @@ export default function TripHomePage() {
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Secondary Links: Reports & Exchange Rates */}
-        <div className="grid grid-cols-2 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="grid grid-cols-2 gap-4"
+        >
           {/* Reports Link */}
-          <Link href={`/trips/${tripId}/reports`} className="block">
-            <div className="flex items-center gap-3 p-4 bg-white/90 hover:bg-white backdrop-blur-sm border border-slate-200/50 rounded-xl transition-colors h-full shadow-[0_2px_8px_rgba(15,23,42,0.06)]">
-              <div className="w-9 h-9 rounded-lg bg-slate-200 flex items-center justify-center shrink-0">
+          <Link href={`/trips/${tripId}/reports`} className="block group">
+            <div className="flex items-center gap-3 p-4 bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-xl transition-all duration-300 h-full shadow-[0_1px_3px_rgba(15,23,42,0.08)] group-hover:shadow-[0_8px_16px_rgba(15,23,42,0.08)] group-hover:-translate-y-0.5 group-hover:border-sky-200/80">
+              <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
                 <BarChart3 className="h-4 w-4 text-slate-600" />
               </div>
               <div className="min-w-0">
@@ -487,7 +522,7 @@ export default function TripHomePage() {
           {/* Exchange Rates Link */}
           <button
             onClick={() => setShowRates(true)}
-            className="flex items-center gap-3 p-4 bg-white/90 hover:bg-white backdrop-blur-sm border border-slate-200/50 rounded-xl transition-colors text-start w-full shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
+            className="flex items-center gap-3 p-4 bg-white/80 backdrop-blur-sm border border-slate-200/60 rounded-xl transition-all duration-300 text-start w-full shadow-[0_1px_3px_rgba(15,23,42,0.08)] hover:shadow-[0_8px_16px_rgba(15,23,42,0.08)] hover:-translate-y-0.5 hover:border-sky-200/80 group"
           >
             <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
               <Coins className="h-4 w-4 text-emerald-600" />
@@ -497,10 +532,15 @@ export default function TripHomePage() {
               <p className="text-xs text-slate-500 truncate">{t("rates.subtitle")}</p>
             </div>
           </button>
-        </div>
+        </motion.div>
 
         {/* Recent Expenses */}
-        <Card className="border-slate-200/50 overflow-hidden shadow-[0_2px_8px_rgba(15,23,42,0.06)] bg-white/95 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Card className="border-slate-200/60 overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.08)] bg-white/80 backdrop-blur-sm">
           <CardHeader className="py-4 px-5 border-b border-slate-100">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold">
@@ -568,6 +608,7 @@ export default function TripHomePage() {
             )}
           </CardContent>
         </Card>
+        </motion.div>
       </div>
 
       {/* Quick Add Modal */}
