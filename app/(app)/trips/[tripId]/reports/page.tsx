@@ -326,32 +326,36 @@ export default function ReportsPage() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Spent */}
-            <Card className="border-slate-200 shadow-sm">
-              <CardContent className="p-6">
+            <Card className="border-slate-200 shadow-sm h-full">
+              <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex items-center gap-2 text-slate-500 mb-3">
-                  <DollarSign className="h-5 w-5" />
+                  <DollarSign className="h-5 w-5 shrink-0" />
                   <span className="text-sm font-medium uppercase tracking-wide">{t("reports.totalSpent")}</span>
                 </div>
-                <p className="text-4xl font-bold text-slate-900 mb-1">
-                  {formatCurrency(summary.totalRealized, trip.baseCurrency)}
-                </p>
-                <p className="text-sm text-slate-500">
+                <div className="flex-1 flex flex-col justify-center">
+                  <p className="text-3xl font-bold text-slate-900 leading-tight mb-2">
+                    {formatCurrency(summary.totalRealized, trip.baseCurrency)}
+                  </p>
+                </div>
+                <p className="text-sm text-slate-500 mt-auto">
                   {summary.expenseCount} {t("reports.expenses")}
                 </p>
               </CardContent>
             </Card>
 
             {/* Average Per Day */}
-            <Card className="border-slate-200 shadow-sm">
-              <CardContent className="p-6">
+            <Card className="border-slate-200 shadow-sm h-full">
+              <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex items-center gap-2 text-slate-500 mb-3">
-                  <Calendar className="h-5 w-5" />
+                  <Calendar className="h-5 w-5 shrink-0" />
                   <span className="text-sm font-medium uppercase tracking-wide">{t("reports.perDay")}</span>
                 </div>
-                <p className="text-4xl font-bold text-slate-900 mb-1">
-                  {formatCurrency(summary.averagePerDay, trip.baseCurrency)}
-                </p>
-                <p className="text-sm text-slate-500">
+                <div className="flex-1 flex flex-col justify-center">
+                  <p className="text-3xl font-bold text-slate-900 leading-tight mb-2">
+                    {formatCurrency(summary.averagePerDay, trip.baseCurrency)}
+                  </p>
+                </div>
+                <p className="text-sm text-slate-500 mt-auto">
                   {summary.tripDays} {t("reports.days")}
                 </p>
               </CardContent>
@@ -359,16 +363,18 @@ export default function ReportsPage() {
 
             {/* Top Category */}
             {topCategory && (
-              <Card className="border-slate-200 shadow-sm">
-                <CardContent className="p-6">
+              <Card className="border-slate-200 shadow-sm h-full">
+                <CardContent className="p-6 flex flex-col h-full">
                   <div className="flex items-center gap-2 text-slate-500 mb-3">
-                    <Tag className="h-5 w-5" />
+                    <Tag className="h-5 w-5 shrink-0" />
                     <span className="text-sm font-medium uppercase tracking-wide">{t("reports.topCategory")}</span>
                   </div>
-                  <p className="text-2xl font-bold text-slate-900 mb-1">
-                    {t(`categories.${topCategory.category}`)}
-                  </p>
-                  <p className="text-sm text-slate-500">
+                  <div className="flex-1 flex flex-col justify-center">
+                    <p className="text-3xl font-bold text-slate-900 leading-tight mb-2">
+                      {t(`categories.${topCategory.category}`)}
+                    </p>
+                  </div>
+                  <p className="text-sm text-slate-500 mt-auto">
                     {formatCurrency(topCategory.amount, trip.baseCurrency)} ({topCategory.percentage.toFixed(0)}%)
                   </p>
                 </CardContent>
@@ -377,16 +383,18 @@ export default function ReportsPage() {
 
             {/* Budget Status (only if budget exists) */}
             {hasBudget && (
-              <Card className={`border-slate-200 shadow-sm ${budgetUsed > 90 ? 'bg-rose-50/50' : budgetUsed > 70 ? 'bg-amber-50/50' : 'bg-emerald-50/50'}`}>
-                <CardContent className="p-6">
+              <Card className={`border-slate-200 shadow-sm h-full ${budgetUsed > 90 ? 'bg-rose-50/50' : budgetUsed > 70 ? 'bg-amber-50/50' : 'bg-emerald-50/50'}`}>
+                <CardContent className="p-6 flex flex-col h-full">
                   <div className="flex items-center gap-2 text-slate-500 mb-3">
-                    <Target className="h-5 w-5" />
+                    <Target className="h-5 w-5 shrink-0" />
                     <span className="text-sm font-medium uppercase tracking-wide">{t("reports.budget")}</span>
                   </div>
-                  <p className="text-4xl font-bold text-slate-900 mb-1">
-                    {budgetUsed.toFixed(0)}%
-                  </p>
-                  <p className="text-sm text-slate-500">
+                  <div className="flex-1 flex flex-col justify-center">
+                    <p className="text-3xl font-bold text-slate-900 leading-tight mb-2">
+                      {budgetUsed.toFixed(0)}%
+                    </p>
+                  </div>
+                  <p className="text-sm text-slate-500 mt-auto">
                     {formatCurrency(budgetRemaining, trip.baseCurrency)} {t("reports.remaining")}
                   </p>
                 </CardContent>
