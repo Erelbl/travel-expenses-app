@@ -196,10 +196,10 @@ export function LandingPage() {
       </section>
 
       {/* Screens Section */}
-      <section className="py-16 px-6">
-        <div className="container mx-auto max-w-5xl space-y-14">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="order-2 md:order-1 max-w-xs mx-auto">
+      <section className="py-12 md:py-16 px-6">
+        <div className="container mx-auto max-w-5xl space-y-8 md:space-y-14">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-center">
+            <div className="order-2 md:order-1 max-w-[240px] md:max-w-xs mx-auto">
               <PhoneFrame>
                 <div className="h-full bg-gradient-to-b from-sky-50 to-slate-50 p-4 overflow-auto">
                   <div className="mb-4">
@@ -243,7 +243,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-center">
             <div>
               <h3 className="text-3xl font-extrabold text-slate-900 mb-3">
                 Add expense
@@ -252,7 +252,7 @@ export function LandingPage() {
                 Quick capture when you're out exploring. Amount, category, done.
               </p>
             </div>
-            <div className="max-w-xs mx-auto">
+            <div className="max-w-[240px] md:max-w-xs mx-auto">
               <PhoneFrame>
                 <div className="h-full bg-white p-4 flex flex-col">
                   <div className="mb-4">
@@ -300,8 +300,8 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="order-2 md:order-1 max-w-xs mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-center">
+            <div className="order-2 md:order-1 max-w-[240px] md:max-w-xs mx-auto">
               <PhoneFrame>
                 <div className="h-full bg-gradient-to-b from-violet-50 via-sky-50 to-white p-4">
                   <div className="mb-4">
