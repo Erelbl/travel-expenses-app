@@ -21,26 +21,19 @@ import { updateUserProfileAction } from "./actions"
 
 interface SettingsClientProps {
   isAdmin: boolean
-  initialProfile: {
-    name: string
-    nickname: string
-    email: string
-  }
+  initialDisplayName: string
+  initialEmail: string
   initialBaseCurrency: string
 }
 
-export function SettingsClient({ isAdmin, initialProfile, initialBaseCurrency }: SettingsClientProps) {
+export function SettingsClient({ isAdmin, initialDisplayName, initialEmail, initialBaseCurrency }: SettingsClientProps) {
   const { t, locale } = useI18n()
   const router = useRouter()
   const isRTL = locale === 'he'
   
   const { profile, preferences, setProfile, setPreferences } = usePreferencesStore()
   
-  const [formProfile, setFormProfile] = useState({
-    name: initialProfile.name,
-    nickname: initialProfile.nickname,
-    email: initialProfile.email,
-  })
+  const [displayName, setDisplayName] = useState(initialDisplayName)
   const [formPreferences, setFormPreferences] = useState({
     ...preferences,
     baseCurrency: initialBaseCurrency,
@@ -56,26 +49,23 @@ export function SettingsClient({ isAdmin, initialProfile, initialBaseCurrency }:
   const [changingPassword, setChangingPassword] = useState(false)
 
   useEffect(() => {
-    const profileChanged = 
-      formProfile.name !== initialProfile.name ||
-      formProfile.nickname !== initialProfile.nickname
+    const nameChanged = displayName !== initialDisplayName
     const prefsChanged = formPreferences.baseCurrency !== initialBaseCurrency
-    setHasChanges(profileChanged || prefsChanged)
-  }, [formProfile, formPreferences, initialProfile, initialBaseCurrency])
+    setHasChanges(nameChanged || prefsChanged)
+  }, [displayName, formPreferences, initialDisplayName, initialBaseCurrency])
 
   async function handleSave() {
     setSaving(true)
     try {
       const result = await updateUserProfileAction({
-        name: formProfile.name,
-        nickname: formProfile.nickname,
+        displayName: displayName,
         baseCurrency: formPreferences.baseCurrency,
       })
 
       if (result.error) {
         toast.error(result.error)
       } else {
-        setProfile(formProfile)
+        setProfile({ ...profile, nickname: displayName })
         setPreferences(formPreferences)
         setHasChanges(false)
         toast.success(t('appSettings.savedSuccess'))
@@ -90,11 +80,7 @@ export function SettingsClient({ isAdmin, initialProfile, initialBaseCurrency }:
   }
 
   function handleCancel() {
-    setFormProfile({
-      name: initialProfile.name,
-      nickname: initialProfile.nickname,
-      email: initialProfile.email,
-    })
+    setDisplayName(initialDisplayName)
     setFormPreferences({
       ...preferences,
       baseCurrency: initialBaseCurrency,
@@ -201,9 +187,7 @@ export function SettingsClient({ isAdmin, initialProfile, initialBaseCurrency }:
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
                 <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 via-sky-500 to-blue-600 text-2xl font-bold text-white shadow-lg ring-4 ring-sky-100">
-                  {formProfile.name ? formProfile.name.charAt(0).toUpperCase() : 
-                   formProfile.nickname ? formProfile.nickname.charAt(0).toUpperCase() : 
-                   <User className="h-8 w-8" />}
+                  {displayName ? displayName.charAt(0).toUpperCase() : <User className="h-8 w-8" />}
                 </div>
                 <div className="flex-1">
                   <Label className="text-sm font-semibold text-slate-700">
@@ -216,28 +200,15 @@ export function SettingsClient({ isAdmin, initialProfile, initialBaseCurrency }:
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-slate-700">
-                  {t('appSettings.profileName')}
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder={t('appSettings.profileNamePlaceholder')}
-                  value={formProfile.name}
-                  onChange={(e) => setFormProfile({ ...formProfile, name: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="nickname" className="text-sm font-medium text-slate-700">
+                <Label htmlFor="displayName" className="text-sm font-medium text-slate-700">
                   {t('appSettings.profileNickname')}
                 </Label>
                 <Input
-                  id="nickname"
+                  id="displayName"
                   type="text"
                   placeholder={t('appSettings.profileNicknamePlaceholder')}
-                  value={formProfile.nickname}
-                  onChange={(e) => setFormProfile({ ...formProfile, nickname: e.target.value })}
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
                 />
               </div>
 
@@ -249,8 +220,9 @@ export function SettingsClient({ isAdmin, initialProfile, initialBaseCurrency }:
                   id="email"
                   type="email"
                   placeholder={t('appSettings.profileEmailPlaceholder')}
-                  value={formProfile.email}
-                  onChange={(e) => setFormProfile({ ...formProfile, email: e.target.value })}
+                  value={initialEmail}
+                  disabled
+                  className="bg-slate-50"
                 />
               </div>
             </CardContent>

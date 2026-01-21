@@ -19,6 +19,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
       allowDangerousEmailAccountLinking: true,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          email: profile.email,
+          emailVerified: profile.email_verified ? new Date() : null,
+          image: profile.picture,
+          // Do NOT include name - preserve user's nickname/display name
+        }
+      },
     }),
     Credentials({
       name: "credentials",
@@ -95,14 +104,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user && token.id) {
         session.user.id = token.id as string
         
-        // Fetch fresh user data to ensure name is up to date
+        // Fetch user's display name (nickname is the stable display name)
         const user = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { name: true, nickname: true },
+          select: { nickname: true },
         })
         
         if (user) {
-          session.user.name = user.name || user.nickname || null
+          session.user.name = user.nickname || null
         }
       }
       return session

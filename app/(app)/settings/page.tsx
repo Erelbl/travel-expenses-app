@@ -23,7 +23,6 @@ export default async function SettingsPage() {
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
-      name: true,
       nickname: true,
       email: true,
       baseCurrency: true,
@@ -35,11 +34,8 @@ export default async function SettingsPage() {
   return (
     <SettingsClient 
       isAdmin={isAdmin}
-      initialProfile={{
-        name: user?.name || "",
-        nickname: user?.nickname || "",
-        email: user?.email || "",
-      }}
+      initialDisplayName={user?.nickname || ""}
+      initialEmail={user?.email || ""}
       initialBaseCurrency={user?.baseCurrency || "USD"}
     />
   )

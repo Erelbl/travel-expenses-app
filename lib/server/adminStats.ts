@@ -87,7 +87,6 @@ async function getAllUsersUncached(): Promise<AdminUser[]> {
   const users = await prisma.user.findMany({
     select: {
       id: true,
-      name: true,
       nickname: true,
       email: true,
       createdAt: true,
@@ -99,7 +98,7 @@ async function getAllUsersUncached(): Promise<AdminUser[]> {
 
   return users.map((user) => ({
     id: user.id,
-    name: user.name || user.nickname || null,
+    name: user.nickname || null,
     email: user.email,
     createdAt: user.createdAt,
     plan: "Free" as const, // For MVP, all users are Free plan
