@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 
 export async function updateUserProfileAction(data: {
   displayName?: string
+  fullName?: string
   baseCurrency?: string
 }) {
   try {
@@ -14,12 +15,13 @@ export async function updateUserProfileAction(data: {
       return { error: "Not authenticated" }
     }
 
-    const { displayName, baseCurrency } = data
+    const { displayName, fullName, baseCurrency } = data
 
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
         nickname: displayName || null,
+        name: fullName || null,
         baseCurrency: baseCurrency || "USD",
       },
     })

@@ -35,6 +35,7 @@ export function SettingsClient({ isAdmin, initialFullName, initialDisplayName, i
   const { profile, preferences, setProfile, setPreferences } = usePreferencesStore()
   
   const [displayName, setDisplayName] = useState(initialDisplayName)
+  const [fullName, setFullName] = useState(initialFullName)
   const [formPreferences, setFormPreferences] = useState({
     ...preferences,
     baseCurrency: initialBaseCurrency,
@@ -50,23 +51,24 @@ export function SettingsClient({ isAdmin, initialFullName, initialDisplayName, i
   const [changingPassword, setChangingPassword] = useState(false)
 
   useEffect(() => {
-    const nameChanged = displayName !== initialDisplayName
+    const nameChanged = displayName !== initialDisplayName || fullName !== initialFullName
     const prefsChanged = formPreferences.baseCurrency !== initialBaseCurrency
     setHasChanges(nameChanged || prefsChanged)
-  }, [displayName, formPreferences, initialDisplayName, initialBaseCurrency])
+  }, [displayName, fullName, formPreferences, initialDisplayName, initialFullName, initialBaseCurrency])
 
   async function handleSave() {
     setSaving(true)
     try {
       const result = await updateUserProfileAction({
         displayName: displayName,
+        fullName: fullName,
         baseCurrency: formPreferences.baseCurrency,
       })
 
       if (result.error) {
         toast.error(result.error)
       } else {
-        setProfile({ ...profile, nickname: displayName })
+        setProfile({ ...profile, nickname: displayName, name: fullName })
         setPreferences(formPreferences)
         setHasChanges(false)
         toast.success(t('appSettings.savedSuccess'))
@@ -82,6 +84,7 @@ export function SettingsClient({ isAdmin, initialFullName, initialDisplayName, i
 
   function handleCancel() {
     setDisplayName(initialDisplayName)
+    setFullName(initialFullName)
     setFormPreferences({
       ...preferences,
       baseCurrency: initialBaseCurrency,
@@ -200,24 +203,6 @@ export function SettingsClient({ isAdmin, initialFullName, initialDisplayName, i
                 </div>
               </div>
 
-              {initialFullName && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-sm font-medium text-slate-700">
-                    {t('appSettings.profileName')}
-                  </Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    value={initialFullName}
-                    disabled
-                    className="bg-slate-50"
-                  />
-                  <p className="text-xs text-slate-500">
-                    From your Google account (read-only)
-                  </p>
-                </div>
-              )}
-
               <div className="space-y-2">
                 <Label htmlFor="displayName" className="text-sm font-medium text-slate-700">
                   {t('appSettings.profileNickname')}
@@ -231,6 +216,22 @@ export function SettingsClient({ isAdmin, initialFullName, initialDisplayName, i
                 />
                 <p className="text-xs text-slate-500">
                   This name is shown across the app
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-sm font-medium text-slate-700">
+                  {t('appSettings.profileName')}
+                </Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder={t('appSettings.profileNamePlaceholder')}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+                <p className="text-xs text-slate-500">
+                  Your full name (optional)
                 </p>
               </div>
 

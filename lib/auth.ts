@@ -19,13 +19,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
       allowDangerousEmailAccountLinking: true,
-      profile(profile) {
+      async profile(profile, tokens) {
+        // Check if this is first sign-in by looking up user
+        const existingUser = await prisma.user.findUnique({
+          where: { email: profile.email },
+          select: { id: true, name: true, nickname: true },
+        })
+
+        // Only prefill names on first sign-in
+        if (!existingUser) {
+          return {
+            id: profile.sub,
+            email: profile.email,
+            emailVerified: profile.email_verified ? new Date() : null,
+            image: profile.picture,
+            name: profile.name || null,
+            nickname: profile.given_name || null,
+          }
+        }
+
+        // Existing user - don't override names
         return {
-          id: profile.sub,
+          id: existingUser.id,
           email: profile.email,
           emailVerified: profile.email_verified ? new Date() : null,
           image: profile.picture,
-          // Do NOT include name - preserve user's nickname/display name
         }
       },
     }),
