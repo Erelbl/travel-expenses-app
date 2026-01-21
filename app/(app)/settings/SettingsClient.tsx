@@ -17,21 +17,36 @@ import { CURRENCIES } from "@/lib/utils/currency"
 import { signOut } from "next-auth/react"
 import Link from "next/link"
 import { changePasswordAction } from "@/app/auth/actions"
+import { updateUserProfileAction } from "./actions"
 
 interface SettingsClientProps {
   isAdmin: boolean
+  initialProfile: {
+    name: string
+    nickname: string
+    email: string
+  }
+  initialBaseCurrency: string
 }
 
-export function SettingsClient({ isAdmin }: SettingsClientProps) {
+export function SettingsClient({ isAdmin, initialProfile, initialBaseCurrency }: SettingsClientProps) {
   const { t, locale } = useI18n()
   const router = useRouter()
   const isRTL = locale === 'he'
   
   const { profile, preferences, setProfile, setPreferences } = usePreferencesStore()
   
-  const [formProfile, setFormProfile] = useState(profile)
-  const [formPreferences, setFormPreferences] = useState(preferences)
+  const [formProfile, setFormProfile] = useState({
+    name: initialProfile.name,
+    nickname: initialProfile.nickname,
+    email: initialProfile.email,
+  })
+  const [formPreferences, setFormPreferences] = useState({
+    ...preferences,
+    baseCurrency: initialBaseCurrency,
+  })
   const [hasChanges, setHasChanges] = useState(false)
+  const [saving, setSaving] = useState(false)
   
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -41,26 +56,49 @@ export function SettingsClient({ isAdmin }: SettingsClientProps) {
   const [changingPassword, setChangingPassword] = useState(false)
 
   useEffect(() => {
-    const profileChanged = JSON.stringify(formProfile) !== JSON.stringify(profile)
-    const prefsChanged = JSON.stringify(formPreferences) !== JSON.stringify(preferences)
+    const profileChanged = 
+      formProfile.name !== initialProfile.name ||
+      formProfile.nickname !== initialProfile.nickname
+    const prefsChanged = formPreferences.baseCurrency !== initialBaseCurrency
     setHasChanges(profileChanged || prefsChanged)
-  }, [formProfile, formPreferences, profile, preferences])
+  }, [formProfile, formPreferences, initialProfile, initialBaseCurrency])
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true)
     try {
-      setProfile(formProfile)
-      setPreferences(formPreferences)
-      setHasChanges(false)
-      toast.success(t('appSettings.savedSuccess'))
+      const result = await updateUserProfileAction({
+        name: formProfile.name,
+        nickname: formProfile.nickname,
+        baseCurrency: formPreferences.baseCurrency,
+      })
+
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        setProfile(formProfile)
+        setPreferences(formPreferences)
+        setHasChanges(false)
+        toast.success(t('appSettings.savedSuccess'))
+        router.refresh()
+      }
     } catch (error) {
       console.error("Failed to save settings:", error)
       toast.error(t('appSettings.savedError'))
+    } finally {
+      setSaving(false)
     }
   }
 
   function handleCancel() {
-    setFormProfile(profile)
-    setFormPreferences(preferences)
+    setFormProfile({
+      name: initialProfile.name,
+      nickname: initialProfile.nickname,
+      email: initialProfile.email,
+    })
+    setFormPreferences({
+      ...preferences,
+      baseCurrency: initialBaseCurrency,
+    })
     setHasChanges(false)
   }
 
@@ -138,11 +176,11 @@ export function SettingsClient({ isAdmin }: SettingsClientProps) {
               </Button>
               {hasChanges && (
                 <>
-                  <Button variant="ghost" size="sm" onClick={handleCancel}>
+                  <Button variant="ghost" size="sm" onClick={handleCancel} disabled={saving}>
                     {t('common.cancel')}
                   </Button>
-                  <Button size="sm" onClick={handleSave}>
-                    {t('common.save')}
+                  <Button size="sm" onClick={handleSave} disabled={saving}>
+                    {saving ? t('common.saving') : t('common.save')}
                   </Button>
                 </>
               )}
@@ -460,11 +498,11 @@ export function SettingsClient({ isAdmin }: SettingsClientProps) {
       {hasChanges && (
         <div className="fixed bottom-0 left-0 right-0 border-t bg-white p-4 shadow-lg md:hidden">
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={handleCancel}>
+            <Button variant="outline" className="flex-1" onClick={handleCancel} disabled={saving}>
               {t('common.cancel')}
             </Button>
-            <Button className="flex-1" onClick={handleSave}>
-              {t('common.save')}
+            <Button className="flex-1" onClick={handleSave} disabled={saving}>
+              {saving ? t('common.saving') : t('common.save')}
             </Button>
           </div>
         </div>

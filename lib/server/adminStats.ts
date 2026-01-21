@@ -88,6 +88,7 @@ async function getAllUsersUncached(): Promise<AdminUser[]> {
     select: {
       id: true,
       name: true,
+      nickname: true,
       email: true,
       createdAt: true,
     },
@@ -97,7 +98,10 @@ async function getAllUsersUncached(): Promise<AdminUser[]> {
   })
 
   return users.map((user) => ({
-    ...user,
+    id: user.id,
+    name: user.name || user.nickname || null,
+    email: user.email,
+    createdAt: user.createdAt,
     plan: "Free" as const, // For MVP, all users are Free plan
   }))
 }

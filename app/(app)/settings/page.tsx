@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/db"
 import { SettingsClient } from "./SettingsClient"
 
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -19,7 +20,27 @@ export default async function SettingsPage() {
     redirect("/auth/login")
   }
   
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      name: true,
+      nickname: true,
+      email: true,
+      baseCurrency: true,
+    },
+  })
+  
   const isAdmin = isAdminEmail(session.user.email)
   
-  return <SettingsClient isAdmin={isAdmin} />
+  return (
+    <SettingsClient 
+      isAdmin={isAdmin}
+      initialProfile={{
+        name: user?.name || "",
+        nickname: user?.nickname || "",
+        email: user?.email || "",
+      }}
+      initialBaseCurrency={user?.baseCurrency || "USD"}
+    />
+  )
 }
