@@ -31,7 +31,8 @@ export function LandingPage() {
 
           {/* Phone Mockups */}
           <div className="relative max-w-5xl mx-auto">
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory md:overflow-visible pb-4 md:pb-0 -mx-6 px-6 md:mx-0">
+              <div className="flex-shrink-0 w-[240px] md:w-auto snap-center">
               <PhoneFrame>
                 <div className="h-full bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60 p-4 overflow-hidden">
                   <div className="bg-gradient-to-br from-sky-400/90 via-blue-500/90 to-indigo-500/90 rounded-2xl p-4 mb-3">
@@ -59,7 +60,9 @@ export function LandingPage() {
                   </div>
                 </div>
               </PhoneFrame>
+              </div>
               
+              <div className="flex-shrink-0 w-[240px] md:w-auto snap-center">
               <PhoneFrame className="md:scale-110">
                 <div className="h-full bg-white p-4 flex flex-col">
                   <div className="mb-4">
@@ -94,7 +97,9 @@ export function LandingPage() {
                   </div>
                 </div>
               </PhoneFrame>
+              </div>
               
+              <div className="flex-shrink-0 w-[240px] md:w-auto snap-center">
               <PhoneFrame>
                 <div className="h-full bg-gradient-to-b from-emerald-50 to-white p-4">
                   <div className="mb-4">
@@ -135,6 +140,7 @@ export function LandingPage() {
                   </div>
                 </div>
               </PhoneFrame>
+              </div>
             </div>
           </div>
         </div>
