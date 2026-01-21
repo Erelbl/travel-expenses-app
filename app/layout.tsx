@@ -23,6 +23,10 @@ const heebo = Heebo({
 export const metadata: Metadata = {
   title: "מעקב הוצאות נסיעות | TravelExpense",
   description: "מעקב הוצאות נסיעות מודרני לטיולים שלך",
+  icons: {
+    icon: "/app-icon.png",
+    apple: "/app-icon.png",
+  },
 };
 
 export default async function RootLayout({
