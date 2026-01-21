@@ -25,7 +25,7 @@ import { formatCurrency } from "@/lib/utils/currency"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { currencyForCountry } from "@/lib/utils/countryCurrency"
 import { getCountryName } from "@/lib/utils/countries.data"
-import { updateCurrentLocation } from "./actions"
+import { updateCurrentLocation, closeTrip } from "./actions"
 import { toast } from "sonner"
 import {
   calculateSummary,
@@ -64,6 +64,8 @@ export default function TripHomePage() {
   const [insightDismissed, setInsightDismissed] = useState(false)
   // Banner insight dismissal (new system)
   const [bannerDismissed, setBannerDismissed] = useState(false)
+  // Close trip prompt dismissal
+  const [closePromptDismissed, setClosePromptDismissed] = useState(false)
   
   // Filters and sorting
   const [filterCategory, setFilterCategory] = useState<ExpenseCategory | "">("")
@@ -80,6 +82,10 @@ export default function TripHomePage() {
       // Check if banner insight was dismissed (new system)
       const bannerDismissedVal = localStorage.getItem(`tw_banner_dismissed_${tripId}`)
       setBannerDismissed(bannerDismissedVal === 'true')
+      
+      // Check if close prompt was dismissed
+      const closePromptDismissedVal = localStorage.getItem(`tw_close_prompt_dismissed_${tripId}`)
+      setClosePromptDismissed(closePromptDismissedVal === 'true')
     }
   }, [tripId])
 
@@ -297,6 +303,69 @@ export default function TripHomePage() {
       </div>
 
       <div className="container mx-auto max-w-4xl px-4 py-5 space-y-6">
+        {/* Close Trip Prompt */}
+        {trip.endDate && !trip.isClosed && !closePromptDismissed && (() => {
+          const endDate = new Date(trip.endDate)
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          endDate.setHours(0, 0, 0, 0)
+          return today > endDate
+        })() && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-sky-50 border border-sky-200 rounded-xl p-4 shadow-sm"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm text-slate-700">
+                  {t("home.tripEndedPrompt")}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem(`tw_close_prompt_dismissed_${tripId}`, 'true')
+                    }
+                    setClosePromptDismissed(true)
+                  }}
+                  className="text-slate-600 hover:text-slate-900"
+                >
+                  {t("home.notNowAction")}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      await closeTrip(tripId)
+                      await loadData()
+                      toast.success(t("home.tripClosedIndicator"))
+                    } catch (error) {
+                      toast.error(t("common.errorMessage"))
+                    }
+                  }}
+                  className="bg-sky-600 hover:bg-sky-700 text-white"
+                >
+                  {t("home.closeTripAction")}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Closed Trip Indicator */}
+        {trip.isClosed && (
+          <div className="bg-slate-100 border border-slate-200 rounded-xl p-3 text-center">
+            <p className="text-sm text-slate-600 font-medium">
+              {t("home.tripClosedIndicator")}
+            </p>
+          </div>
+        )}
+
         {/* Current Location Selector */}
         {canAddExpense(trip) && (
           <motion.div

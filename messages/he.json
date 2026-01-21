@@ -317,7 +317,11 @@
     "newestFirst": "החדש ביותר תחילה",
     "oldestFirst": "הישן ביותר תחילה",
     "newest": "החדש",
-    "oldest": "הישן"
+    "oldest": "הישן",
+    "tripEndedPrompt": "הטיול הסתיים — תרצה לסגור אותו אחרי שסיימת לעדכן הוצאות?",
+    "closeTripAction": "סגור טיול",
+    "notNowAction": "לא עכשיו",
+    "tripClosedIndicator": "הטיול סגור"
   },
   "bannerInsights": {
     "budgetHighPaceHighCost": "מוציאים {actual} {currency} ליום ביעד יקר יחסית — שקלו אם זה מתאים ליעד של {target} {currency} ליום",

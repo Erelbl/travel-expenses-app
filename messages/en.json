@@ -317,7 +317,11 @@
     "newestFirst": "Newest First",
     "oldestFirst": "Oldest First",
     "newest": "Newest",
-    "oldest": "Oldest"
+    "oldest": "Oldest",
+    "tripEndedPrompt": "Trip ended — close it after updating expenses?",
+    "closeTripAction": "Close Trip",
+    "notNowAction": "Not Now",
+    "tripClosedIndicator": "Trip closed"
   },
   "bannerInsights": {
     "budgetHighPaceHighCost": "Spending {actual} {currency}/day in a relatively expensive destination — consider if this aligns with your {target} {currency}/day target",
