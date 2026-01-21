@@ -21,12 +21,13 @@ import { updateUserProfileAction } from "./actions"
 
 interface SettingsClientProps {
   isAdmin: boolean
+  initialFullName: string
   initialDisplayName: string
   initialEmail: string
   initialBaseCurrency: string
 }
 
-export function SettingsClient({ isAdmin, initialDisplayName, initialEmail, initialBaseCurrency }: SettingsClientProps) {
+export function SettingsClient({ isAdmin, initialFullName, initialDisplayName, initialEmail, initialBaseCurrency }: SettingsClientProps) {
   const { t, locale } = useI18n()
   const router = useRouter()
   const isRTL = locale === 'he'
@@ -199,6 +200,24 @@ export function SettingsClient({ isAdmin, initialDisplayName, initialEmail, init
                 </div>
               </div>
 
+              {initialFullName && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-sm font-medium text-slate-700">
+                    {t('appSettings.profileName')}
+                  </Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={initialFullName}
+                    disabled
+                    className="bg-slate-50"
+                  />
+                  <p className="text-xs text-slate-500">
+                    From your Google account (read-only)
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="displayName" className="text-sm font-medium text-slate-700">
                   {t('appSettings.profileNickname')}
@@ -210,6 +229,9 @@ export function SettingsClient({ isAdmin, initialDisplayName, initialEmail, init
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                 />
+                <p className="text-xs text-slate-500">
+                  This name is shown across the app
+                </p>
               </div>
 
               <div className="space-y-2">

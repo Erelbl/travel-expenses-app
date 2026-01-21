@@ -3,7 +3,8 @@ import { unstable_cache } from "next/cache"
 
 export interface AdminUser {
   id: string
-  name: string | null
+  displayName: string | null
+  fullName: string | null
   email: string | null
   createdAt: Date
   lastLoginAt: Date | null
@@ -103,6 +104,7 @@ async function getUsersPageUncached(page: number, plan: string): Promise<{ users
       where,
       select: {
         id: true,
+        name: true,
         nickname: true,
         email: true,
         createdAt: true,
@@ -121,7 +123,8 @@ async function getUsersPageUncached(page: number, plan: string): Promise<{ users
   return {
     users: users.map((user) => ({
       id: user.id,
-      name: user.nickname || null,
+      displayName: user.nickname || null,
+      fullName: user.name || null,
       email: user.email,
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt,
