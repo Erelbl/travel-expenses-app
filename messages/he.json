@@ -531,6 +531,9 @@
     "last7Days": "7 ימים אחרונים",
     "newUsers": "משתמשים חדשים",
     "totalTrips": "סה״כ טיולים",
+    "activeTrips": "טיולים פעילים",
+    "endedTrips": "טיולים שהסתיימו",
+    "deletedTrips": "טיולים שנמחקו",
     "newTrips": "טיולים חדשים",
     "totalExpenses": "סה״כ הוצאות",
     "newExpenses": "הוצאות חדשות",
@@ -542,9 +545,26 @@
     "name": "שם",
     "email": "אימייל",
     "plan": "תוכנית",
+    "joined": "הצטרף",
+    "lastLogin": "כניסה אחרונה",
+    "actions": "פעולות",
     "planFree": "חינמית",
     "planTraveler": "נוסע",
-    "planPro": "PRO"
+    "planPro": "PRO",
+    "planAll": "כל התוכניות",
+    "disable": "השבת",
+    "enable": "הפעל",
+    "disabled": "מושבת",
+    "disableConfirm": "האם אתה בטוח שברצונך להשבית משתמש זה? הוא לא יוכל לגשת לאפליקציה.",
+    "enableConfirm": "האם אתה בטוח שברצונך להפעיל משתמש זה?",
+    "userDisabled": "המשתמש הושבת",
+    "userEnabled": "המשתמש הופעל",
+    "actionFailed": "הפעולה נכשלה",
+    "page": "עמוד",
+    "of": "מתוך",
+    "prev": "הקודם",
+    "next": "הבא",
+    "tripsStats": "סטטיסטיקות טיולים"
   }
 }
 

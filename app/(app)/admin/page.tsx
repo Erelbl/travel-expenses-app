@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation"
 import { auth } from "@/lib/auth"
-import { getAdminStats, getAllUsers, getSignupTrend } from "@/lib/server/adminStats"
+import { getAdminStats, getUsersPage, getSignupTrend, getTripStats } from "@/lib/server/adminStats"
 import { AdminContent } from "./AdminContent"
 
 function isAdminEmail(email: string | null | undefined): boolean {
@@ -15,7 +15,11 @@ function isAdminEmail(email: string | null | undefined): boolean {
   return adminEmails.includes(email.toLowerCase())
 }
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: { page?: string; plan?: string }
+}) {
   const session = await auth()
   
   if (!session?.user?.id) {
@@ -26,11 +30,24 @@ export default async function AdminPage() {
     notFound()
   }
   
-  const [stats, users, signupTrend] = await Promise.all([
+  const page = parseInt(searchParams.page || "1", 10)
+  const plan = searchParams.plan || "All"
+  
+  const [stats, usersData, signupTrend, tripStats] = await Promise.all([
     getAdminStats(),
-    getAllUsers(),
+    getUsersPage(page, plan),
     getSignupTrend(),
+    getTripStats(),
   ])
   
-  return <AdminContent stats={stats} users={users} signupTrend={signupTrend} />
+  return (
+    <AdminContent
+      stats={stats}
+      usersData={usersData}
+      signupTrend={signupTrend}
+      tripStats={tripStats}
+      currentPage={page}
+      currentPlan={plan}
+    />
+  )
 }

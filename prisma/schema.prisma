@@ -18,6 +18,8 @@ model User {
   baseCurrency  String    @default("USD")
   language      String    @default("en")
   isAdmin       Boolean   @default(false)
+  isDisabled    Boolean   @default(false)
+  lastLoginAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

@@ -94,6 +94,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user }) {
+      if (user?.id) {
+        try {
+          // Update last login timestamp
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          })
+          
+          // Check if user is disabled
+          const dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { isDisabled: true },
+          })
+          
+          if (dbUser?.isDisabled) {
+            return false
+          }
+        } catch (error) {
+          console.error("[AUTH] Sign-in callback error:", error)
+        }
+      }
+      return true
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
@@ -104,13 +128,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user && token.id) {
         session.user.id = token.id as string
         
-        // Fetch user's display name (nickname is the stable display name)
+        // Fetch user's display name and disabled status
         const user = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { nickname: true },
+          select: { nickname: true, isDisabled: true },
         })
         
         if (user) {
+          // Block disabled users
+          if (user.isDisabled) {
+            throw new Error("Account disabled")
+          }
           session.user.name = user.nickname || null
         }
       }

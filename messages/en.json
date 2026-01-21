@@ -531,6 +531,9 @@
     "last7Days": "Last 7 Days",
     "newUsers": "New users",
     "totalTrips": "Total Trips",
+    "activeTrips": "Active Trips",
+    "endedTrips": "Ended Trips",
+    "deletedTrips": "Deleted Trips",
     "newTrips": "New trips",
     "totalExpenses": "Total Expenses",
     "newExpenses": "New expenses",
@@ -542,9 +545,26 @@
     "name": "Name",
     "email": "Email",
     "plan": "Plan",
+    "joined": "Joined",
+    "lastLogin": "Last Login",
+    "actions": "Actions",
     "planFree": "Free",
     "planTraveler": "Traveler",
-    "planPro": "PRO"
+    "planPro": "PRO",
+    "planAll": "All Plans",
+    "disable": "Disable",
+    "enable": "Enable",
+    "disabled": "Disabled",
+    "disableConfirm": "Are you sure you want to disable this user? They will not be able to access the app.",
+    "enableConfirm": "Are you sure you want to enable this user?",
+    "userDisabled": "User disabled",
+    "userEnabled": "User enabled",
+    "actionFailed": "Action failed",
+    "page": "Page",
+    "of": "of",
+    "prev": "Previous",
+    "next": "Next",
+    "tripsStats": "Trips Statistics"
   }
 }
 

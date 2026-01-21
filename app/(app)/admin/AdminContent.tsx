@@ -4,10 +4,10 @@ import { useI18n } from "@/lib/i18n/I18nProvider"
 import { PageContainer } from "@/components/ui/page-container"
 import { PageHeader } from "@/components/page-header"
 import { StatCard } from "@/components/stat-card"
-import { Users, UserCheck, UserX, Calendar, MapPin, Receipt } from "lucide-react"
+import { Users, UserCheck, UserX, Calendar, MapPin, Receipt, CheckCircle, XCircle } from "lucide-react"
 import { AdminUsersTable } from "./AdminUsersTable"
 import { AdminSignupChart } from "./AdminSignupChart"
-import type { AdminUser, SignupTrendDataPoint } from "@/lib/server/adminStats"
+import type { AdminUser, SignupTrendDataPoint, TripStats } from "@/lib/server/adminStats"
 
 interface AdminStats {
   users: {
@@ -29,11 +29,14 @@ interface AdminStats {
 
 interface AdminContentProps {
   stats: AdminStats
-  users: AdminUser[]
+  usersData: { users: AdminUser[], total: number }
   signupTrend: SignupTrendDataPoint[]
+  tripStats: TripStats
+  currentPage: number
+  currentPlan: string
 }
 
-export function AdminContent({ stats, users, signupTrend }: AdminContentProps) {
+export function AdminContent({ stats, usersData, signupTrend, tripStats, currentPage, currentPlan }: AdminContentProps) {
   const { t } = useI18n()
   
   const secondsAgo = Math.floor((Date.now() - stats.timestamp) / 1000)
@@ -79,27 +82,30 @@ export function AdminContent({ stats, users, signupTrend }: AdminContentProps) {
           <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.userSignupTrend")}</h2>
           <AdminSignupChart data={signupTrend} />
         </section>
-
-        {/* Users Table */}
-        <section>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.allUsers")}</h2>
-          <AdminUsersTable users={users} />
-        </section>
         
         {/* Trips Stats */}
         <section>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.trips")}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.tripsStats")}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               title={t("admin.totalTrips")}
-              value={stats.trips.total.toLocaleString()}
+              value={tripStats.total.toLocaleString()}
               icon={MapPin}
             />
             <StatCard
-              title={t("admin.last7Days")}
-              value={stats.trips.createdLast7d.toLocaleString()}
-              icon={Calendar}
-              subtitle={t("admin.newTrips")}
+              title={t("admin.activeTrips")}
+              value={tripStats.active.toLocaleString()}
+              icon={CheckCircle}
+            />
+            <StatCard
+              title={t("admin.endedTrips")}
+              value={tripStats.ended.toLocaleString()}
+              icon={XCircle}
+            />
+            <StatCard
+              title={t("admin.deletedTrips")}
+              value={tripStats.deleted.toLocaleString()}
+              icon={XCircle}
             />
           </div>
         </section>
@@ -120,6 +126,17 @@ export function AdminContent({ stats, users, signupTrend }: AdminContentProps) {
               subtitle={t("admin.newExpenses")}
             />
           </div>
+        </section>
+
+        {/* Users Table */}
+        <section>
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.allUsers")}</h2>
+          <AdminUsersTable
+            users={usersData.users}
+            total={usersData.total}
+            currentPage={currentPage}
+            currentPlan={currentPlan}
+          />
         </section>
       </div>
     </PageContainer>

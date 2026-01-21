@@ -6,12 +6,21 @@ export interface AdminUser {
   name: string | null
   email: string | null
   createdAt: Date
+  lastLoginAt: Date | null
+  isDisabled: boolean
   plan: "Free" | "Traveler" | "PRO"
 }
 
 export interface SignupTrendDataPoint {
   date: string
   count: number
+}
+
+export interface TripStats {
+  total: number
+  active: number
+  ended: number
+  deleted: number
 }
 
 interface AdminStats {
@@ -83,37 +92,49 @@ export const getAdminStats = () =>
     }
   )()
 
-async function getAllUsersUncached(): Promise<AdminUser[]> {
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      nickname: true,
-      email: true,
-      createdAt: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  })
+async function getUsersPageUncached(page: number, plan: string): Promise<{ users: AdminUser[], total: number }> {
+  const pageSize = 25
+  const skip = (page - 1) * pageSize
 
-  return users.map((user) => ({
-    id: user.id,
-    name: user.nickname || null,
-    email: user.email,
-    createdAt: user.createdAt,
-    plan: "Free" as const, // For MVP, all users are Free plan
-  }))
+  const where = plan !== "All" ? {} : {}
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        nickname: true,
+        email: true,
+        createdAt: true,
+        lastLoginAt: true,
+        isDisabled: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      skip,
+      take: pageSize,
+    }),
+    prisma.user.count({ where }),
+  ])
+
+  return {
+    users: users.map((user) => ({
+      id: user.id,
+      name: user.nickname || null,
+      email: user.email,
+      createdAt: user.createdAt,
+      lastLoginAt: user.lastLoginAt,
+      isDisabled: user.isDisabled,
+      plan: "Free" as const, // For MVP, all users are Free plan
+    })),
+    total,
+  }
 }
 
-export const getAllUsers = () =>
-  unstable_cache(
-    async () => getAllUsersUncached(),
-    ["admin-users"],
-    {
-      revalidate: 60,
-      tags: ["admin-users"],
-    }
-  )()
+export async function getUsersPage(page: number, plan: string) {
+  return getUsersPageUncached(page, plan)
+}
 
 async function getSignupTrendUncached(): Promise<SignupTrendDataPoint[]> {
   const thirtyDaysAgo = new Date()
@@ -164,6 +185,39 @@ export const getSignupTrend = () =>
     {
       revalidate: 60,
       tags: ["admin-signup-trend"],
+    }
+  )()
+
+async function getTripStatsUncached(): Promise<TripStats> {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const [total, ended] = await Promise.all([
+    prisma.trip.count(),
+    prisma.trip.count({
+      where: {
+        endDate: {
+          lt: today,
+        },
+      },
+    }),
+  ])
+
+  return {
+    total,
+    active: total - ended,
+    ended,
+    deleted: 0, // No soft delete implemented
+  }
+}
+
+export const getTripStats = () =>
+  unstable_cache(
+    async () => getTripStatsUncached(),
+    ["admin-trip-stats"],
+    {
+      revalidate: 60,
+      tags: ["admin-trip-stats"],
     }
   )()
 
