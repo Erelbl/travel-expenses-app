@@ -109,11 +109,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             select: { isDisabled: true },
           })
           
-          if (dbUser?.isDisabled) {
+          // Only block if explicitly disabled (true)
+          if (dbUser?.isDisabled === true) {
             return false
           }
         } catch (error) {
           console.error("[AUTH] Sign-in callback error:", error)
+          // Allow sign-in to proceed on error (fail-safe)
         }
       }
       return true
@@ -128,18 +130,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user && token.id) {
         session.user.id = token.id as string
         
-        // Fetch user's display name and disabled status
-        const user = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { nickname: true, isDisabled: true },
-        })
-        
-        if (user) {
-          // Block disabled users
-          if (user.isDisabled) {
-            throw new Error("Account disabled")
+        try {
+          // Fetch user's display name and disabled status
+          const user = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { nickname: true, isDisabled: true },
+          })
+          
+          if (user) {
+            // Block disabled users (only if explicitly true)
+            if (user.isDisabled === true) {
+              throw new Error("Account disabled")
+            }
+            session.user.name = user.nickname || null
           }
-          session.user.name = user.nickname || null
+        } catch (error) {
+          console.error("[AUTH] Session callback error:", error)
+          // If it's the "Account disabled" error, re-throw
+          if (error instanceof Error && error.message === "Account disabled") {
+            throw error
+          }
+          // Otherwise, continue with session (fail-safe)
         }
       }
       return session
