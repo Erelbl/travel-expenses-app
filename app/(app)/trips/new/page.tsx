@@ -48,7 +48,6 @@ export default function NewTripPage() {
     tripType: "" as "" | "solo" | "couple" | "family" | "friends",
     adults: 1,
     children: 0,
-    travelStyle: "" as "" | "budget" | "balanced" | "comfort" | "luxury",
   })
 
   // Derived currencies based on planned countries
@@ -84,9 +83,9 @@ export default function NewTripPage() {
         plannedCountries: formData.plannedCountries,
         itineraryLegs: [], // Will be added in enhanced form
         tripType: formData.tripType || undefined,
-        adults: formData.adults,
-        children: formData.children,
-        travelStyle: formData.travelStyle || undefined,
+        adults: formData.tripType === 'family' ? formData.adults : null,
+        children: formData.tripType === 'family' ? formData.children : null,
+        travelStyle: undefined,
         isClosed: false,
         closedAt: null,
         members: [
@@ -272,71 +271,54 @@ export default function NewTripPage() {
                 </p>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="tripType">{t('createTrip.tripType')}</Label>
-                  <Select
-                    id="tripType"
-                    value={formData.tripType}
-                    onChange={(e) => {
-                      const tripType = e.target.value as typeof formData.tripType
-                      const defaultAdults = tripType === "solo" ? 1 : tripType === "couple" ? 2 : tripType === "family" ? 2 : tripType === "friends" ? 3 : 1
-                      setFormData({ ...formData, tripType, adults: defaultAdults })
-                    }}
-                  >
-                    <option value="">{t('createTrip.tripTypeSelect')}</option>
-                    <option value="solo">{t('createTrip.tripTypeSolo')}</option>
-                    <option value="couple">{t('createTrip.tripTypeCouple')}</option>
-                    <option value="family">{t('createTrip.tripTypeFamily')}</option>
-                    <option value="friends">{t('createTrip.tripTypeFriends')}</option>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="travelStyle">{t('createTrip.travelStyle')}</Label>
-                  <Select
-                    id="travelStyle"
-                    value={formData.travelStyle}
-                    onChange={(e) =>
-                      setFormData({ ...formData, travelStyle: e.target.value as typeof formData.travelStyle })
-                    }
-                  >
-                    <option value="">{t('createTrip.travelStyleSelect')}</option>
-                    <option value="budget">{t('createTrip.travelStyleBudget')}</option>
-                    <option value="balanced">{t('createTrip.travelStyleBalanced')}</option>
-                    <option value="comfort">{t('createTrip.travelStyleComfort')}</option>
-                    <option value="luxury">{t('createTrip.travelStyleLuxury')}</option>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="tripType">{t('createTrip.tripType')}</Label>
+                <Select
+                  id="tripType"
+                  value={formData.tripType}
+                  onChange={(e) => {
+                    const tripType = e.target.value as typeof formData.tripType
+                    const defaultAdults = tripType === "solo" ? 1 : tripType === "couple" ? 2 : tripType === "family" ? 2 : tripType === "friends" ? 3 : 1
+                    setFormData({ ...formData, tripType, adults: defaultAdults })
+                  }}
+                >
+                  <option value="">{t('createTrip.tripTypeSelect')}</option>
+                  <option value="solo">{t('createTrip.tripTypeSolo')}</option>
+                  <option value="couple">{t('createTrip.tripTypeCouple')}</option>
+                  <option value="family">{t('createTrip.tripTypeFamily')}</option>
+                  <option value="friends">{t('createTrip.tripTypeFriends')}</option>
+                </Select>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="adults">{t('createTrip.adults')}</Label>
-                  <Input
-                    id="adults"
-                    type="number"
-                    min="0"
-                    value={formData.adults}
-                    onChange={(e) =>
-                      setFormData({ ...formData, adults: parseInt(e.target.value) || 0 })
-                    }
-                  />
-                </div>
+              {formData.tripType === 'family' && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="adults">{t('createTrip.adults')}</Label>
+                    <Input
+                      id="adults"
+                      type="number"
+                      min="0"
+                      value={formData.adults}
+                      onChange={(e) =>
+                        setFormData({ ...formData, adults: parseInt(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="children">{t('createTrip.children')}</Label>
-                  <Input
-                    id="children"
-                    type="number"
-                    min="0"
-                    value={formData.children}
-                    onChange={(e) =>
-                      setFormData({ ...formData, children: parseInt(e.target.value) || 0 })
-                    }
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="children">{t('createTrip.children')}</Label>
+                    <Input
+                      id="children"
+                      type="number"
+                      min="0"
+                      value={formData.children}
+                      onChange={(e) =>
+                        setFormData({ ...formData, children: parseInt(e.target.value) || 0 })
+                      }
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-4">
