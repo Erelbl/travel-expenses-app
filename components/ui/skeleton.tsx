@@ -5,9 +5,11 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
 export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
-      className={cn("animate-pulse rounded-lg bg-slate-200", className)}
+      className={cn("animate-pulse rounded-lg bg-slate-200/80 relative overflow-hidden", className)}
       {...props}
-    />
+    >
+      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+    </div>
   )
 }
 
