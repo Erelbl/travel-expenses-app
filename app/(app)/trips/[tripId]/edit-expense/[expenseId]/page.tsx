@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
 import { OfflineBanner } from "@/components/OfflineBanner"
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Modal, ModalHeader, ModalTitle, ModalContent, ModalClose } from "@/components/ui/modal"
 import { tripsRepository, expensesRepository, ratesRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
 import { Expense, ExpenseCategory } from "@/lib/schemas/expense.schema"
@@ -46,6 +47,8 @@ export default function EditExpensePage() {
   const [loading, setLoading] = useState(false)
   const [saveError, setSaveError] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   
   // FX Rate state
   const [fxRateStatus, setFxRateStatus] = useState<"checking" | "available" | "unavailable" | "manual">("checking")
@@ -298,6 +301,31 @@ export default function EditExpensePage() {
     }
   }
 
+  async function handleDelete() {
+    if (!originalExpense || deleting) return
+
+    setDeleting(true)
+
+    try {
+      const response = await fetch(`/api/expenses/${expenseId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete expense')
+      }
+
+      toast.success(t('editExpense.deleteSuccess'))
+      setShowDeleteModal(false)
+      router.push(`/trips/${tripId}`)
+    } catch (error) {
+      console.error("Failed to delete expense:", error)
+      toast.error(t('editExpense.deleteError'))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   if (initialLoading || !trip || !originalExpense) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
@@ -321,19 +349,41 @@ export default function EditExpensePage() {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-bold text-slate-900">{t('editExpense.title')}</h1>
           <p className="text-sm text-slate-600">{trip.name}</p>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowDeleteModal(true)}
+          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+          title={t('common.delete')}
+        >
+          <Trash2 className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* Desktop Header */}
       <div className="hidden px-6 py-8 md:block">
         <div className="container mx-auto max-w-2xl">
-          <h1 className="text-3xl font-bold text-slate-900">{t('editExpense.title')}</h1>
-          <p className="mt-1 text-base text-slate-600">
-            {t('editExpense.subtitle')} {trip.name}
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">{t('editExpense.title')}</h1>
+              <p className="mt-1 text-base text-slate-600">
+                {t('editExpense.subtitle')} {trip.name}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowDeleteModal(true)}
+              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              title={t('common.delete')}
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -668,6 +718,38 @@ export default function EditExpensePage() {
       </div>
 
       <BottomNav tripId={tripId} />
+
+      {/* Delete Confirmation Modal */}
+      <Modal open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <div dir={locale === 'he' ? 'rtl' : 'ltr'}>
+          <ModalHeader>
+            <ModalTitle>{t('editExpense.deleteTitle')}</ModalTitle>
+            <ModalClose onClick={() => setShowDeleteModal(false)} />
+          </ModalHeader>
+          <ModalContent>
+            <p className="text-sm text-slate-600 mb-6">
+              {t('editExpense.deleteMessage')}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="px-4 py-2"
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? t('common.loading') : t('editExpense.deleteButton')}
+              </Button>
+            </div>
+          </ModalContent>
+        </div>
+      </Modal>
     </div>
   )
 }

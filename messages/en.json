@@ -110,7 +110,12 @@
     "save": "Save Changes",
     "success": "Expense updated!",
     "error": "Failed to update expense. Please try again.",
-    "calmNote": "You can update this as many times as needed"
+    "calmNote": "You can update this as many times as needed",
+    "deleteTitle": "Delete Expense",
+    "deleteMessage": "Delete this expense? This action cannot be undone.",
+    "deleteButton": "Delete",
+    "deleteSuccess": "Expense deleted",
+    "deleteError": "Failed to delete expense"
   },
   "addExpense": {
     "title": "Add Expense",
