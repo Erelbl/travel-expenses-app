@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Zap, Globe2, TrendingUp, Check, Plane, CreditCard, BarChart3, Users } from "lucide-react"
+import Image from "next/image"
+import { Zap, Globe2, TrendingUp, Check, CreditCard, BarChart3, Users } from "lucide-react"
 import { PhoneFrame } from "@/components/phone-frame"
 
 export function LandingPage() {
@@ -519,9 +520,7 @@ export function LandingPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2 text-white">
-              <div className="bg-gradient-to-br from-sky-400 to-blue-600 p-2 rounded-lg">
-                <Plane className="h-5 w-5 text-white" />
-              </div>
+              <Image src="/brand/logo.png" alt="TravelWise" width={32} height={32} className="h-8 w-8 rounded-lg" />
               <span className="font-bold text-lg">TravelWise</span>
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm">

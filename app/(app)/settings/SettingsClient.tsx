@@ -482,6 +482,10 @@ export function SettingsClient({ isAdmin, initialFullName, initialDisplayName, i
               <Link href="/terms" className="hover:text-slate-900 transition-colors">
                 Terms of Service
               </Link>
+              <span className="text-slate-300">•</span>
+              <Link href="/contact" className="hover:text-slate-900 transition-colors">
+                Contact
+              </Link>
             </div>
             <p className="text-xs text-slate-400">
               © {new Date().getFullYear()} TravelWise. All rights reserved.
