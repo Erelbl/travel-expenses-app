@@ -70,6 +70,7 @@ ${message}
     await resend.emails.send({
       from: process.env.EMAIL_FROM || "onboarding@resend.dev",
       to: "blerelbl@gmail.com",
+      replyTo: email,
       subject: "[TravelWise] פנייה חדשה מהאפליקציה",
       html: emailHtml,
       text: emailText,

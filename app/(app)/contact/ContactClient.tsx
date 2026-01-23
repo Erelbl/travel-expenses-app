@@ -12,24 +12,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 
 interface ContactClientProps {
-  userEmail: string
   userId: string
 }
 
-export function ContactClient({ userEmail, userId }: ContactClientProps) {
+export function ContactClient({ userId }: ContactClientProps) {
   const { locale } = useI18n()
   const router = useRouter()
   const isRTL = locale === 'he'
 
   const [name, setName] = useState("")
-  const [email, setEmail] = useState(userEmail)
+  const [email, setEmail] = useState("")
   const [message, setMessage] = useState("")
   const [honeypot, setHoneypot] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [lastSubmitTime, setLastSubmitTime] = useState<number | null>(null)
 
-  const phone = "+972-50-000-0000"
+  const phone = "+972543037729"
   const whatsappUrl = `https://wa.me/${phone.replace(/[^0-9]/g, '')}`
 
   const MAX_MESSAGE_LENGTH = 2000

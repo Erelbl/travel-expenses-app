@@ -9,6 +9,6 @@ export default async function ContactPage() {
     redirect("/auth/login")
   }
   
-  return <ContactClient userEmail={session.user.email || ""} userId={session.user.id} />
+  return <ContactClient userId={session.user.id} />
 }
 
