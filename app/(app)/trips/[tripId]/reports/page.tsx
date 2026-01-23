@@ -508,7 +508,7 @@ export default function ReportsPage() {
                   amount: d.amount,
                   isFuture: d.isFuture,
                 }))}
-                height={280}
+                height={300}
                 currency={trip.baseCurrency}
                 formatCurrency={formatCurrency}
                 highlightDates={highlightDates}
