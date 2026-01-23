@@ -130,6 +130,12 @@ export default function ReportsPage() {
     const stored = localStorage.getItem(`reports:countryIncludeFlights:${params.tripId}`)
     return stored === 'true'
   })
+  
+  const [excludeFlightsFromDailyAvg, setExcludeFlightsFromDailyAvg] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const stored = localStorage.getItem(`reports:dailyAvgExcludeFlights:${params.tripId}`)
+    return stored === 'true'
+  })
 
   const [filters, setFilters] = useState<ReportFilters>({
     dateRange: "all",
@@ -140,12 +146,18 @@ export default function ReportsPage() {
     category: "",
   })
   
-  // Persist toggle state
+  // Persist toggle states
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(`reports:countryIncludeFlights:${tripId}`, String(includeFlightsInCountry))
     }
   }, [includeFlightsInCountry, tripId])
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`reports:dailyAvgExcludeFlights:${tripId}`, String(excludeFlightsFromDailyAvg))
+    }
+  }, [excludeFlightsFromDailyAvg, tripId])
 
   useEffect(() => {
     loadData()
@@ -248,6 +260,12 @@ export default function ReportsPage() {
     ? filteredExpenses 
     : filteredExpenses.filter(e => e.category !== 'Flights')
   const countryBreakdown = calculateCountryBreakdown(expensesForCountryBreakdown)
+  
+  // Daily average - with and without flights
+  const expensesForDailyAvg = excludeFlightsFromDailyAvg
+    ? filteredExpenses.filter(e => e.category !== 'Flights')
+    : filteredExpenses
+  const summaryForDailyAvg = calculateSummary(expensesForDailyAvg, trip)
   
   const topCategories = getTopCategories(categoryBreakdown, 5)
   const dailySpend = calculateDailySpend(filteredExpenses)
@@ -482,17 +500,35 @@ export default function ReportsPage() {
             {/* Average Per Day */}
             <Card className="border-slate-200 shadow-sm h-full">
               <CardContent className="p-4 flex flex-col h-full">
-                <div className="flex items-center gap-2 text-slate-500 mb-2">
-                  <Calendar className="h-4 w-4 shrink-0" />
-                  <span className="text-xs font-medium uppercase tracking-wide">{t("reports.perDay")}</span>
+                <div className="flex items-center justify-between text-slate-500 mb-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 shrink-0" />
+                    <span className="text-xs font-medium uppercase tracking-wide">{t("reports.perDay")}</span>
+                  </div>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={excludeFlightsFromDailyAvg}
+                      onChange={(e) => setExcludeFlightsFromDailyAvg(e.target.checked)}
+                      className="w-3 h-3 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                    />
+                    <span className="text-[10px] text-slate-500">
+                      {locale === "he" ? "ללא טיסות" : "No flights"}
+                    </span>
+                  </label>
                 </div>
                 <div className="flex-1 flex flex-col justify-center">
                   <p className="text-2xl font-bold text-slate-900 leading-tight mb-1">
-                    {formatCurrency(summary.averagePerDay, trip.baseCurrency)}
+                    {formatCurrency(summaryForDailyAvg.averagePerDay, trip.baseCurrency)}
                   </p>
                 </div>
                 <p className="text-xs text-slate-500 mt-auto">
-                  {summary.tripDays} {t("reports.days")}
+                  {summaryForDailyAvg.tripDays} {t("reports.days")}
+                  {excludeFlightsFromDailyAvg && (
+                    <span className="block text-[10px] text-slate-400 mt-0.5">
+                      {locale === "he" ? "משקף עלות יומית בתוך היעד" : "In-destination daily cost"}
+                    </span>
+                  )}
                 </p>
               </CardContent>
             </Card>
