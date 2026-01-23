@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Filter, TrendingUp, Calendar, DollarSign, BarChart3, Plus, Target, Tag } from "lucide-react"
+import { ArrowLeft, Filter, Calendar, DollarSign, BarChart3, Plus, Target, Tag } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { Button } from "@/components/ui/button"
@@ -518,7 +518,7 @@ export default function ReportsPage() {
         </Card>
 
         {/* VISUAL BREAKDOWNS - Supporting charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* Category Breakdown */}
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4">
@@ -580,63 +580,6 @@ export default function ReportsPage() {
                       </div>
                     )
                   })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Top Days */}
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                <TrendingUp className="h-5 w-5 text-emerald-500" />
-                {t("reports.topDays")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {dailySpend.length === 0 ? (
-                <p className="text-base text-slate-500 text-center py-8">
-                  {t("reports.noData")}
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {dailySpend
-                    .filter((d) => !d.isFuture)
-                    .sort((a, b) => b.amount - a.amount)
-                    .slice(0, 5)
-                    .map((day, index) => (
-                      <div key={day.date} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                              <span className="text-sm font-bold text-emerald-700">#{index + 1}</span>
-                            </div>
-                            <span className="font-semibold text-base text-slate-700">
-                              {new Date(day.date).toLocaleDateString(locale, {
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </span>
-                          </div>
-                          <span className="text-base text-slate-900 font-bold">
-                            {formatCurrency(day.amount, trip.baseCurrency)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-emerald-400 rounded-full transition-all duration-500"
-                              style={{
-                                width: `${(day.amount / dailySpend[0].amount) * 100}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm text-slate-500 w-12 text-end">
-                            {day.count} {day.count === 1 ? t("reports.expense") : t("reports.expenses")}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
                 </div>
               )}
             </CardContent>

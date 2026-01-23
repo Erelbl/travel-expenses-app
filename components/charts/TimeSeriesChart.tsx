@@ -28,7 +28,7 @@ export function TimeSeriesChart({
 
     const maxAmount = Math.max(...data.map((d) => d.amount))
     const padding = { top: 20, right: 20, bottom: 40, left: 60 }
-    const chartWidth = 800
+    const chartWidth = 100
     const chartHeight = height
     const innerWidth = chartWidth - padding.left - padding.right
     const innerHeight = chartHeight - padding.top - padding.bottom
@@ -128,11 +128,11 @@ export function TimeSeriesChart({
   } = chartData
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full">
       <svg
         viewBox={`0 0 ${chartWidth} ${chartHeight}`}
         className="w-full"
-        style={{ minWidth: "600px" }}
+        preserveAspectRatio="none"
       >
         {/* Grid lines */}
         {yTicks.map((tick, i) => (
