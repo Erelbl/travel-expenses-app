@@ -250,7 +250,7 @@ export default function EditExpensePage() {
         amount,
         currency: formData.currency,
         category: formData.category,
-        country: formData.country,
+        country: formData.category === 'Flights' ? '' : formData.country, // Flights have no country
         merchant: formData.merchant || undefined,
         note: formData.note || undefined,
         date: formData.date,
@@ -456,7 +456,14 @@ export default function EditExpensePage() {
                 <button
                   key={category}
                   type="button"
-                  onClick={() => setFormData({ ...formData, category })}
+                  onClick={() => {
+                    // Clear country when switching to Flights
+                    if (category === 'Flights') {
+                      setFormData({ ...formData, category, country: '' })
+                    } else {
+                      setFormData({ ...formData, category })
+                    }
+                  }}
                   className={`whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
                     formData.category === category
                       ? "bg-slate-900 text-white shadow-md"
@@ -469,32 +476,34 @@ export default function EditExpensePage() {
             </div>
           </div>
 
-          {/* 4. COUNTRY */}
-          <div className="space-y-2">
-            <Label htmlFor="country" className="font-semibold text-slate-800">
-              {t('addExpense.country')} <span className="text-red-500">*</span>
-            </Label>
-            {tripCountriesOptions.length === 1 ? (
-              <div className="premium-input h-14 bg-slate-50 flex items-center justify-between px-4 text-base font-medium text-slate-700 cursor-not-allowed">
-                <span>{tripCountriesOptions[0].flag} {tripCountriesOptions[0].name}</span>
-                <Badge variant="secondary" className="text-xs">{t('common.only')}</Badge>
-              </div>
-            ) : (
-              <Select
-                id="country"
-                value={formData.country}
-                onChange={(e) => handleCountryChange(e.target.value)}
-                className="premium-input h-14 bg-white text-base font-medium text-slate-900"
-                required
-              >
-                {tripCountriesOptions.map((country) => (
-                  <option key={country.code} value={country.code}>
-                    {country.flag} {country.name}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </div>
+          {/* 4. COUNTRY - hidden for flights */}
+          {formData.category !== 'Flights' && (
+            <div className="space-y-2">
+              <Label htmlFor="country" className="font-semibold text-slate-800">
+                {t('addExpense.country')} <span className="text-red-500">*</span>
+              </Label>
+              {tripCountriesOptions.length === 1 ? (
+                <div className="premium-input h-14 bg-slate-50 flex items-center justify-between px-4 text-base font-medium text-slate-700 cursor-not-allowed">
+                  <span>{tripCountriesOptions[0].flag} {tripCountriesOptions[0].name}</span>
+                  <Badge variant="secondary" className="text-xs">{t('common.only')}</Badge>
+                </div>
+              ) : (
+                <Select
+                  id="country"
+                  value={formData.country}
+                  onChange={(e) => handleCountryChange(e.target.value)}
+                  className="premium-input h-14 bg-white text-base font-medium text-slate-900"
+                  required
+                >
+                  {tripCountriesOptions.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.flag} {country.name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </div>
+          )}
 
           {/* 5. DATE */}
           <div className="space-y-2">
