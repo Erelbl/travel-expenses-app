@@ -473,6 +473,77 @@ export default function ReportsPage() {
           </div>
         </div>
 
+        {/* VISUAL BREAKDOWNS - Supporting charts */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* Category Breakdown */}
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
+                <Tag className="h-5 w-5 text-sky-500" />
+                {t("reports.byCategory")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {topCategories.length === 0 ? (
+                <p className="text-base text-slate-500 text-center py-8">
+                  {t("reports.noData")}
+                </p>
+              ) : (
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                  {/* Pie Chart */}
+                  <div className="flex-shrink-0">
+                    <DonutChart
+                      data={categoryBreakdown
+                        .sort((a, b) => b.amount - a.amount)
+                        .map((item) => ({
+                          category: item.category,
+                          percentage: item.percentage,
+                        }))}
+                      size={200}
+                      strokeWidth={40}
+                    />
+                  </div>
+                  {/* Legend */}
+                  <div className="flex-1 w-full space-y-3">
+                    {categoryBreakdown
+                      .sort((a, b) => b.amount - a.amount)
+                      .map((item) => (
+                        <div
+                          key={item.category}
+                          className="flex items-center justify-between cursor-pointer transition-opacity hover:opacity-80"
+                          onMouseEnter={() => setHoveredCategory(item.category)}
+                          onMouseLeave={() => setHoveredCategory(null)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-4 h-4 rounded-full shrink-0"
+                              style={{
+                                backgroundColor:
+                                  CATEGORY_CHART_COLORS[item.category as ExpenseCategory] ||
+                                  CATEGORY_CHART_COLORS.Other,
+                              }}
+                            />
+                            <span className="font-medium text-sm text-slate-700">
+                              {t(`categories.${item.category}`)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-bold text-slate-900">
+                              {formatCurrency(item.amount, trip.baseCurrency)}
+                            </span>
+                            <span className="text-xs font-semibold text-slate-500 w-10 text-end">
+                              {item.percentage.toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         {/* MAIN HERO GRAPH - Time-based spending */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-4">
@@ -516,75 +587,6 @@ export default function ReportsPage() {
             )}
           </CardContent>
         </Card>
-
-        {/* VISUAL BREAKDOWNS - Supporting charts */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* Category Breakdown */}
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                <Tag className="h-5 w-5 text-sky-500" />
-                {t("reports.byCategory")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {topCategories.length === 0 ? (
-                <p className="text-base text-slate-500 text-center py-8">
-                  {t("reports.noData")}
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {topCategories.map((item) => {
-                    const colors = getCategoryColors(item.category)
-                    return (
-                      <div 
-                        key={item.category} 
-                        className="space-y-2 cursor-pointer transition-opacity"
-                        onMouseEnter={() => setHoveredCategory(item.category)}
-                        onMouseLeave={() => setHoveredCategory(null)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-full shrink-0"
-                              style={{
-                                backgroundColor:
-                                  CATEGORY_CHART_COLORS[item.category as ExpenseCategory] ||
-                                  CATEGORY_CHART_COLORS.Other,
-                              }}
-                            />
-                            <span className="font-semibold text-base text-slate-700">
-                              {t(`categories.${item.category}`)}
-                            </span>
-                          </div>
-                          <span className="text-base text-slate-900 font-bold">
-                            {formatCurrency(item.amount, trip.baseCurrency)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{
-                                width: `${item.percentage}%`,
-                                backgroundColor:
-                                  CATEGORY_CHART_COLORS[item.category as ExpenseCategory] ||
-                                  CATEGORY_CHART_COLORS.Other,
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-semibold text-slate-600 w-12 text-end">
-                            {item.percentage.toFixed(0)}%
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Filters Modal (Centered Popup) */}
         <Modal open={showFilters} onOpenChange={setShowFilters} size="lg">
