@@ -125,6 +125,11 @@ export default function ReportsPage() {
   const [error, setError] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<ExpenseCategory | null>(null)
+  const [includeFlightsInCountry, setIncludeFlightsInCountry] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const stored = localStorage.getItem(`reports:countryIncludeFlights:${params.tripId}`)
+    return stored === 'true'
+  })
 
   const [filters, setFilters] = useState<ReportFilters>({
     dateRange: "all",
@@ -134,6 +139,13 @@ export default function ReportsPage() {
     country: "",
     category: "",
   })
+  
+  // Persist toggle state
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`reports:countryIncludeFlights:${tripId}`, String(includeFlightsInCountry))
+    }
+  }, [includeFlightsInCountry, tripId])
 
   useEffect(() => {
     loadData()
@@ -230,7 +242,13 @@ export default function ReportsPage() {
   // Calculate metrics
   const summary = calculateSummary(filteredExpenses, trip)
   const categoryBreakdown = calculateCategoryBreakdown(filteredExpenses)
-  const countryBreakdown = calculateCountryBreakdown(filteredExpenses)
+  
+  // Country breakdown - exclude flights by default unless toggle is on
+  const expensesForCountryBreakdown = includeFlightsInCountry 
+    ? filteredExpenses 
+    : filteredExpenses.filter(e => e.category !== 'Flights')
+  const countryBreakdown = calculateCountryBreakdown(expensesForCountryBreakdown)
+  
   const topCategories = getTopCategories(categoryBreakdown, 5)
   const dailySpend = calculateDailySpend(filteredExpenses)
   
@@ -259,7 +277,7 @@ export default function ReportsPage() {
   
   // Calculate daily average per country (for multi-country trips)
   const countryDailyAverages = isMultiCountry ? countryBreakdown.map(country => {
-    const countryExpenses = filteredExpenses.filter(e => e.country === country.country && e.convertedAmount)
+    const countryExpenses = expensesForCountryBreakdown.filter(e => e.country === country.country && e.convertedAmount)
     if (countryExpenses.length === 0) return null
     
     const dates = countryExpenses.map(e => e.usageDate || e.date).sort()
@@ -575,9 +593,27 @@ export default function ReportsPage() {
           {isMultiCountry && countryBreakdown.length > 0 && (
             <Card className="border-slate-200 shadow-sm">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-bold text-slate-900">
-                  {t("reports.byCountry")}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-bold text-slate-900">
+                    {t("reports.byCountry")}
+                  </CardTitle>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={includeFlightsInCountry}
+                      onChange={(e) => setIncludeFlightsInCountry(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                    />
+                    <span className="text-xs text-slate-600">
+                      {locale === "he" ? "כלול טיסות" : "Include flights"}
+                    </span>
+                  </label>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  {locale === "he" 
+                    ? "הפירוט לפי מדינה מוצג ללא טיסות כדי לשקף הוצאות בתוך היעד. לכן סכומי המדינות עשויים להיות שונים מהסה״כ הכללי."
+                    : "Country breakdown excludes flights by default to reflect in-destination spending. Country totals may differ from overall totals."}
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
