@@ -22,12 +22,14 @@ import { Trip } from "@/lib/schemas/trip.schema"
 import { Expense, ExpenseCategory } from "@/lib/schemas/expense.schema"
 import { formatCurrency } from "@/lib/utils/currency"
 import { getCategoryColors } from "@/lib/utils/categoryColors"
+import { getCountryName, getCountryFlag } from "@/lib/utils/countries"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import {
   ReportFilters,
   filterExpenses,
   calculateSummary,
   calculateCategoryBreakdown,
+  calculateCountryBreakdown,
   calculateDailySpend,
   getTopCategories,
 } from "@/lib/utils/reports"
@@ -228,6 +230,7 @@ export default function ReportsPage() {
   // Calculate metrics
   const summary = calculateSummary(filteredExpenses, trip)
   const categoryBreakdown = calculateCategoryBreakdown(filteredExpenses)
+  const countryBreakdown = calculateCountryBreakdown(filteredExpenses)
   const topCategories = getTopCategories(categoryBreakdown, 5)
   const dailySpend = calculateDailySpend(filteredExpenses)
   
@@ -245,6 +248,10 @@ export default function ReportsPage() {
   const hasBudget = trip.targetBudget && trip.targetBudget > 0
   const budgetUsed = hasBudget ? (summary.totalRealized / trip.targetBudget!) * 100 : 0
   const budgetRemaining = hasBudget ? trip.targetBudget! - summary.totalRealized : 0
+  
+  // Calculate burn rate
+  const currentPace = summary.averagePerDay
+  const budgetPace = hasBudget && summary.tripDays > 0 ? trip.targetBudget! / summary.tripDays : 0
 
   // Calculate dominant category per day for hover interaction
   const dominantCategoryByDate = new Map<string, ExpenseCategory>()
@@ -540,6 +547,92 @@ export default function ReportsPage() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Country Breakdown */}
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-slate-900">
+                {t("reports.byCountry")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {countryBreakdown.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-sm text-slate-500">
+                    {locale === "he" ? "אין מספיק נתונים לשיוך לפי מדינה עדיין" : "Not enough data to show country breakdown yet"}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {countryBreakdown.map((item) => (
+                    <div key={item.country} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{getCountryFlag(item.country)}</span>
+                        <span className="font-medium text-sm text-slate-700">
+                          {getCountryName(item.country, locale)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-slate-900">
+                          {formatCurrency(item.amount, trip.baseCurrency)}
+                        </span>
+                        <span className="text-xs font-semibold text-slate-500 w-10 text-end">
+                          {item.percentage.toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Burn Rate */}
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold text-slate-900">
+                {locale === "he" ? "קצב הוצאה" : "Spending Pace"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <span className="text-sm text-slate-600">
+                    {locale === "he" ? "ממוצע הוצאה ליום" : "Average per day"}
+                  </span>
+                  <span className="text-lg font-bold text-slate-900">
+                    {formatCurrency(currentPace, trip.baseCurrency)}
+                  </span>
+                </div>
+                {hasBudget && (
+                  <>
+                    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <span className="text-sm text-slate-600">
+                        {locale === "he" ? "קצב נדרש לעמידה בתקציב" : "Required pace for budget"}
+                      </span>
+                      <span className="text-lg font-bold text-slate-900">
+                        {formatCurrency(budgetPace, trip.baseCurrency)}
+                      </span>
+                    </div>
+                    {currentPace > budgetPace && (
+                      <p className="text-xs text-amber-600 bg-amber-50 p-3 rounded-lg">
+                        {locale === "he" 
+                          ? `אתה מוציא ${formatCurrency(currentPace - budgetPace, trip.baseCurrency)} ליום יותר מהקצב הנדרש`
+                          : `You're spending ${formatCurrency(currentPace - budgetPace, trip.baseCurrency)} per day more than needed`}
+                      </p>
+                    )}
+                    {currentPace <= budgetPace && (
+                      <p className="text-xs text-emerald-600 bg-emerald-50 p-3 rounded-lg">
+                        {locale === "he" 
+                          ? "הקצב שלך מתאים לתקציב"
+                          : "Your pace is on track with the budget"}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
