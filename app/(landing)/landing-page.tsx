@@ -8,7 +8,7 @@ import { plans } from "@/lib/plans"
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-slate-50" dir="ltr">
+    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-slate-50 font-marketing" dir="ltr">
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6">
         <div className="container mx-auto max-w-6xl">
