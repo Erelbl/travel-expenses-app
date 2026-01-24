@@ -174,15 +174,49 @@ export default function TripHomePage() {
   const summary = calculateSummary(expenses, trip)
   const { realized, future } = classifyExpenses(expenses)
   
-  // Generate all insights (both regular and banner)
+  // Generate insights separately by type
   const allRegularInsights = generateInsights(trip, expenses)
   const allBannerInsights = generateAllBannerInsights(trip, expenses)
-  const allInsights = [...allRegularInsights, ...allBannerInsights]
   
-  // Select the single best insight to display, considering dismissal state
-  const displayedInsight = selectInsightToDisplay(allInsights, dismissedInsights)
-  const displayedBannerInsight = displayedInsight && 'textKey' in displayedInsight ? displayedInsight : null
-  const displayedRegularInsight = displayedInsight && 'titleKey' in displayedInsight ? displayedInsight : null
+  // Select best regular insight (type-safe with Insight[])
+  const selectedRegularInsight = selectInsightToDisplay(allRegularInsights, dismissedInsights)
+  
+  // Select best banner insight (similar logic, inline)
+  const selectBannerInsight = () => {
+    if (allBannerInsights.length === 0) return null
+    
+    const now = Date.now()
+    const DISMISSAL_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
+    
+    // Filter out recently dismissed banner insights
+    const eligibleBanners = allBannerInsights.filter(insight => {
+      const dismissedAt = dismissedInsights.get(insight.dismissalId)
+      if (!dismissedAt) return true
+      return (now - dismissedAt) > DISMISSAL_DURATION
+    })
+    
+    // Return highest priority eligible banner
+    return eligibleBanners.length > 0 ? eligibleBanners[0] : null
+  }
+  const selectedBannerInsight = selectBannerInsight()
+  
+  // Decide which single insight to display (banner vs regular)
+  // Choose the one with higher priority, or banner if tied
+  let displayedBannerInsight = null
+  let displayedRegularInsight = null
+  
+  if (selectedBannerInsight && selectedRegularInsight) {
+    // Both available: pick higher priority
+    if (selectedBannerInsight.priority >= selectedRegularInsight.priority) {
+      displayedBannerInsight = selectedBannerInsight
+    } else {
+      displayedRegularInsight = selectedRegularInsight
+    }
+  } else if (selectedBannerInsight) {
+    displayedBannerInsight = selectedBannerInsight
+  } else if (selectedRegularInsight) {
+    displayedRegularInsight = selectedRegularInsight
+  }
   
   // Dismiss insight
   const dismissInsight = (dismissalId: string) => {
@@ -551,7 +585,7 @@ export default function TripHomePage() {
             className="relative bg-gradient-to-r from-amber-50/80 to-yellow-50/80 backdrop-blur-sm border border-amber-200/60 rounded-xl p-4 shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
           >
             <button
-              onClick={() => dismissInsight(displayedInsight!.dismissalId)}
+              onClick={() => dismissInsight((displayedBannerInsight || displayedRegularInsight)!.dismissalId)}
               className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-3 text-amber-600 hover:text-amber-800 transition-colors`}
               aria-label={t('common.close')}
             >
