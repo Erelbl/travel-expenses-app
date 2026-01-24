@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { parseReceiptText } from "@/lib/receipts/parseReceiptText"
+
+export const runtime = "nodejs"
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"] // Client normalizes to JPEG
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"]
 
 interface ExtractionResult {
   amount: number | null
@@ -15,170 +16,224 @@ interface ExtractionResult {
     date: number
     merchant: number
   }
-  debugText?: string // Dev only
-  error?: {
+}
+
+interface ErrorResponse {
+  error: {
     code: string
     message: string
   }
 }
 
-function createErrorResponse(code: string, message: string): ExtractionResult {
-  return {
-    amount: null,
-    currency: null,
-    date: null,
-    merchant: null,
-    confidence: { amount: 0, currency: 0, date: 0, merchant: 0 },
-    error: { code, message },
-  }
-}
-
-async function extractTextFromImage(buffer: Buffer, mimeType: string): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY
-  
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY not configured")
-  }
-
-  const base64Image = buffer.toString("base64")
-  const dataUrl = `data:${mimeType};base64,${base64Image}`
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Extract all visible text from this receipt image exactly as plain text. Return ONLY the text you see, preserving line breaks. No commentary, no analysis, just the raw text."
-            },
-            {
-              type: "image_url",
-              image_url: { url: dataUrl },
-            },
-          ],
-        },
-      ],
-      max_tokens: 1000,
-      temperature: 0,
-    }),
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`OpenAI API error: ${response.status} - ${errorText.substring(0, 200)}`)
-  }
-
-  const data = await response.json()
-  const extractedText = data.choices?.[0]?.message?.content || ""
-  
-  return extractedText.trim()
-}
-
 export async function POST(request: NextRequest) {
+  // Check API key first
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey || apiKey.trim() === "") {
+    console.error("[Receipt] OPENAI_API_KEY not configured")
+    return NextResponse.json(
+      { error: { code: "MISSING_OPENAI_API_KEY", message: "OPENAI_API_KEY is not set" } },
+      { status: 500 }
+    )
+  }
+
   try {
     const formData = await request.formData()
-    const file = formData.get("image") as File
+    const file = formData.get("image")
 
-    // Validation
-    if (!file) {
-      console.error("[Receipt] No file provided")
+    // Validate file exists
+    if (!file || !(file instanceof File)) {
+      console.error("[Receipt] No valid file provided")
       return NextResponse.json(
-        createErrorResponse("NO_FILE", "No image provided"),
+        { error: { code: "NO_FILE", message: "No image file provided" } },
         { status: 400 }
       )
     }
 
+    // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       console.error("[Receipt] Invalid file type:", file.type)
       return NextResponse.json(
-        createErrorResponse("INVALID_TYPE", "Only JPEG and PNG images are accepted. Please convert the image first."),
+        { error: { code: "INVALID_TYPE", message: "Only JPEG and PNG images are accepted" } },
         { status: 400 }
       )
     }
 
+    // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       console.error("[Receipt] File too large:", file.size)
       return NextResponse.json(
-        createErrorResponse("FILE_TOO_LARGE", `File size ${file.size} exceeds 10MB limit`),
+        { error: { code: "FILE_TOO_LARGE", message: `File size exceeds 10MB limit` } },
         { status: 400 }
       )
     }
 
     console.log(`[Receipt] Processing: ${file.type}, ${file.size} bytes`)
 
-    // Convert to Buffer
+    // Convert to buffer
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // Extract text via OCR
-    let extractedText: string
-    try {
-      extractedText = await extractTextFromImage(buffer, file.type)
-      
-      if (!extractedText) {
-        console.error("[Receipt] OCR returned empty text")
-        return NextResponse.json(
-          createErrorResponse("EXTRACTION_EMPTY", "Could not extract text from image"),
-          { status: 200 }
-        )
-      }
-
-      console.log(`[Receipt] Extracted text length: ${extractedText.length} chars`)
-    } catch (error) {
-      console.error("[Receipt] OCR error:", {
-        code: "OCR_FAILED",
-        message: error instanceof Error ? error.message : String(error),
-        fileType: file.type,
-        size: file.size,
-      })
+    if (buffer.length === 0) {
+      console.error("[Receipt] Empty file buffer")
       return NextResponse.json(
-        createErrorResponse("OCR_FAILED", "Failed to extract text from image"),
-        { status: 200 }
+        { error: { code: "EMPTY_FILE", message: "File is empty" } },
+        { status: 400 }
       )
     }
 
-    // Parse extracted text
-    const parsed = parseReceiptText(extractedText)
+    // Build data URL
+    const mimeType = file.type?.startsWith("image/") ? file.type : "image/jpeg"
+    const base64Image = buffer.toString("base64")
+    const dataUrl = `data:${mimeType};base64,${base64Image}`
 
-    console.log("[Receipt] Parsed result:", {
-      amount: parsed.amount,
-      currency: parsed.currency,
-      date: parsed.date,
-      merchant: parsed.merchant?.substring(0, 30),
-      confidence: parsed.confidence,
+    console.log(`[Receipt] Calling OpenAI vision API...`)
+
+    // Call OpenAI with vision-capable model
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Analyze this receipt image and extract key information. Return ONLY a valid JSON object (no markdown, no explanation) with this exact structure:
+
+{
+  "amount": <number or null>,
+  "currency": "<3-letter ISO code or null>",
+  "date": "<YYYY-MM-DD or null>",
+  "merchant": "<merchant name or null>",
+  "confidence": {
+    "amount": <0.0-1.0>,
+    "currency": <0.0-1.0>,
+    "date": <0.0-1.0>,
+    "merchant": <0.0-1.0>
+  }
+}
+
+Instructions:
+- amount: Extract the TOTAL/FINAL amount to pay (look for keywords: TOTAL, AMOUNT DUE, GRAND TOTAL, BALANCE DUE, TO PAY, סה״כ, לתשלום). Return as number.
+- currency: Return 3-letter ISO code (USD, EUR, GBP, AUD, ILS, CAD, etc.). Infer from symbols: $ with AU context = AUD, ₪ = ILS, € = EUR, £ = GBP.
+- date: Extract transaction date, normalize to YYYY-MM-DD format.
+- merchant: Extract merchant/store name from top of receipt (clean, short name).
+- confidence: Your confidence for each field (0=not found, 0.5=uncertain, 1.0=certain).
+
+Return ONLY the JSON object, nothing else.`
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: dataUrl,
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 500,
+        temperature: 0.1,
+      }),
     })
 
-    // Build response
-    const result: ExtractionResult = {
-      amount: parsed.amount,
-      currency: parsed.currency,
-      date: parsed.date,
-      merchant: parsed.merchant,
-      confidence: parsed.confidence,
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`[Receipt] OpenAI API error: ${response.status}`, errorText.substring(0, 300))
+      return NextResponse.json(
+        { error: { code: "API_ERROR", message: `OpenAI API returned ${response.status}` } },
+        { status: 502 }
+      )
     }
 
-    // Add debugText in development only
-    if (process.env.NODE_ENV === "development") {
-      result.debugText = extractedText.slice(0, 4000)
+    const data = await response.json()
+    const content = data.choices?.[0]?.message?.content
+
+    if (!content) {
+      console.error("[Receipt] Empty response from OpenAI", data)
+      return NextResponse.json(
+        { error: { code: "EXTRACTION_EMPTY", message: "No data extracted from image" } },
+        { status: 502 }
+      )
     }
 
-    return NextResponse.json(result, { status: 200 })
+    console.log("[Receipt] Raw response:", content.substring(0, 500))
+
+    // Parse JSON with fallback for markdown-wrapped responses
+    let result: ExtractionResult
+    try {
+      // Clean markdown code blocks if present
+      const cleanContent = content
+        .replace(/```json\s*/g, "")
+        .replace(/```\s*/g, "")
+        .trim()
+      
+      const parsed = JSON.parse(cleanContent)
+
+      // Validate required structure
+      if (typeof parsed !== "object" || parsed === null) {
+        throw new Error("Response is not an object")
+      }
+
+      // Build validated result
+      result = {
+        amount: typeof parsed.amount === "number" && isFinite(parsed.amount) && parsed.amount > 0 
+          ? parsed.amount 
+          : null,
+        currency: typeof parsed.currency === "string" && parsed.currency.length === 3 
+          ? parsed.currency.toUpperCase() 
+          : null,
+        date: typeof parsed.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.date) 
+          ? parsed.date 
+          : null,
+        merchant: typeof parsed.merchant === "string" && parsed.merchant.trim().length > 0 
+          ? parsed.merchant.trim() 
+          : null,
+        confidence: {
+          amount: typeof parsed.confidence?.amount === "number" ? parsed.confidence.amount : 0,
+          currency: typeof parsed.confidence?.currency === "number" ? parsed.confidence.currency : 0,
+          date: typeof parsed.confidence?.date === "number" ? parsed.confidence.date : 0,
+          merchant: typeof parsed.confidence?.merchant === "number" ? parsed.confidence.merchant : 0,
+        }
+      }
+
+      console.log("[Receipt] Parsed result:", {
+        amount: result.amount,
+        currency: result.currency,
+        date: result.date,
+        merchant: result.merchant?.substring(0, 30),
+        confidence: result.confidence,
+      })
+
+      // Check if we got at least amount and currency (minimum viable extraction)
+      if (!result.amount || !result.currency) {
+        console.error("[Receipt] Missing critical fields (amount or currency)")
+        return NextResponse.json(
+          { error: { code: "EXTRACTION_INCOMPLETE", message: "Could not extract amount and currency from receipt" } },
+          { status: 502 }
+        )
+      }
+
+      return NextResponse.json(result, { status: 200 })
+    } catch (parseError) {
+      console.error("[Receipt] JSON parse error:", parseError, "Content:", content.substring(0, 300))
+      return NextResponse.json(
+        { error: { code: "EXTRACTION_INVALID", message: "Failed to parse extraction result" } },
+        { status: 502 }
+      )
+    }
   } catch (error) {
     console.error("[Receipt] Unexpected error:", {
       code: "UNKNOWN_ERROR",
       message: error instanceof Error ? error.message : String(error),
     })
     return NextResponse.json(
-      createErrorResponse("UNKNOWN_ERROR", "Internal error during receipt processing"),
-      { status: 200 }
+      { error: { code: "UNKNOWN_ERROR", message: "Internal error during receipt processing" } },
+      { status: 500 }
     )
   }
 }
