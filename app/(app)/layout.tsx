@@ -35,13 +35,13 @@ export default async function AppLayout({
   }
 
   return (
-    <>
+    <div dir="rtl" className="font-app">
       <TopographicBackground />
       <TopNav />
       {showBanner && <EmailVerificationBanner userId={userId} />}
       {children}
       <InstallBanner />
-    </>
+    </div>
   )
 }
 

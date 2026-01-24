@@ -40,9 +40,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Default to Hebrew (RTL) - I18nProvider will adjust dynamically
-    <html lang="he" dir="rtl" className={`${manrope.variable} ${heebo.variable}`} suppressHydrationWarning>
-      <body className="min-h-screen font-sans antialiased">
+    <html lang="en" className={`${manrope.variable} ${heebo.variable}`} suppressHydrationWarning>
+      <body className="min-h-screen antialiased">
         <SessionProvider>
           <I18nProvider>
             <main className="relative z-10">{children}</main>

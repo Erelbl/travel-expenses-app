@@ -4,9 +4,9 @@ export default function LandingLayout({
   children: React.ReactNode
 }) {
   return (
-    <html dir="ltr" lang="en">
-      <body>{children}</body>
-    </html>
+    <div dir="ltr" className="font-marketing">
+      {children}
+    </div>
   )
 }
 

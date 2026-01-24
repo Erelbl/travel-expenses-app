@@ -53,9 +53,26 @@
 }
 
 body {
-  font-family: var(--font-manrope), system-ui, -apple-system, sans-serif;
   color: var(--text-primary);
   background-color: var(--background);
+}
+
+/* Direction utilities */
+.ltr {
+  direction: ltr;
+}
+
+.rtl {
+  direction: rtl;
+}
+
+/* Font utilities */
+.font-marketing {
+  font-family: var(--font-manrope), system-ui, -apple-system, sans-serif;
+}
+
+.font-app {
+  font-family: var(--font-heebo), system-ui, -apple-system, sans-serif;
 }
 
 /* Premium scrollbar */
