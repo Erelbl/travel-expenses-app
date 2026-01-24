@@ -84,7 +84,7 @@ export default function AddExpensePage() {
   const [showManualFxInput, setShowManualFxInput] = useState(false)
   const [manualFxRate, setManualFxRate] = useState("")
   
-  const [formData, setFormData] = useState<ExpenseFormState>({
+  const [formState, setFormState] = useState<ExpenseFormState>({
     merchant: "", // What was this for? - First field!
     amount: "",
     currency: "",
@@ -158,7 +158,7 @@ export default function AddExpensePage() {
         )
       }
       
-      setFormData((prev) => ({
+      setFormState((prev) => ({
         ...prev,
         currency: defaultCurrency,
         country: defaultCountry,
@@ -172,7 +172,7 @@ export default function AddExpensePage() {
   function handleCountryChange(newCountry: string) {
     if (!trip) return
     
-    setFormData((prev) => {
+    setFormState((prev) => {
       const countryCurrency = currencyForCountry(newCountry)
       
       // If country has a mapped currency and it's in our allowed list, use it
@@ -196,13 +196,13 @@ export default function AddExpensePage() {
   useEffect(() => {
     if (!trip) return
     fetchExchangeRate()
-  }, [formData.currency, trip])
+  }, [formState.currency, trip])
 
   async function fetchExchangeRate() {
     if (!trip) return
     
     // Same currency = no conversion needed
-    if (formData.currency === trip.baseCurrency) {
+    if (formState.currency === trip.baseCurrency) {
       setFxRateStatus("available")
       setFxRate(1)
       setRateWarning(false)
@@ -216,7 +216,7 @@ export default function AddExpensePage() {
     try {
       // Try to fetch from our API route
       const response = await fetch(
-        `/api/exchange-rates?base=${formData.currency}&target=${trip.baseCurrency}&date=${formData.date}`
+        `/api/exchange-rates?base=${formState.currency}&target=${trip.baseCurrency}&date=${formState.date}`
       )
 
       if (response.ok) {
@@ -228,14 +228,14 @@ export default function AddExpensePage() {
         const currentRates = await ratesRepository.getRates(trip.baseCurrency)
         const updatedRates = {
           ...currentRates?.rates,
-          [formData.currency]: data.rate,
+          [formState.currency]: data.rate,
         }
         await ratesRepository.setRates(trip.baseCurrency, updatedRates)
       } else {
         // API failed, check local storage
         const rates = await ratesRepository.getRates(trip.baseCurrency)
-        if (rates && rates.rates[formData.currency]) {
-          setFxRate(rates.rates[formData.currency])
+        if (rates && rates.rates[formState.currency]) {
+          setFxRate(rates.rates[formState.currency])
           setFxRateStatus("available")
         } else {
           // No rate available
@@ -250,8 +250,8 @@ export default function AddExpensePage() {
       // Try local storage as fallback
       try {
         const rates = await ratesRepository.getRates(trip.baseCurrency)
-        if (rates && rates.rates[formData.currency]) {
-          setFxRate(rates.rates[formData.currency])
+        if (rates && rates.rates[formState.currency]) {
+          setFxRate(rates.rates[formState.currency])
           setFxRateStatus("available")
         } else {
           setFxRateStatus("unavailable")
@@ -308,7 +308,7 @@ export default function AddExpensePage() {
       const newHints: typeof scanHints = {}
 
       if (result.amount && result.confidence.amount > 0) {
-        setFormData((prev) => ({ ...prev, amount: result.amount.toString() }))
+        setFormState((prev) => ({ ...prev, amount: result.amount.toString() }))
         if (result.confidence.amount < 0.7) {
           newHints.amount = t('addExpense.scanLowConfidence')
         } else {
@@ -317,7 +317,7 @@ export default function AddExpensePage() {
       }
 
       if (result.currency && result.confidence.currency > 0 && allowedCurrencies.includes(result.currency)) {
-        setFormData((prev) => ({ ...prev, currency: result.currency }))
+        setFormState((prev) => ({ ...prev, currency: result.currency }))
         if (result.confidence.currency < 0.7) {
           newHints.currency = t('addExpense.scanLowConfidence')
         } else {
@@ -326,7 +326,7 @@ export default function AddExpensePage() {
       }
 
       if (result.date && result.confidence.date > 0) {
-        setFormData((prev) => ({ ...prev, date: result.date }))
+        setFormState((prev) => ({ ...prev, date: result.date }))
         if (result.confidence.date < 0.7) {
           newHints.date = t('addExpense.scanLowConfidence')
         } else {
@@ -335,7 +335,7 @@ export default function AddExpensePage() {
       }
 
       if (result.merchant && result.confidence.merchant > 0) {
-        setFormData((prev) => ({ ...prev, merchant: result.merchant }))
+        setFormState((prev) => ({ ...prev, merchant: result.merchant }))
         if (result.confidence.merchant < 0.7) {
           newHints.merchant = t('addExpense.scanLowConfidence')
         } else {
@@ -344,14 +344,14 @@ export default function AddExpensePage() {
       }
 
       // Apply country suggestion only if country is not yet set
-      if (result.suggestedCountry && !formData.country) {
-        setFormData((prev) => ({ ...prev, country: result.suggestedCountry }))
+      if (result.suggestedCountry && !formState.country) {
+        setFormState((prev) => ({ ...prev, country: result.suggestedCountry }))
         newHints.country = t('addExpense.scanDetectedFrom')
       }
 
       // Apply category suggestion
       if (result.suggestedCategory) {
-        setFormData((prev) => ({ ...prev, category: result.suggestedCategory as ExpenseCategory }))
+        setFormState((prev) => ({ ...prev, category: result.suggestedCategory as ExpenseCategory }))
         newHints.category = t('addExpense.scanDetectedFrom')
       }
 
@@ -380,7 +380,7 @@ export default function AddExpensePage() {
     e.preventDefault()
     if (!trip) return
 
-    const amount = parseFloat(formData.amount)
+    const amount = parseFloat(formState.amount)
     if (isNaN(amount) || amount <= 0) {
       toast.error(t('addExpense.invalidAmount'))
       return
@@ -390,7 +390,7 @@ export default function AddExpensePage() {
     setSaveError(false)
 
     try {
-      const nights = formData.numberOfNights ? parseInt(formData.numberOfNights) : undefined
+      const nights = formState.numberOfNights ? parseInt(formState.numberOfNights) : undefined
       const pricePerNight = nights && nights > 0 ? amount / nights : undefined
       
       // Get current user for createdByMemberId
@@ -399,16 +399,16 @@ export default function AddExpensePage() {
       const expenseData: CreateExpense = {
         tripId,
         amount,
-        currency: formData.currency,
-        category: formData.category,
-        country: formData.category === 'Flights' ? '' : formData.country, // Flights have no country
-        merchant: formData.merchant || undefined,
-        note: formData.note || undefined,
-        date: formData.date,
+        currency: formState.currency,
+        category: formState.category,
+        country: formState.category === 'Flights' ? '' : formState.country, // Flights have no country
+        merchant: formState.merchant || undefined,
+        note: formState.note || undefined,
+        date: formState.date,
         // Smart contextual fields
         numberOfNights: nights,
-        isFutureExpense: formData.isFutureExpense || undefined,
-        usageDate: formData.isFutureExpense && formData.usageDate ? formData.usageDate : undefined,
+        isFutureExpense: formState.isFutureExpense || undefined,
+        usageDate: formState.isFutureExpense && formState.usageDate ? formState.usageDate : undefined,
         pricePerNight: pricePerNight,
         // Collaboration field
         createdByMemberId: currentUser?.id,
@@ -419,15 +419,15 @@ export default function AddExpensePage() {
       await expensesRepository.createExpense(expenseData)
       
       // Save preferences for next time (per-trip and global)
-      setLastUsedCurrency(tripId, formData.currency) // Per-trip
-      setLastUsedCountry(formData.country) // Global
+      setLastUsedCurrency(tripId, formState.currency) // Per-trip
+      setLastUsedCountry(formState.country) // Global
       
       // If manual FX rate was used, store it for future use
       if (fxRateStatus === "manual" && fxRate) {
         const currentRates = await ratesRepository.getRates(trip.baseCurrency)
         await ratesRepository.setRates(trip.baseCurrency, {
           ...currentRates?.rates,
-          [formData.currency]: fxRate,
+          [formState.currency]: fxRate,
         })
       }
       
@@ -530,9 +530,9 @@ export default function AddExpensePage() {
             <Input
               id="merchant"
               placeholder={t('addExpense.whatForPlaceholder')}
-              value={formData.merchant}
+              value={formState.merchant}
               onChange={(e) => {
-                setFormData({ ...formData, merchant: e.target.value })
+                setFormState({ ...formState, merchant: e.target.value })
                 setScanHints((prev) => ({ ...prev, merchant: undefined }))
               }}
               className="premium-input h-14 bg-white text-base font-medium text-slate-900 placeholder:text-slate-400"
@@ -561,18 +561,18 @@ export default function AddExpensePage() {
                 step="0.01"
                 inputMode="decimal"
                 placeholder="0.00"
-                value={formData.amount}
+                value={formState.amount}
                 onChange={(e) => {
-                  setFormData({ ...formData, amount: e.target.value })
+                  setFormState({ ...formState, amount: e.target.value })
                   setScanHints((prev) => ({ ...prev, amount: undefined }))
                 }}
                 className="premium-input h-20 flex-1 bg-white text-4xl font-bold text-slate-900 placeholder:text-slate-300"
                 required
               />
               <Select
-                value={formData.currency}
+                value={formState.currency}
                 onChange={(e) => {
-                  setFormData({ ...formData, currency: e.target.value })
+                  setFormState({ ...formState, currency: e.target.value })
                   setScanHints((prev) => ({ ...prev, currency: undefined }))
                 }}
                 className="premium-input h-20 w-28 bg-white text-lg font-semibold text-slate-900 md:w-32"
@@ -592,7 +592,7 @@ export default function AddExpensePage() {
             )}
             
             {/* FX Rate - Only show when there's a problem (manual fallback needed) */}
-            {trip && formData.currency !== trip.baseCurrency && fxRateStatus === "unavailable" && (
+            {trip && formState.currency !== trip.baseCurrency && fxRateStatus === "unavailable" && (
               <div className="space-y-3">
                 <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
                   <p className="text-sm font-medium text-amber-800 mb-2">
@@ -630,7 +630,7 @@ export default function AddExpensePage() {
                     />
                     <p className="text-xs text-slate-500">
                       {t('addExpense.fxRateManualHelp', { 
-                        from: formData.currency, 
+                        from: formState.currency, 
                         to: trip.baseCurrency 
                       })}
                     </p>
@@ -653,14 +653,14 @@ export default function AddExpensePage() {
                   onClick={() => {
                     // Clear country when switching to Flights
                     if (category === 'Flights') {
-                      setFormData({ ...formData, category, country: '' })
+                      setFormState({ ...formState, category, country: '' })
                     } else {
-                      setFormData({ ...formData, category })
+                      setFormState({ ...formState, category })
                     }
                     setScanHints((prev) => ({ ...prev, category: undefined }))
                   }}
                   className={`whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
-                    formData.category === category
+                    formState.category === category
                       ? "bg-slate-900 text-white shadow-md"
                       : "bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                   }`}
@@ -677,7 +677,7 @@ export default function AddExpensePage() {
           </div>
 
           {/* 4. COUNTRY - Only trip countries (hidden for flights) */}
-          {formData.category !== 'Flights' && (
+          {formState.category !== 'Flights' && (
             <div className="space-y-2">
               <Label htmlFor="country" className="font-semibold text-slate-800">
                 {t('addExpense.country')} <span className="text-red-500">*</span>
@@ -693,7 +693,7 @@ export default function AddExpensePage() {
                 <>
                   <Select
                     id="country"
-                    value={formData.country}
+                    value={formState.country}
                     onChange={(e) => {
                       handleCountryChange(e.target.value)
                       setScanHints((prev) => ({ ...prev, country: undefined }))
@@ -728,9 +728,9 @@ export default function AddExpensePage() {
             <Input
               id="date"
               type="date"
-              value={formData.date}
+              value={formState.date}
               onChange={(e) => {
-                setFormData({ ...formData, date: e.target.value })
+                setFormState({ ...formState, date: e.target.value })
                 setScanHints((prev) => ({ ...prev, date: undefined }))
               }}
               className="premium-input h-14 bg-white text-base font-medium text-slate-900"
@@ -772,9 +772,9 @@ export default function AddExpensePage() {
             <label className="flex items-start gap-3 cursor-pointer group">
               <input
                 type="checkbox"
-                checked={formData.isFutureExpense}
+                checked={formState.isFutureExpense}
                 onChange={(e) =>
-                  setFormData({ ...formData, isFutureExpense: e.target.checked, usageDate: e.target.checked ? formData.usageDate : "" })
+                  setFormState({ ...formState, isFutureExpense: e.target.checked, usageDate: e.target.checked ? formState.usageDate : "" })
                 }
                 className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-all"
               />
@@ -790,7 +790,7 @@ export default function AddExpensePage() {
           </div>
 
           {/* 8. Usage Date (shown only if isFutureExpense is checked) */}
-          {formData.isFutureExpense && (
+          {formState.isFutureExpense && (
             <div className="space-y-2 animate-fade-in">
               <Label htmlFor="usageDate" className="font-semibold text-slate-800">
                 {t('addExpense.usageDate')} <span className="text-red-500">*</span>
@@ -798,13 +798,13 @@ export default function AddExpensePage() {
               <Input
                 id="usageDate"
                 type="date"
-                value={formData.usageDate}
+                value={formState.usageDate}
                 onChange={(e) =>
-                  setFormData({ ...formData, usageDate: e.target.value })
+                  setFormState({ ...formState, usageDate: e.target.value })
                 }
                 className="premium-input h-14 bg-white text-base font-medium text-slate-900"
-                required={formData.isFutureExpense}
-                min={formData.date}
+                required={formState.isFutureExpense}
+                min={formState.date}
               />
               <p className="text-xs text-slate-500">
                 {t('addExpense.usageDateHelp')}
@@ -820,9 +820,9 @@ export default function AddExpensePage() {
             <Input
               id="note"
               placeholder={t('addExpense.notesPlaceholder')}
-              value={formData.note}
+              value={formState.note}
               onChange={(e) =>
-                setFormData({ ...formData, note: e.target.value })
+                setFormState({ ...formState, note: e.target.value })
               }
               className="premium-input h-14 bg-white text-base font-medium text-slate-900 placeholder:text-slate-400"
             />
