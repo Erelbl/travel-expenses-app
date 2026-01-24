@@ -58,6 +58,7 @@ export function QuickAddExpense({
     amount?: string
     currency?: string
     merchant?: string
+    category?: string
   }>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
@@ -171,6 +172,12 @@ export function QuickAddExpense({
         }
       }
 
+      // Apply category suggestion
+      if (result.suggestedCategory) {
+        setFormData((prev) => ({ ...prev, category: result.suggestedCategory as ExpenseCategory }))
+        newHints.category = t('addExpense.scanDetectedFrom')
+      }
+
       setScanHints(newHints)
 
       // Show success or partial success message
@@ -272,7 +279,6 @@ export function QuickAddExpense({
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={handleReceiptScan}
                 className="hidden"
                 disabled={scanningReceipt}
@@ -413,7 +419,10 @@ export function QuickAddExpense({
                   <button
                     key={category}
                     type="button"
-                    onClick={() => setFormData({ ...formData, category })}
+                    onClick={() => {
+                      setFormData({ ...formData, category })
+                      setScanHints((prev) => ({ ...prev, category: undefined }))
+                    }}
                     className={`
                       px-3 py-1.5 rounded-full text-sm font-medium transition-all
                       ${isSelected
@@ -427,6 +436,11 @@ export function QuickAddExpense({
                 )
               })}
             </div>
+            {scanHints.category && (
+              <p className="text-xs text-blue-600">
+                💡 {scanHints.category}
+              </p>
+            )}
           </div>
 
           {/* Actions */}

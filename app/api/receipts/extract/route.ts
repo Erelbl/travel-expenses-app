@@ -5,6 +5,88 @@ export const runtime = "nodejs"
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"]
 
+// Country suggestion helpers
+function suggestCountry(currency: string | null, merchant: string | null): string | null {
+  if (!currency) return null
+
+  // Currency to country mapping
+  const currencyMap: Record<string, string> = {
+    AUD: "AU",
+    USD: "US",
+    EUR: "DE", // Default to Germany, could be refined
+    GBP: "GB",
+    ILS: "IL",
+    CAD: "CA",
+    JPY: "JP",
+    NZD: "NZ",
+    CHF: "CH",
+    SEK: "SE",
+    NOK: "NO",
+    DKK: "DK",
+    SGD: "SG",
+    HKD: "HK",
+  }
+
+  let suggestedCountry = currencyMap[currency]
+
+  // Strengthen with merchant hints for AUD
+  if (currency === "AUD" && merchant) {
+    const upperMerchant = merchant.toUpperCase()
+    const auMerchants = ["WOOLWORTHS", "COLES", "ALDI", "IGA", "BUNNINGS", "KMART", "TARGET"]
+    const auCities = ["SYDNEY", "MELBOURNE", "BRISBANE", "PERTH", "ADELAIDE", "CANBERRA", "DARWIN", "HOBART"]
+    
+    if (auMerchants.some(m => upperMerchant.includes(m)) || auCities.some(c => upperMerchant.includes(c))) {
+      suggestedCountry = "AU"
+    }
+  }
+
+  return suggestedCountry || null
+}
+
+// Category suggestion helpers
+function suggestCategory(merchant: string | null): string | null {
+  if (!merchant) return null
+
+  const upperMerchant = merchant.toUpperCase()
+
+  // Grocery/supermarket
+  if (/WOOLWORTHS|COLES|ALDI|IGA|SAFEWAY|KROGER|WALMART|TARGET|TESCO|SAINSBURY|LIDL|CARREFOUR/.test(upperMerchant)) {
+    return "Food"
+  }
+
+  // Restaurants/cafes
+  if (/RESTAURANT|CAFE|COFFEE|STARBUCKS|MCDONALD|BURGER|PIZZA|SUBWAY/.test(upperMerchant)) {
+    return "Food"
+  }
+
+  // Transport
+  if (/UBER|LYFT|TAXI|GRAB|METRO|TRAIN|BUS|TRANSIT|PARKING/.test(upperMerchant)) {
+    return "Transport"
+  }
+
+  // Lodging
+  if (/HOTEL|MOTEL|AIRBNB|BOOKING|HOSTEL|INN|RESORT/.test(upperMerchant)) {
+    return "Lodging"
+  }
+
+  // Activities
+  if (/MUSEUM|TOUR|TICKET|CINEMA|THEATER|PARK|ZOO|AQUARIUM/.test(upperMerchant)) {
+    return "Activities"
+  }
+
+  // Shopping
+  if (/SHOP|STORE|MALL|BOUTIQUE|FASHION|CLOTHING/.test(upperMerchant)) {
+    return "Shopping"
+  }
+
+  // Health
+  if (/PHARMACY|CHEMIST|MEDICAL|CLINIC|HOSPITAL|DOCTOR/.test(upperMerchant)) {
+    return "Health"
+  }
+
+  return null
+}
+
 interface ExtractionResult {
   amount: number | null
   currency: string | null
@@ -16,6 +98,8 @@ interface ExtractionResult {
     date: number
     merchant: number
   }
+  suggestedCountry?: string
+  suggestedCategory?: string
 }
 
 interface ErrorResponse {
@@ -201,12 +285,25 @@ Return ONLY the JSON object, nothing else.`
         }
       }
 
+      // Add suggestions based on extracted data
+      const suggestedCountry = suggestCountry(result.currency, result.merchant)
+      const suggestedCategory = suggestCategory(result.merchant)
+      
+      if (suggestedCountry) {
+        result.suggestedCountry = suggestedCountry
+      }
+      if (suggestedCategory) {
+        result.suggestedCategory = suggestedCategory
+      }
+
       console.log("[Receipt] Parsed result:", {
         amount: result.amount,
         currency: result.currency,
         date: result.date,
         merchant: result.merchant?.substring(0, 30),
         confidence: result.confidence,
+        suggestedCountry: result.suggestedCountry,
+        suggestedCategory: result.suggestedCategory,
       })
 
       // Check if we got at least amount and currency (minimum viable extraction)

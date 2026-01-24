@@ -56,6 +56,8 @@ export default function EditExpensePage() {
     currency?: string
     date?: string
     merchant?: string
+    country?: string
+    category?: string
   }>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
   
@@ -298,6 +300,18 @@ export default function EditExpensePage() {
         }
       }
 
+      // Apply country suggestion only if country is not yet set
+      if (result.suggestedCountry && !formData.country) {
+        setFormData((prev) => ({ ...prev, country: result.suggestedCountry }))
+        newHints.country = t('addExpense.scanDetectedFrom')
+      }
+
+      // Apply category suggestion
+      if (result.suggestedCategory) {
+        setFormData((prev) => ({ ...prev, category: result.suggestedCategory as ExpenseCategory }))
+        newHints.category = t('addExpense.scanDetectedFrom')
+      }
+
       setScanHints(newHints)
 
       // Show success or partial success message
@@ -505,7 +519,6 @@ export default function EditExpensePage() {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={handleReceiptScan}
                 className="hidden"
                 disabled={scanningReceipt}
@@ -649,6 +662,7 @@ export default function EditExpensePage() {
                     } else {
                       setFormData({ ...formData, category })
                     }
+                    setScanHints((prev) => ({ ...prev, category: undefined }))
                   }}
                   className={`whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
                     formData.category === category
@@ -660,6 +674,11 @@ export default function EditExpensePage() {
                 </button>
               ))}
             </div>
+            {scanHints.category && (
+              <p className="text-xs text-blue-600">
+                💡 {scanHints.category}
+              </p>
+            )}
           </div>
 
           {/* 4. COUNTRY - hidden for flights */}
@@ -677,7 +696,10 @@ export default function EditExpensePage() {
                 <Select
                   id="country"
                   value={formData.country}
-                  onChange={(e) => handleCountryChange(e.target.value)}
+                  onChange={(e) => {
+                    handleCountryChange(e.target.value)
+                    setScanHints((prev) => ({ ...prev, country: undefined }))
+                  }}
                   className="premium-input h-14 bg-white text-base font-medium text-slate-900"
                   required
                 >
@@ -687,6 +709,11 @@ export default function EditExpensePage() {
                     </option>
                   ))}
                 </Select>
+              )}
+              {scanHints.country && (
+                <p className="text-xs text-blue-600">
+                  💡 {scanHints.country}
+                </p>
               )}
             </div>
           )}
