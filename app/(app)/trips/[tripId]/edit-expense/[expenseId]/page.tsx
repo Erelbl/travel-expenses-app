@@ -319,8 +319,8 @@ export default function EditExpensePage() {
         newHints.country = t('addExpense.scanDetectedFrom')
       }
 
-      // Apply category suggestion
-      if (result.suggestedCategory) {
+      // Apply category suggestion only if field is empty
+      if (result.suggestedCategory && !formState.category) {
         setFormState((prev) => ({ ...prev, category: result.suggestedCategory as ExpenseCategory }))
         newHints.category = t('addExpense.scanDetectedFrom')
       }

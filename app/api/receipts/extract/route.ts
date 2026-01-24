@@ -74,10 +74,7 @@ function suggestCategory(merchant: string | null): string | null {
     return "Activities"
   }
 
-  // Shopping
-  if (/SHOP|STORE|MALL|BOUTIQUE|FASHION|CLOTHING/.test(upperMerchant)) {
-    return "Shopping"
-  }
+  // No "Shopping" category exists in app schema; omit if not matched above
 
   // Health
   if (/PHARMACY|CHEMIST|MEDICAL|CLINIC|HOSPITAL|DOCTOR/.test(upperMerchant)) {
