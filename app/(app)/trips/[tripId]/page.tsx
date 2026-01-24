@@ -24,7 +24,6 @@ import { Expense, ExpenseCategory } from "@/lib/schemas/expense.schema"
 import { formatCurrency } from "@/lib/utils/currency"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { currencyForCountry } from "@/lib/utils/countryCurrency"
-import { getCountryName } from "@/lib/utils/countries.data"
 import { updateCurrentLocation, closeTrip } from "./actions"
 import { toast } from "sonner"
 import {
@@ -35,7 +34,7 @@ import {
 import { formatDateShort, getTripDayInfo } from "@/lib/utils/date"
 import { generateInsights, selectInsightToDisplay } from "@/lib/server/insights"
 import { generateAllBannerInsights } from "@/lib/server/banner-insights"
-import { getCountryName } from "@/lib/utils/countries.data"
+import { getCountryName as getCountryNameUtil } from "@/lib/utils/countries.data"
 import { formatCurrencyLocalized } from "@/lib/utils/currency"
 
 const MAX_RECENT_EXPENSES = 15
@@ -401,7 +400,7 @@ export default function TripHomePage() {
                   : trip.countries || []
                 ).map((country) => (
                   <option key={country} value={country}>
-                    {getCountryName(country, locale)}
+                    {getCountryNameUtil(country, locale)}
                   </option>
                 ))}
               </select>
@@ -605,10 +604,10 @@ export default function TripHomePage() {
                         }
                         // Translate country codes to names
                         if (params?.country1) {
-                          params.country1 = getCountryName(params.country1 as string, locale)
+                          params.country1 = getCountryNameUtil(params.country1 as string, locale)
                         }
                         if (params?.country2) {
-                          params.country2 = getCountryName(params.country2 as string, locale)
+                          params.country2 = getCountryNameUtil(params.country2 as string, locale)
                         }
                         return t(displayedRegularInsight.comparisonKey, params)
                       })()}
