@@ -173,8 +173,8 @@ export default function PricingPage() {
                 <div className="grid grid-cols-4 gap-4 p-6">
                   <div className="text-slate-700">Receipt scan</div>
                   <div className="text-center text-slate-400">—</div>
-                  <div className="text-center text-emerald-600">✓</div>
-                  <div className="text-center text-emerald-600">✓</div>
+                  <div className="text-center text-slate-600 text-sm">10/year</div>
+                  <div className="text-center text-emerald-600 font-semibold">Unlimited</div>
                 </div>
                 
                 <div className="grid grid-cols-4 gap-4 p-6">
