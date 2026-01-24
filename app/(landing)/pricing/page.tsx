@@ -7,7 +7,7 @@ import { plans } from "@/lib/plans"
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-slate-50 font-marketing" dir="ltr">
+    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-slate-50" dir="ltr">
       <LandingNav variant="marketing" />
       
       <section className="pt-32 pb-20 px-6">
@@ -125,7 +125,7 @@ export default function PricingPage() {
                   </ul>
 
                   <Link
-                    href="/auth/login"
+                    href={isPaidPlan ? `/checkout?plan=${plan.id}` : "/auth/login"}
                     className={`
                       block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors
                       ${
