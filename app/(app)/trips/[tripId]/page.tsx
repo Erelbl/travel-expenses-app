@@ -33,8 +33,10 @@ import {
   classifyExpenses,
 } from "@/lib/utils/reports"
 import { formatDateShort, getTripDayInfo } from "@/lib/utils/date"
-import { generateInsights } from "@/lib/server/insights"
-import { generateBannerInsight } from "@/lib/server/banner-insights"
+import { generateInsights, selectInsightToDisplay } from "@/lib/server/insights"
+import { generateAllBannerInsights } from "@/lib/server/banner-insights"
+import { getCountryName } from "@/lib/utils/countries.data"
+import { formatCurrencyLocalized } from "@/lib/utils/currency"
 
 const MAX_RECENT_EXPENSES = 15
 
@@ -60,10 +62,8 @@ export default function TripHomePage() {
   const [showRates, setShowRates] = useState(false)
   // Expense filter (for shared trips)
   const [showOnlyMine, setShowOnlyMine] = useState(false)
-  // Insight banner dismissal (old system)
-  const [insightDismissed, setInsightDismissed] = useState(false)
-  // Banner insight dismissal (new system)
-  const [bannerDismissed, setBannerDismissed] = useState(false)
+  // Single unified insight dismissal state
+  const [dismissedInsights, setDismissedInsights] = useState<Map<string, number>>(new Map())
   // Close trip prompt dismissal
   const [closePromptDismissed, setClosePromptDismissed] = useState(false)
   
@@ -74,14 +74,17 @@ export default function TripHomePage() {
 
   useEffect(() => {
     loadData()
-    // Check if insight was dismissed (old system)
+    // Load dismissed insights from localStorage
     if (typeof window !== 'undefined') {
-      const dismissed = localStorage.getItem(`tw_insight_dismissed_${tripId}`)
-      setInsightDismissed(dismissed === 'true')
-      
-      // Check if banner insight was dismissed (new system)
-      const bannerDismissedVal = localStorage.getItem(`tw_banner_dismissed_${tripId}`)
-      setBannerDismissed(bannerDismissedVal === 'true')
+      const stored = localStorage.getItem(`tw_insights_dismissed_${tripId}`)
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          setDismissedInsights(new Map(Object.entries(parsed)))
+        } catch (e) {
+          console.error('Failed to parse dismissed insights:', e)
+        }
+      }
       
       // Check if close prompt was dismissed
       const closePromptDismissedVal = localStorage.getItem(`tw_close_prompt_dismissed_${tripId}`)
@@ -172,30 +175,28 @@ export default function TripHomePage() {
   const summary = calculateSummary(expenses, trip)
   const { realized, future } = classifyExpenses(expenses)
   
-  // Generate insights (old system)
-  const insights = generateInsights(trip, expenses)
+  // Generate all insights (both regular and banner)
+  const allRegularInsights = generateInsights(trip, expenses)
+  const allBannerInsights = generateAllBannerInsights(trip, expenses)
+  const allInsights = [...allRegularInsights, ...allBannerInsights]
   
-  // Generate banner insight (new system)
-  const bannerInsight = generateBannerInsight(trip, expenses)
+  // Select the single best insight to display, considering dismissal state
+  const displayedInsight = selectInsightToDisplay(allInsights, dismissedInsights)
+  const displayedBannerInsight = displayedInsight && 'textKey' in displayedInsight ? displayedInsight : null
+  const displayedRegularInsight = displayedInsight && 'titleKey' in displayedInsight ? displayedInsight : null
   
-  // Dismiss insight banner (old system)
-  const dismissInsight = () => {
+  // Dismiss insight
+  const dismissInsight = (dismissalId: string) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(`tw_insight_dismissed_${tripId}`, 'true')
-      setInsightDismissed(true)
+      const newDismissed = new Map(dismissedInsights)
+      newDismissed.set(dismissalId, Date.now())
+      setDismissedInsights(newDismissed)
+      
+      // Persist to localStorage
+      const obj = Object.fromEntries(newDismissed)
+      localStorage.setItem(`tw_insights_dismissed_${tripId}`, JSON.stringify(obj))
     }
   }
-  
-  // Dismiss banner insight (new system)
-  const dismissBannerInsight = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`tw_banner_dismissed_${tripId}`, 'true')
-      setBannerDismissed(true)
-    }
-  }
-  
-  // Get top insight for banner (old system)
-  const topInsight = insights.length > 0 ? insights[0] : null
 
   // Calculate today's spend
   const today = getTodayString()
@@ -542,8 +543,8 @@ export default function TripHomePage() {
           </Card>
         </motion.div>
 
-        {/* Banner Insight (new system) */}
-        {bannerInsight && !bannerDismissed && (
+        {/* Single Unified Insight Banner */}
+        {(displayedBannerInsight || displayedRegularInsight) && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -551,74 +552,72 @@ export default function TripHomePage() {
             className="relative bg-gradient-to-r from-amber-50/80 to-yellow-50/80 backdrop-blur-sm border border-amber-200/60 rounded-xl p-4 shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
           >
             <button
-              onClick={dismissBannerInsight}
-              className="absolute top-3 right-3 text-amber-600 hover:text-amber-800 transition-colors"
+              onClick={() => dismissInsight(displayedInsight!.dismissalId)}
+              className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-3 text-amber-600 hover:text-amber-800 transition-colors`}
               aria-label={t('common.close')}
             >
               <X className="h-4 w-4" />
             </button>
-            <div className="flex items-start gap-3 pr-8">
-              <div className="flex-shrink-0 text-2xl">
-                💡
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-amber-800 leading-relaxed">
-                  {t(bannerInsight.textKey, bannerInsight.params || {})}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Trip Insights Banner (old system) */}
-        {topInsight && !insightDismissed && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative bg-gradient-to-r from-amber-50/80 to-yellow-50/80 backdrop-blur-sm border border-amber-200/60 rounded-xl p-4 shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
-          >
-            <button
-              onClick={dismissInsight}
-              className="absolute top-3 right-3 text-amber-600 hover:text-amber-800 transition-colors"
-              aria-label={t('common.close')}
-            >
-              <X className="h-4 w-4" />
-            </button>
-            <div className="flex items-start gap-3 pr-8">
+            <div className={`flex items-start gap-3 ${isRTL ? 'pl-8' : 'pr-8'}`}>
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
                 <Lightbulb className="h-5 w-5 text-amber-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2 mb-1">
-                  <h3 className="text-sm font-semibold text-amber-900">
-                    {t(topInsight.titleKey)}
-                  </h3>
-                  <span className="text-lg font-bold text-amber-800">
-                    {topInsight.value}
-                    {topInsight.type === 'daily_spend' && t('insights.perDay')}
-                    {topInsight.type === 'category_skew' && topInsight.comparisonParams?.categoryRaw && 
-                      ` ${t(`categories.${topInsight.comparisonParams.categoryRaw}`)}`}
-                    {topInsight.type === 'expense_concentration' && ` ${t('insights.inTop20')}`}
-                  </span>
-                </div>
-                <p className="text-sm text-amber-700">
-                  {(() => {
-                    const params = { ...topInsight.comparisonParams }
-                    // Translate tripType if present
-                    if (params?.tripType) {
-                      params.tripType = t(`insights.${params.tripType}`)
-                    }
-                    // Translate category if present
-                    if (params?.categoryRaw) {
-                      params.category = t(`categories.${params.categoryRaw}`).replace(/[🍔🚕✈️🏨🎟️🛍️💊💳]\s*/, "").toLowerCase()
-                    }
-                    return t(topInsight.comparisonKey, params)
-                  })()}
-                </p>
-                <p className="text-xs text-amber-600 mt-1">
-                  {t('insights.updatedAsYouGo')}
-                </p>
+                {displayedBannerInsight && (
+                  <p className="text-sm text-amber-800 leading-relaxed">
+                    {t(displayedBannerInsight.textKey, {
+                      ...displayedBannerInsight.params,
+                      // Format currency amounts with locale
+                      actual: displayedBannerInsight.params?.actual 
+                        ? formatCurrencyLocalized(Number(displayedBannerInsight.params.actual), displayedBannerInsight.params.currency as string, locale)
+                        : displayedBannerInsight.params?.actual,
+                      target: displayedBannerInsight.params?.target 
+                        ? formatCurrencyLocalized(Number(displayedBannerInsight.params.target), displayedBannerInsight.params.currency as string, locale)
+                        : displayedBannerInsight.params?.target,
+                    })}
+                  </p>
+                )}
+                {displayedRegularInsight && (
+                  <>
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <h3 className="text-sm font-semibold text-amber-900">
+                        {t(displayedRegularInsight.titleKey)}
+                      </h3>
+                      <span className="text-lg font-bold text-amber-800">
+                        {displayedRegularInsight.type === 'daily_spend' || displayedRegularInsight.type === 'cost_per_adult'
+                          ? `${formatCurrencyLocalized(Number(displayedRegularInsight.value), displayedRegularInsight.comparisonParams?.currency as string || trip.baseCurrency, locale)}${displayedRegularInsight.type === 'daily_spend' ? t('insights.perDay') : ''}`
+                          : displayedRegularInsight.value}
+                        {displayedRegularInsight.type === 'category_skew' && displayedRegularInsight.comparisonParams?.categoryRaw && 
+                          ` ${t(`categories.${displayedRegularInsight.comparisonParams.categoryRaw}`)}`}
+                        {displayedRegularInsight.type === 'expense_concentration' && ` ${t('insights.inTop20')}`}
+                      </span>
+                    </div>
+                    <p className="text-sm text-amber-700">
+                      {(() => {
+                        const params = { ...displayedRegularInsight.comparisonParams }
+                        // Translate tripType if present
+                        if (params?.tripType) {
+                          params.tripType = t(`insights.${params.tripType}`)
+                        }
+                        // Translate category if present
+                        if (params?.categoryRaw) {
+                          params.category = t(`categories.${params.categoryRaw}`).replace(/[🍔🚕✈️🏨🎟️🛍️💊💳]\s*/, "").toLowerCase()
+                        }
+                        // Translate country codes to names
+                        if (params?.country1) {
+                          params.country1 = getCountryName(params.country1 as string, locale)
+                        }
+                        if (params?.country2) {
+                          params.country2 = getCountryName(params.country2 as string, locale)
+                        }
+                        return t(displayedRegularInsight.comparisonKey, params)
+                      })()}
+                    </p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      {t('insights.updatedAsYouGo')}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

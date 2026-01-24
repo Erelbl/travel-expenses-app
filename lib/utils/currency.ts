@@ -118,6 +118,32 @@ export function formatCurrencyWithSymbol(code: string): string {
 }
 
 /**
+ * Format currency for display with locale awareness
+ * @param amount - The amount to format
+ * @param currency - The currency code
+ * @param locale - The locale for formatting (e.g., 'en', 'he')
+ * @returns Formatted currency string
+ */
+export function formatCurrencyLocalized(amount: number, currency: string, locale: string = 'en'): string {
+  try {
+    const formatter = new Intl.NumberFormat(locale === 'he' ? 'he-IL' : 'en-US', {
+      style: 'currency',
+      currency: currency,
+      currencyDisplay: 'symbol',
+      minimumFractionDigits: ['JPY', 'KRW', 'VND'].includes(currency) ? 0 : 0,
+      maximumFractionDigits: ['JPY', 'KRW', 'VND'].includes(currency) ? 0 : 0,
+    });
+    
+    return formatter.format(amount);
+  } catch (error) {
+    // Fallback to manual formatting if Intl fails
+    const symbol = getCurrencySymbol(currency);
+    const formatted = Math.round(amount).toString();
+    return locale === 'he' ? `${symbol}${formatted}` : `${symbol}${formatted}`;
+  }
+}
+
+/**
  * Format currency for display (backwards compatibility)
  * @param amount - The amount to format
  * @param currency - The currency code

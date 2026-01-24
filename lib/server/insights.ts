@@ -16,6 +16,8 @@ export interface Insight {
   comparisonKey: string
   comparisonParams?: Record<string, string | number>
   score: number // Higher = more interesting/actionable
+  priority: number // For rotation logic
+  dismissalId: string // Unique ID for dismissal tracking
 }
 
 interface InsightEvaluator {
@@ -72,8 +74,15 @@ const dailySpendInsight: InsightEvaluator = {
     }
     
     const benchmark = benchmarks[trip.tripType || "solo"] || 100
+    
+    // Guard against division by zero or invalid benchmark
+    if (benchmark <= 0 || !isFinite(benchmark)) return null
+    
     const deviation = ((dailyAvg - benchmark) / benchmark) * 100
     const deviationAbs = Math.abs(deviation)
+    
+    // Guard against absurd percentages
+    if (deviationAbs > 300) return null
     
     // Score higher if deviation is significant
     const score = deviationAbs >= 20 ? 90 : deviationAbs >= 10 ? 70 : 50
@@ -84,13 +93,16 @@ const dailySpendInsight: InsightEvaluator = {
       id: "daily_spend",
       type: "daily_spend",
       titleKey: "insights.dailySpendTitle",
-      value: `${dailyAvg.toFixed(0)} ${trip.baseCurrency}`,
+      value: `${Math.round(dailyAvg)}`,
       comparisonKey,
       comparisonParams: {
         percent: Math.round(deviationAbs).toString(),
         tripType: trip.tripType || "solo",
+        currency: trip.baseCurrency,
       },
       score,
+      priority: deviationAbs >= 20 ? 95 : 70,
+      dismissalId: `${trip.id}_daily_spend`,
     }
   },
 }
@@ -107,6 +119,9 @@ const categorySkewInsight: InsightEvaluator = {
     const breakdown = getCategoryBreakdown(expenses)
     const total = expenses.reduce((sum, e) => sum + (e.convertedAmount || 0), 0)
     
+    // Guard against zero or invalid total
+    if (total <= 0 || !isFinite(total)) return null
+    
     // Find dominant category
     let maxCategory = ""
     let maxAmount = 0
@@ -119,6 +134,9 @@ const categorySkewInsight: InsightEvaluator = {
     })
     
     const percentage = (maxAmount / total) * 100
+    
+    // Guard against absurd percentages
+    if (!isFinite(percentage) || percentage > 100) return null
     
     // Score higher if category is very dominant
     const score = percentage >= 50 ? 85 : percentage >= 40 ? 70 : 60
@@ -137,6 +155,8 @@ const categorySkewInsight: InsightEvaluator = {
         categoryRaw: maxCategory, // Keep raw category for UI translation
       },
       score,
+      priority: percentage >= 50 ? 90 : 75,
+      dismissalId: `${trip.id}_category_skew_${maxCategory}`,
     }
   },
 }
@@ -152,7 +172,14 @@ const costPerAdultInsight: InsightEvaluator = {
   calculate: (trip, expenses) => {
     const dailyAvg = calculateDailyAverage(expenses)
     const adults = trip.adults ?? 1
+    
+    // Guard against invalid division
+    if (adults <= 0 || !isFinite(adults)) return null
+    
     const perAdult = dailyAvg / adults
+    
+    // Guard against invalid results
+    if (!isFinite(perAdult)) return null
     
     // Medium-high score by default
     const score = 75
@@ -163,12 +190,15 @@ const costPerAdultInsight: InsightEvaluator = {
       id: "cost_per_adult",
       type: "cost_per_adult",
       titleKey: "insights.costPerAdultTitle",
-      value: `${perAdult.toFixed(0)} ${trip.baseCurrency}`,
+      value: `${Math.round(perAdult)}`,
       comparisonKey,
       comparisonParams: {
         adults: adults.toString(),
+        currency: trip.baseCurrency,
       },
       score,
+      priority: 80,
+      dismissalId: `${trip.id}_cost_per_adult`,
     }
   },
 }
@@ -196,7 +226,7 @@ const countryComparisonInsight: InsightEvaluator = {
     // Calculate daily averages
     const countryAverages = Object.entries(countryData).map(([country, data]) => ({
       country,
-      dailyAvg: data.total / data.days.size,
+      dailyAvg: data.days.size > 0 ? data.total / data.days.size : 0,
     }))
     
     if (countryAverages.length < 2) return null
@@ -207,7 +237,13 @@ const countryComparisonInsight: InsightEvaluator = {
     const highest = countryAverages[0]
     const lowest = countryAverages[countryAverages.length - 1]
     
+    // Guard against division by zero or invalid values
+    if (lowest.dailyAvg <= 0 || !isFinite(lowest.dailyAvg) || !isFinite(highest.dailyAvg)) return null
+    
     const difference = ((highest.dailyAvg - lowest.dailyAvg) / lowest.dailyAvg) * 100
+    
+    // Guard against absurd percentages
+    if (!isFinite(difference) || difference > 300) return null
     
     // Score higher if there's a significant difference
     const score = difference >= 40 ? 95 : difference >= 20 ? 80 : 60
@@ -227,6 +263,8 @@ const countryComparisonInsight: InsightEvaluator = {
         percent: Math.round(difference).toString(),
       },
       score,
+      priority: difference >= 40 ? 100 : 85,
+      dismissalId: `${trip.id}_country_comparison_${highest.country}_${lowest.country}`,
     }
   },
 }
@@ -242,10 +280,16 @@ const expenseConcentrationInsight: InsightEvaluator = {
     const sorted = [...expenses].sort((a, b) => (b.convertedAmount || 0) - (a.convertedAmount || 0))
     const total = expenses.reduce((sum, e) => sum + (e.convertedAmount || 0), 0)
     
+    // Guard against invalid total
+    if (total <= 0 || !isFinite(total)) return null
+    
     const top20Count = Math.max(1, Math.ceil(expenses.length * 0.2))
     const top20Total = sorted.slice(0, top20Count).reduce((sum, e) => sum + (e.convertedAmount || 0), 0)
     
     const percentage = (top20Total / total) * 100
+    
+    // Guard against invalid percentage
+    if (!isFinite(percentage) || percentage > 100) return null
     
     // Score higher if top expenses dominate
     const score = percentage >= 70 ? 88 : percentage >= 60 ? 75 : 55
@@ -260,6 +304,8 @@ const expenseConcentrationInsight: InsightEvaluator = {
       value: `${Math.round(percentage)}%`,
       comparisonKey: "insights.fewLargeExpenses",
       score,
+      priority: percentage >= 70 ? 92 : 77,
+      dismissalId: `${trip.id}_expense_concentration`,
     }
   },
 }
@@ -280,7 +326,7 @@ const allEvaluators: InsightEvaluator[] = [
  * 
  * @param trip - The trip to analyze
  * @param expenses - All expenses for the trip
- * @returns Top 2-3 insights, sorted by score
+ * @returns All generated insights, sorted by priority
  */
 export function generateInsights(trip: Trip, expenses: Expense[]): Insight[] {
   if (expenses.length === 0) {
@@ -299,8 +345,35 @@ export function generateInsights(trip: Trip, expenses: Expense[]): Insight[] {
     }
   }
   
-  // Sort by score (highest first) and return top 2-3
-  insights.sort((a, b) => b.score - a.score)
-  return insights.slice(0, 3)
+  // Sort by priority (highest first)
+  insights.sort((a, b) => b.priority - a.score)
+  return insights
+}
+
+/**
+ * Select the single best insight to display, considering dismissal state
+ * 
+ * @param insights - All available insights
+ * @param dismissedInsights - Set of dismissed insight IDs with timestamps
+ * @returns The best insight to display, or null if none available
+ */
+export function selectInsightToDisplay(
+  insights: Insight[],
+  dismissedInsights: Map<string, number>
+): Insight | null {
+  if (insights.length === 0) return null
+  
+  const now = Date.now()
+  const DISMISSAL_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
+  
+  // Filter out recently dismissed insights
+  const eligibleInsights = insights.filter(insight => {
+    const dismissedAt = dismissedInsights.get(insight.dismissalId)
+    if (!dismissedAt) return true
+    return (now - dismissedAt) > DISMISSAL_DURATION
+  })
+  
+  // Return highest priority eligible insight
+  return eligibleInsights.length > 0 ? eligibleInsights[0] : null
 }
 

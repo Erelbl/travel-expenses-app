@@ -12,6 +12,8 @@ export interface BannerInsight {
   type: "budget_pacing" | "family_hint"
   textKey: string
   params?: Record<string, string>
+  dismissalId: string // Unique ID for dismissal tracking
+  priority: number // For rotation logic
 }
 
 type CostLevel = "low" | "medium" | "high"
@@ -120,11 +122,20 @@ function getBudgetPacingInsight(
   const daysPassed = getDaysPassed(trip.startDate)
   const totalSpent = expenses.reduce((sum, e) => sum + (e.convertedAmount || 0), 0)
   
+  // Guard against invalid values
+  if (totalDays <= 0 || daysPassed <= 0 || !isFinite(totalSpent)) return null
+  
   const targetPerDay = trip.targetBudget / totalDays
   const actualPerDay = totalSpent / daysPassed
   
+  // Guard against invalid division
+  if (targetPerDay <= 0 || !isFinite(targetPerDay) || !isFinite(actualPerDay)) return null
+  
   // Determine if on/above/below pace
   const ratio = actualPerDay / targetPerDay
+  
+  // Guard against absurd ratios
+  if (!isFinite(ratio) || ratio > 10) return null
   
   // Get destination context
   const destination = getDestinationCountry(trip)
@@ -132,6 +143,7 @@ function getBudgetPacingInsight(
   
   // Determine message based on ratio, cost level, and trip type
   let textKey: string
+  let priority: number
   
   if (ratio >= 1.3) {
     // Significantly above target
@@ -142,9 +154,11 @@ function getBudgetPacingInsight(
     } else {
       textKey = "bannerInsights.budgetHighPace"
     }
+    priority = 95
   } else if (ratio >= 1.1) {
     // Slightly above target
     textKey = "bannerInsights.budgetSlightlyAbove"
+    priority = 80
   } else if (ratio <= 0.7) {
     // Well below target
     if (trip.tripType === "family") {
@@ -152,12 +166,15 @@ function getBudgetPacingInsight(
     } else {
       textKey = "bannerInsights.budgetWellBelow"
     }
+    priority = 70
   } else if (ratio <= 0.9) {
     // Slightly below target
     textKey = "bannerInsights.budgetSlightlyBelow"
+    priority = 65
   } else {
     // On pace
     textKey = "bannerInsights.budgetOnPace"
+    priority = 60
   }
   
   return {
@@ -165,10 +182,12 @@ function getBudgetPacingInsight(
     type: "budget_pacing",
     textKey,
     params: {
-      actual: actualPerDay.toFixed(0),
-      target: targetPerDay.toFixed(0),
+      actual: Math.round(actualPerDay).toString(),
+      target: Math.round(targetPerDay).toString(),
       currency: trip.baseCurrency,
     },
+    dismissalId: `${trip.id}_budget_pacing`,
+    priority,
   }
 }
 
@@ -183,24 +202,46 @@ function getFamilyHintInsight(trip: Trip): BannerInsight | null {
     id: "family_hint",
     type: "family_hint",
     textKey: "bannerInsights.familyHint",
+    dismissalId: `${trip.id}_family_hint`,
+    priority: 50,
   }
 }
 
 /**
+ * Generate all banner insights (no filtering)
+ * 
+ * @param trip - The trip to analyze
+ * @param expenses - All expenses for the trip
+ * @returns All banner insights sorted by priority
+ */
+export function generateAllBannerInsights(
+  trip: Trip,
+  expenses: Expense[]
+): BannerInsight[] {
+  const insights: BannerInsight[] = []
+  
+  // Priority 1: Budget pacing
+  const budgetInsight = getBudgetPacingInsight(trip, expenses)
+  if (budgetInsight) insights.push(budgetInsight)
+  
+  // Priority 2: Family hint
+  const familyInsight = getFamilyHintInsight(trip)
+  if (familyInsight) insights.push(familyInsight)
+  
+  // Sort by priority
+  insights.sort((a, b) => b.priority - a.priority)
+  return insights
+}
+
+/**
  * Generate ONE banner insight (by priority)
+ * @deprecated Use generateAllBannerInsights + selectInsightToDisplay instead
  */
 export function generateBannerInsight(
   trip: Trip,
   expenses: Expense[]
 ): BannerInsight | null {
-  // Priority 1: Budget pacing
-  const budgetInsight = getBudgetPacingInsight(trip, expenses)
-  if (budgetInsight) return budgetInsight
-  
-  // Priority 2: Family hint
-  const familyInsight = getFamilyHintInsight(trip)
-  if (familyInsight) return familyInsight
-  
-  return null
+  const all = generateAllBannerInsights(trip, expenses)
+  return all.length > 0 ? all[0] : null
 }
 
