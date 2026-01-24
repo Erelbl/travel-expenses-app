@@ -64,6 +64,8 @@ export default function EditExpensePage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [scanningReceipt, setScanningReceipt] = useState(false)
+  const [userTouchedCountry, setUserTouchedCountry] = useState(false)
+  const [userTouchedCategory, setUserTouchedCategory] = useState(false)
   const [scanHints, setScanHints] = useState<{
     amount?: string
     currency?: string
@@ -313,14 +315,14 @@ export default function EditExpensePage() {
         }
       }
 
-      // Apply country suggestion only if country is not yet set
-      if (result.suggestedCountry && !formState.country) {
+      // Apply country suggestion only if user has not manually touched country
+      if (result.suggestedCountry && !userTouchedCountry) {
         setFormState((prev) => ({ ...prev, country: result.suggestedCountry }))
         newHints.country = t('addExpense.scanDetectedFrom')
       }
 
-      // Apply category suggestion only if field is empty
-      if (result.suggestedCategory && !formState.category) {
+      // Apply category suggestion only if user has not manually touched category
+      if (result.suggestedCategory && !userTouchedCategory) {
         setFormState((prev) => ({ ...prev, category: result.suggestedCategory as ExpenseCategory }))
         newHints.category = t('addExpense.scanDetectedFrom')
       }
@@ -669,6 +671,7 @@ export default function EditExpensePage() {
                   key={category}
                   type="button"
                   onClick={() => {
+                    setUserTouchedCategory(true)
                     // Clear country when switching to Flights
                     if (category === 'Flights') {
                       setFormState({ ...formState, category, country: '' })
@@ -710,6 +713,7 @@ export default function EditExpensePage() {
                   id="country"
                   value={formState.country}
                   onChange={(e) => {
+                    setUserTouchedCountry(true)
                     handleCountryChange(e.target.value)
                     setScanHints((prev) => ({ ...prev, country: undefined }))
                   }}
