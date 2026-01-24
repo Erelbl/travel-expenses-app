@@ -41,6 +41,19 @@ const CATEGORIES: ExpenseCategory[] = [
   "Other",
 ]
 
+interface ExpenseFormState {
+  merchant: string
+  amount: string
+  currency: string
+  category: ExpenseCategory
+  country: string
+  note: string
+  date: string
+  numberOfNights: string
+  isFutureExpense: boolean
+  usageDate: string
+}
+
 export default function AddExpensePage() {
   const params = useParams()
   const router = useRouter()
@@ -71,7 +84,7 @@ export default function AddExpensePage() {
   const [showManualFxInput, setShowManualFxInput] = useState(false)
   const [manualFxRate, setManualFxRate] = useState("")
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ExpenseFormState>({
     merchant: "", // What was this for? - First field!
     amount: "",
     currency: "",
