@@ -290,12 +290,12 @@ export default function AddExpensePage() {
       // Normalize image to JPEG for reliable extraction
       const normalizedFile = await normalizeReceiptImageToJpeg(file)
       
-      const formData = new FormData()
-      formData.append("image", normalizedFile)
+      const uploadFormData = new FormData()
+      uploadFormData.append("image", normalizedFile)
 
       const response = await fetch("/api/receipts/extract", {
         method: "POST",
-        body: formData,
+        body: uploadFormData,
       })
 
       if (!response.ok) {
@@ -744,7 +744,7 @@ export default function AddExpensePage() {
           </div>
 
           {/* 6. SMART FIELD: Number of Nights (Lodging only) */}
-          {formData.category === "Lodging" && (
+          {formState.category === "Lodging" && (
             <div className="space-y-2 animate-fade-in">
               <Label htmlFor="numberOfNights" className="font-semibold text-slate-800">
                 {t('addExpense.numberOfNights')}
@@ -755,9 +755,9 @@ export default function AddExpensePage() {
                 min="1"
                 step="1"
                 placeholder={t('addExpense.numberOfNightsPlaceholder')}
-                value={formData.numberOfNights}
+                value={formState.numberOfNights}
                 onChange={(e) =>
-                  setFormData({ ...formData, numberOfNights: e.target.value })
+                  setFormState({ ...formState, numberOfNights: e.target.value })
                 }
                 className="premium-input h-14 bg-white text-base font-medium text-slate-900 placeholder:text-slate-400"
               />
