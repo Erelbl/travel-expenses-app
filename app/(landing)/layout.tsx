@@ -4,7 +4,7 @@ export default function LandingLayout({
   children: React.ReactNode
 }) {
   return (
-    <div dir="ltr" className="font-[family-name:var(--font-manrope)]">
+    <div dir="ltr" className="font-[family-name:var(--font-plus-jakarta-sans)]">
       {children}
     </div>
   )

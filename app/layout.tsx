@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
-import { Manrope, Heebo } from "next/font/google";
+import { Plus_Jakarta_Sans, Heebo } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
 import { SessionProvider } from "@/components/SessionProvider";
 
 // Font for Latin characters (marketing pages)
-const manrope = Manrope({ 
+const plusJakartaSans = Plus_Jakarta_Sans({ 
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-manrope",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plus-jakarta-sans",
   display: "swap",
   fallback: ["system-ui", "-apple-system", "sans-serif"],
 });
 
-// Font for Hebrew characters
+// Font for Hebrew characters (app pages)
 const heebo = Heebo({
   subsets: ["hebrew", "latin"],
   variable: "--font-heebo",
@@ -41,7 +41,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${manrope.variable} ${heebo.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${plusJakartaSans.variable} ${heebo.variable}`} suppressHydrationWarning>
       <body className="min-h-screen antialiased">
         <SessionProvider>
           <I18nProvider>
