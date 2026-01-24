@@ -1,10 +1,4 @@
-import { Plus_Jakarta_Sans } from "next/font/google"
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-})
+import { marketingFont } from "@/lib/fonts/marketing-font"
 
 export default function LandingLayout({
   children,
@@ -12,11 +6,7 @@ export default function LandingLayout({
   children: React.ReactNode
 }) {
   return (
-    <div 
-      dir="ltr" 
-      className={plusJakartaSans.className}
-      style={{ fontFamily: '"Plus Jakarta Sans", ui-sans-serif, system-ui' }}
-    >
+    <div dir="ltr" className={marketingFont.className}>
       {children}
     </div>
   )
