@@ -23,6 +23,7 @@ import {
   currencyForCountry
 } from "@/lib/utils/countryCurrency"
 import { useI18n } from "@/lib/i18n/I18nProvider"
+import { normalizeReceiptImageToJpeg } from "@/lib/utils/normalizeReceiptImage"
 
 const CATEGORIES: ExpenseCategory[] = [
   "Food",
@@ -241,8 +242,11 @@ export default function EditExpensePage() {
     setScanHints({})
 
     try {
+      // Normalize image to JPEG for reliable extraction
+      const normalizedFile = await normalizeReceiptImageToJpeg(file)
+      
       const formData = new FormData()
-      formData.append("image", file)
+      formData.append("image", normalizedFile)
 
       const response = await fetch("/api/receipts/extract", {
         method: "POST",

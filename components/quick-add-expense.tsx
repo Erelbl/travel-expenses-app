@@ -18,6 +18,7 @@ import { getCategoryColors } from "@/lib/utils/categoryColors"
 import { getCurrentUserMember } from "@/lib/utils/permissions"
 import { getTripAllowedCurrencies } from "@/lib/utils/countryCurrency"
 import { getCurrencySymbol } from "@/lib/utils/currency"
+import { normalizeReceiptImageToJpeg } from "@/lib/utils/normalizeReceiptImage"
 
 const CATEGORIES: ExpenseCategory[] = [
   "Food",
@@ -118,8 +119,11 @@ export function QuickAddExpense({
     setScanHints({})
 
     try {
+      // Normalize image to JPEG for reliable extraction
+      const normalizedFile = await normalizeReceiptImageToJpeg(file)
+      
       const formDataUpload = new FormData()
-      formDataUpload.append("image", file)
+      formDataUpload.append("image", normalizedFile)
 
       const response = await fetch("/api/receipts/extract", {
         method: "POST",

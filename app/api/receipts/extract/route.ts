@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
-const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/heic"]
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"] // Client normalizes to JPEG
 
 interface ExtractionResult {
   amount: number | null
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     if (!ALLOWED_TYPES.includes(file.type)) {
       console.error("[Receipt] Invalid file type:", file.type)
       return NextResponse.json(
-        createErrorResponse("INVALID_TYPE", `Invalid file type: ${file.type}`),
+        createErrorResponse("INVALID_TYPE", "Only JPEG and PNG images are accepted. Please convert the image first."),
         { status: 400 }
       )
     }
@@ -163,8 +163,11 @@ Rules:
     const content = data.choices?.[0]?.message?.content
 
     if (!content) {
-      console.error("[Receipt] No content in API response")
-      return NextResponse.json(createEmptyResponse(), { status: 200 })
+      console.error("[Receipt] No content in API response", data)
+      return NextResponse.json(
+        createErrorResponse("EXTRACTION_EMPTY", "Provider returned empty response"),
+        { status: 200 }
+      )
     }
 
     console.log("[Receipt] Raw API response:", content.substring(0, 300))
