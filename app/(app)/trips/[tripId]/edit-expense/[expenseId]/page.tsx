@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Trash2 } from "lucide-react"
+import { ArrowLeft, Trash2, Camera } from "lucide-react"
 import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
 import { OfflineBanner } from "@/components/OfflineBanner"
@@ -49,6 +49,14 @@ export default function EditExpensePage() {
   const [initialLoading, setInitialLoading] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [scanningReceipt, setScanningReceipt] = useState(false)
+  const [scanHints, setScanHints] = useState<{
+    amount?: string
+    currency?: string
+    date?: string
+    merchant?: string
+  }>({})
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // FX Rate state
   const [fxRateStatus, setFxRateStatus] = useState<"checking" | "available" | "unavailable" | "manual">("checking")
@@ -221,6 +229,88 @@ export default function EditExpensePage() {
       if (fxRateStatus === "manual") {
         setFxRateStatus("unavailable")
         setFxRate(null)
+      }
+    }
+  }
+
+  async function handleReceiptScan(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setScanningReceipt(true)
+    setScanHints({})
+
+    try {
+      const formData = new FormData()
+      formData.append("image", file)
+
+      const response = await fetch("/api/receipts/extract", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to extract receipt data")
+      }
+
+      const result = await response.json()
+
+      // Update form fields with extracted data
+      const newHints: typeof scanHints = {}
+
+      if (result.amount && result.confidence.amount > 0) {
+        setFormData((prev) => ({ ...prev, amount: result.amount.toString() }))
+        if (result.confidence.amount < 0.7) {
+          newHints.amount = t('addExpense.scanLowConfidence')
+        } else {
+          newHints.amount = t('addExpense.scanDetectedFrom')
+        }
+      }
+
+      if (result.currency && result.confidence.currency > 0 && allowedCurrencies.includes(result.currency)) {
+        setFormData((prev) => ({ ...prev, currency: result.currency }))
+        if (result.confidence.currency < 0.7) {
+          newHints.currency = t('addExpense.scanLowConfidence')
+        } else {
+          newHints.currency = t('addExpense.scanDetectedFrom')
+        }
+      }
+
+      if (result.date && result.confidence.date > 0) {
+        setFormData((prev) => ({ ...prev, date: result.date }))
+        if (result.confidence.date < 0.7) {
+          newHints.date = t('addExpense.scanLowConfidence')
+        } else {
+          newHints.date = t('addExpense.scanDetectedFrom')
+        }
+      }
+
+      if (result.merchant && result.confidence.merchant > 0) {
+        setFormData((prev) => ({ ...prev, merchant: result.merchant }))
+        if (result.confidence.merchant < 0.7) {
+          newHints.merchant = t('addExpense.scanLowConfidence')
+        } else {
+          newHints.merchant = t('addExpense.scanDetectedFrom')
+        }
+      }
+
+      setScanHints(newHints)
+
+      // Show success or partial success message
+      const hasAnyData = result.amount || result.currency || result.date || result.merchant
+      if (hasAnyData) {
+        toast.success(t('addExpense.scanSuccess'))
+      } else {
+        toast.error(t('addExpense.scanFailed'))
+      }
+    } catch (error) {
+      console.error("Receipt scan error:", error)
+      toast.error(t('addExpense.scanFailed'))
+    } finally {
+      setScanningReceipt(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
       }
     }
   }
@@ -401,6 +491,35 @@ export default function EditExpensePage() {
         )}
         
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Receipt Scanner */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-700">
+              {t('editExpense.title')}
+            </h2>
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleReceiptScan}
+                className="hidden"
+                disabled={scanningReceipt}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={scanningReceipt}
+                className="flex items-center gap-2 text-sm text-slate-700 hover:bg-slate-100"
+              >
+                <Camera className="h-4 w-4" />
+                {scanningReceipt ? t('addExpense.scanningReceipt') : t('addExpense.scanReceipt')}
+              </Button>
+            </div>
+          </div>
+
           {/* 1. WHAT WAS THIS FOR? */}
           <div className="space-y-2">
             <Label htmlFor="merchant" className="font-semibold text-slate-800">
@@ -410,13 +529,19 @@ export default function EditExpensePage() {
               id="merchant"
               placeholder={t('addExpense.whatForPlaceholder')}
               value={formData.merchant}
-              onChange={(e) =>
+              onChange={(e) => {
                 setFormData({ ...formData, merchant: e.target.value })
-              }
+                setScanHints((prev) => ({ ...prev, merchant: undefined }))
+              }}
               className="premium-input h-14 bg-white text-base font-medium text-slate-900 placeholder:text-slate-400"
               required
               autoFocus
             />
+            {scanHints.merchant && (
+              <p className="text-xs text-blue-600">
+                💡 {scanHints.merchant}
+              </p>
+            )}
           </div>
 
           {/* 2. AMOUNT + CURRENCY */}
@@ -432,17 +557,19 @@ export default function EditExpensePage() {
                 inputMode="decimal"
                 placeholder="0.00"
                 value={formData.amount}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({ ...formData, amount: e.target.value })
-                }
+                  setScanHints((prev) => ({ ...prev, amount: undefined }))
+                }}
                 className="premium-input h-20 flex-1 bg-white text-4xl font-bold text-slate-900 placeholder:text-slate-300"
                 required
               />
               <Select
                 value={formData.currency}
-                onChange={(e) =>
+                onChange={(e) => {
                   setFormData({ ...formData, currency: e.target.value })
-                }
+                  setScanHints((prev) => ({ ...prev, currency: undefined }))
+                }}
                 className="premium-input h-20 w-28 bg-white text-lg font-semibold text-slate-900 md:w-32"
                 required
               >
@@ -453,6 +580,11 @@ export default function EditExpensePage() {
                 ))}
               </Select>
             </div>
+            {(scanHints.amount || scanHints.currency) && (
+              <p className="text-xs text-blue-600">
+                💡 {scanHints.amount || scanHints.currency}
+              </p>
+            )}
             
             {/* FX Rate warning */}
             {trip && formData.currency !== trip.baseCurrency && fxRateStatus === "unavailable" && (
@@ -564,12 +696,18 @@ export default function EditExpensePage() {
               id="date"
               type="date"
               value={formData.date}
-              onChange={(e) =>
+              onChange={(e) => {
                 setFormData({ ...formData, date: e.target.value })
-              }
+                setScanHints((prev) => ({ ...prev, date: undefined }))
+              }}
               className="premium-input h-14 bg-white text-base font-medium text-slate-900"
               required
             />
+            {scanHints.date && (
+              <p className="text-xs text-blue-600">
+                💡 {scanHints.date}
+              </p>
+            )}
           </div>
 
           {/* 6. Number of Nights (Lodging only) */}

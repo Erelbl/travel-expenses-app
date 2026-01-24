@@ -160,7 +160,13 @@
     "fxRateManualHelp": "1 {from} = ___ {to}",
     "fxRateCalculating": "Calculating conversion...",
     "fxRateUnavailable": "Conversion unavailable - expense will be saved without base currency amount",
-    "fxRateSuccess": "Exchange rate: {rate} ({from} → {to})"
+    "fxRateSuccess": "Exchange rate: {rate} ({from} → {to})",
+    "scanReceipt": "Scan Receipt",
+    "scanningReceipt": "Analyzing receipt...",
+    "scanSuccess": "Receipt scanned successfully",
+    "scanFailed": "Could not read receipt — you can enter manually",
+    "scanDetectedFrom": "Detected from receipt",
+    "scanLowConfidence": "Not sure — please verify"
   },
   "categories": {
     "Food": "Food",

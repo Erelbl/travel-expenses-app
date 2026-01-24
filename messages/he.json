@@ -160,7 +160,13 @@
     "fxRateManualHelp": "1 {from} = ___ {to}",
     "fxRateCalculating": "מחשב המרה...",
     "fxRateUnavailable": "המרה לא זמינה - ההוצאה תישמר ללא סכום במטבע בסיס",
-    "fxRateSuccess": "שער המרה: {rate} ({from} → {to})"
+    "fxRateSuccess": "שער המרה: {rate} ({from} → {to})",
+    "scanReceipt": "סרוק קבלה",
+    "scanningReceipt": "מנתח קבלה...",
+    "scanSuccess": "קבלה נסרקה בהצלחה",
+    "scanFailed": "לא הצלחנו לזהות — אפשר להקליד ידנית",
+    "scanDetectedFrom": "זוהה מהקבלה",
+    "scanLowConfidence": "לא בטוח — בדוק"
   },
   "categories": {
     "Food": "אוכל",
