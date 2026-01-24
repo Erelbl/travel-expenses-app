@@ -21,8 +21,17 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  title: "מעקב הוצאות נסיעות | TravelExpense",
+  title: "מעקב הוצאות נסיעות | TravelWise",
   description: "מעקב הוצאות נסיעות מודרני לטיולים שלך",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "TravelWise",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default async function RootLayout({

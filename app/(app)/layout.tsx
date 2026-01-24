@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth"
 import { TopNav } from "@/components/top-nav"
 import TopographicBackground from "@/components/TopographicBackground"
 import { EmailVerificationBanner } from "@/components/EmailVerificationBanner"
+import { InstallBanner } from "@/components/pwa/InstallBanner"
 import { prisma } from "@/lib/db"
 import { unstable_cache } from "next/cache"
 
@@ -39,6 +40,7 @@ export default async function AppLayout({
       <TopNav />
       {showBanner && <EmailVerificationBanner userId={userId} />}
       {children}
+      <InstallBanner />
     </>
   )
 }
