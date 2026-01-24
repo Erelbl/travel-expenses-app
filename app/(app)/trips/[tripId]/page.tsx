@@ -598,16 +598,30 @@ export default function TripHomePage() {
               <div className="flex-1 min-w-0">
                 {displayedBannerInsight && (
                   <p className="text-sm text-amber-800 leading-relaxed">
-                    {t(displayedBannerInsight.textKey, {
-                      ...displayedBannerInsight.params,
-                      // Format currency amounts with locale
-                      actual: displayedBannerInsight.params?.actual 
-                        ? formatCurrencyLocalized(Number(displayedBannerInsight.params.actual), displayedBannerInsight.params.currency as string, locale)
-                        : displayedBannerInsight.params?.actual,
-                      target: displayedBannerInsight.params?.target 
-                        ? formatCurrencyLocalized(Number(displayedBannerInsight.params.target), displayedBannerInsight.params.currency as string, locale)
-                        : displayedBannerInsight.params?.target,
-                    })}
+                    {(() => {
+                      // Build params safely - never assign undefined
+                      const formattedParams: Record<string, string | number> = { 
+                        ...(displayedBannerInsight.params ?? {}) 
+                      }
+                      
+                      // Format currency amounts with locale if they exist
+                      if (displayedBannerInsight.params?.actual != null && displayedBannerInsight.params?.currency) {
+                        formattedParams.actual = formatCurrencyLocalized(
+                          Number(displayedBannerInsight.params.actual), 
+                          displayedBannerInsight.params.currency as string, 
+                          locale
+                        )
+                      }
+                      if (displayedBannerInsight.params?.target != null && displayedBannerInsight.params?.currency) {
+                        formattedParams.target = formatCurrencyLocalized(
+                          Number(displayedBannerInsight.params.target), 
+                          displayedBannerInsight.params.currency as string, 
+                          locale
+                        )
+                      }
+                      
+                      return t(displayedBannerInsight.textKey, formattedParams)
+                    })()}
                   </p>
                 )}
                 {displayedRegularInsight && (
