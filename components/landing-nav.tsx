@@ -13,6 +13,12 @@ export function LandingNav() {
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
           <Link
+            href="/pricing"
+            className="text-slate-600 hover:text-slate-900 font-medium transition-colors text-sm sm:text-base"
+          >
+            Pricing
+          </Link>
+          <Link
             href="/auth/login"
             className="text-slate-600 hover:text-slate-900 font-medium transition-colors text-sm sm:text-base"
           >

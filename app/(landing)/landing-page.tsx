@@ -4,6 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Zap, Globe2, TrendingUp, Check, CreditCard, BarChart3, Users } from "lucide-react"
 import { PhoneFrame } from "@/components/phone-frame"
+import { plans } from "@/lib/plans"
 
 export function LandingPage() {
   return (
@@ -20,7 +21,7 @@ export function LandingPage() {
               </span>
             </h1>
             <p className="text-xl text-slate-600 mb-10 leading-relaxed">
-              A simple way to understand your travel expenses — without clutter or splitting.
+              A simple way to understand your travel spending — and stay in control.
             </p>
             <Link
               href="/auth/login"
@@ -388,111 +389,124 @@ export function LandingPage() {
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {/* Free */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 hover:shadow-lg transition-shadow">
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">Free</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-slate-900">$0</span>
-                <span className="text-slate-600 ml-2">forever</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-2 text-slate-700">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                  <span>3 active trips</span>
-                </li>
-                <li className="flex items-start gap-2 text-slate-700">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                  <span>Basic currency support</span>
-                </li>
-                <li className="flex items-start gap-2 text-slate-700">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                  <span>Simple insights</span>
-                </li>
-              </ul>
-              <Link
-                href="/auth/login"
-                className="block w-full bg-slate-900 text-white text-center px-6 py-3 rounded-xl font-semibold hover:bg-slate-800 transition-colors"
-              >
-                Get started
-              </Link>
-            </div>
+            {plans.map((plan) => {
+              const isPopular = plan.popular
+              const isPaidPlan = plan.priceYearly > 0
 
-            {/* Traveler - Most Popular */}
-            <div className="bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl p-8 shadow-xl transform md:scale-105 relative">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold">
-                Most popular
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Traveler</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-white">$9</span>
-                <span className="text-sky-100 ml-2">/ year</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-2 text-white">
-                  <Check className="w-5 h-5 text-sky-200 flex-shrink-0 mt-0.5" />
-                  <span>Unlimited trips</span>
-                </li>
-                <li className="flex items-start gap-2 text-white">
-                  <Check className="w-5 h-5 text-sky-200 flex-shrink-0 mt-0.5" />
-                  <span>Share trips with partners</span>
-                </li>
-                <li className="flex items-start gap-2 text-white">
-                  <Check className="w-5 h-5 text-sky-200 flex-shrink-0 mt-0.5" />
-                  <span>All currencies</span>
-                </li>
-                <li className="flex items-start gap-2 text-white">
-                  <Check className="w-5 h-5 text-sky-200 flex-shrink-0 mt-0.5" />
-                  <span>Advanced insights</span>
-                </li>
-                <li className="flex items-start gap-2 text-white">
-                  <Check className="w-5 h-5 text-sky-200 flex-shrink-0 mt-0.5" />
-                  <span>Export data</span>
-                </li>
-              </ul>
-              <Link
-                href="/auth/login"
-                className="block w-full bg-white text-sky-600 text-center px-6 py-3 rounded-xl font-semibold hover:bg-sky-50 transition-colors"
-              >
-                Get started
-              </Link>
-            </div>
+              return (
+                <div
+                  key={plan.id}
+                  className={`
+                    rounded-2xl p-8 transition-all
+                    ${
+                      isPopular
+                        ? "bg-gradient-to-br from-sky-500 to-blue-600 shadow-xl transform md:scale-105 relative"
+                        : "bg-white shadow-sm border border-slate-200 hover:shadow-lg"
+                    }
+                  `}
+                >
+                  {isPopular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold">
+                      Most popular
+                    </div>
+                  )}
 
-            {/* PRO */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 hover:shadow-lg transition-shadow">
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">PRO</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-slate-900">$19</span>
-                <span className="text-slate-600 ml-2">/ year</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-2 text-slate-700">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                  <span>Everything in Traveler</span>
-                </li>
-                <li className="flex items-start gap-2 text-slate-700">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                  <span>Advanced trip sharing</span>
-                </li>
-                <li className="flex items-start gap-2 text-slate-700">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                  <span>Priority support</span>
-                </li>
-                <li className="flex items-start gap-2 text-slate-700">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                  <span>Custom categories</span>
-                </li>
-                <li className="flex items-start gap-2 text-slate-700">
-                  <Check className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                  <span>Team features</span>
-                </li>
-              </ul>
-              <Link
-                href="/auth/login"
-                className="block w-full bg-slate-900 text-white text-center px-6 py-3 rounded-xl font-semibold hover:bg-slate-800 transition-colors"
-              >
-                Get started
-              </Link>
-            </div>
+                  <h3
+                    className={`text-2xl font-bold mb-2 ${
+                      isPopular ? "text-white" : "text-slate-900"
+                    }`}
+                  >
+                    {plan.name}
+                  </h3>
+
+                  <div className="mb-2">
+                    {plan.isPromo && plan.priceYearlyRegular ? (
+                      <div className="flex items-baseline gap-2">
+                        <span
+                          className={`text-4xl font-bold ${
+                            isPopular ? "text-white" : "text-slate-900"
+                          }`}
+                        >
+                          ${plan.priceYearly}
+                        </span>
+                        <span
+                          className={`text-xl line-through ${
+                            isPopular ? "text-sky-100" : "text-slate-400"
+                          }`}
+                        >
+                          ${plan.priceYearlyRegular}
+                        </span>
+                      </div>
+                    ) : (
+                      <span
+                        className={`text-4xl font-bold ${
+                          isPopular ? "text-white" : "text-slate-900"
+                        }`}
+                      >
+                        ${plan.priceYearly}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mb-6">
+                    {plan.isPromo && plan.promoLabel ? (
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-sm ${
+                            isPopular ? "text-sky-100" : "text-slate-600"
+                          }`}
+                        >
+                          / year
+                        </span>
+                        <span className="px-2 py-0.5 bg-yellow-400 text-slate-900 text-xs font-semibold rounded-full">
+                          {plan.promoLabel}
+                        </span>
+                      </div>
+                    ) : (
+                      <span
+                        className={`${
+                          isPopular ? "text-sky-100" : "text-slate-600"
+                        }`}
+                      >
+                        {isPaidPlan ? "/ year" : "forever"}
+                      </span>
+                    )}
+                  </div>
+
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map((feature, idx) => (
+                      <li
+                        key={idx}
+                        className={`flex items-start gap-2 ${
+                          isPopular ? "text-white" : "text-slate-700"
+                        }`}
+                      >
+                        <Check
+                          className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                            isPopular ? "text-sky-200" : "text-emerald-500"
+                          }`}
+                        />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link
+                    href="/auth/login"
+                    className={`
+                      block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors
+                      ${
+                        isPopular
+                          ? "bg-white text-sky-600 hover:bg-sky-50"
+                          : "bg-slate-900 text-white hover:bg-slate-800"
+                      }
+                    `}
+                  >
+                    {plan.ctaLabel}
+                  </Link>
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
