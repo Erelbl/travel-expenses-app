@@ -5,7 +5,7 @@ export default async function HomePage() {
   // Landing page is public - accessible to everyone
   return (
     <>
-      <LandingNav />
+      <LandingNav variant="marketing" />
       <LandingPage />
     </>
   )
