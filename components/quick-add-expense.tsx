@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { Camera } from "lucide-react"
 import { Modal, ModalHeader, ModalTitle, ModalContent, ModalClose } from "@/components/ui/modal"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { PrimaryButton } from "@/components/ui/primary-button"
 import { expensesRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
@@ -50,6 +52,13 @@ export function QuickAddExpense({
   const [lastUsedCurrency, setLastUsedCurrency] = useState<string | null>(null)
   const [manualRate, setManualRate] = useState("")
   const [showManualRate, setShowManualRate] = useState(false)
+  const [scanningReceipt, setScanningReceipt] = useState(false)
+  const [scanHints, setScanHints] = useState<{
+    amount?: string
+    currency?: string
+    merchant?: string
+  }>({})
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
     merchant: "",
     amount: "",
@@ -98,6 +107,84 @@ export function QuickAddExpense({
     })
     setManualRate("")
     setShowManualRate(false)
+    setScanHints({})
+  }
+
+  async function handleReceiptScan(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setScanningReceipt(true)
+    setScanHints({})
+
+    try {
+      const formDataUpload = new FormData()
+      formDataUpload.append("image", file)
+
+      const response = await fetch("/api/receipts/extract", {
+        method: "POST",
+        body: formDataUpload,
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to extract receipt data")
+      }
+
+      const result = await response.json()
+
+      // Log errors in development
+      if (result.error && process.env.NODE_ENV === 'development') {
+        console.log("[Receipt Scan Debug]", result.error)
+      }
+
+      // Update form fields with extracted data
+      const newHints: typeof scanHints = {}
+
+      if (result.amount && result.confidence.amount > 0) {
+        setFormData((prev) => ({ ...prev, amount: result.amount.toString() }))
+        if (result.confidence.amount < 0.7) {
+          newHints.amount = t('addExpense.scanLowConfidence')
+        } else {
+          newHints.amount = t('addExpense.scanDetectedFrom')
+        }
+      }
+
+      if (result.currency && result.confidence.currency > 0 && allowedCurrencies.includes(result.currency)) {
+        setFormData((prev) => ({ ...prev, currency: result.currency }))
+        if (result.confidence.currency < 0.7) {
+          newHints.currency = t('addExpense.scanLowConfidence')
+        } else {
+          newHints.currency = t('addExpense.scanDetectedFrom')
+        }
+      }
+
+      if (result.merchant && result.confidence.merchant > 0) {
+        setFormData((prev) => ({ ...prev, merchant: result.merchant }))
+        if (result.confidence.merchant < 0.7) {
+          newHints.merchant = t('addExpense.scanLowConfidence')
+        } else {
+          newHints.merchant = t('addExpense.scanDetectedFrom')
+        }
+      }
+
+      setScanHints(newHints)
+
+      // Show success or partial success message
+      const hasAnyData = result.amount || result.currency || result.merchant
+      if (hasAnyData) {
+        toast.success(t('addExpense.scanSuccess'))
+      } else {
+        toast.error(t('addExpense.scanFailed'))
+      }
+    } catch (error) {
+      console.error("Receipt scan error:", error)
+      toast.error(t('addExpense.scanFailed'))
+    } finally {
+      setScanningReceipt(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""
+      }
+    }
   }
 
   function handleClose() {
@@ -171,6 +258,35 @@ export function QuickAddExpense({
         </ModalHeader>
         
         <ModalContent className="space-y-6 pb-6">
+          {/* Receipt Scanner */}
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+            <h3 className="text-sm font-medium text-slate-700">
+              {t('quickAdd.title')}
+            </h3>
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleReceiptScan}
+                className="hidden"
+                disabled={scanningReceipt}
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={scanningReceipt}
+                className="flex items-center gap-2 text-xs text-slate-600 hover:bg-slate-100"
+              >
+                <Camera className="h-3.5 w-3.5" />
+                {scanningReceipt ? t('addExpense.scanningReceipt') : t('addExpense.scanReceipt')}
+              </Button>
+            </div>
+          </div>
+
           {/* Save Error Banner */}
           {saveError && (
             <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">
@@ -192,10 +308,18 @@ export function QuickAddExpense({
               id="qa-merchant"
               placeholder={t('quickAdd.whatForPlaceholder')}
               value={formData.merchant}
-              onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, merchant: e.target.value })
+                setScanHints((prev) => ({ ...prev, merchant: undefined }))
+              }}
               className="h-12 bg-white text-base font-medium text-slate-900 placeholder:text-slate-400"
               autoFocus
             />
+            {scanHints.merchant && (
+              <p className="text-xs text-blue-600">
+                💡 {scanHints.merchant}
+              </p>
+            )}
           </div>
 
           {/* Amount & Currency */}
@@ -211,12 +335,18 @@ export function QuickAddExpense({
                 inputMode="decimal"
                 placeholder="0.00"
                 value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, amount: e.target.value })
+                  setScanHints((prev) => ({ ...prev, amount: undefined }))
+                }}
                 className="h-14 bg-white text-2xl font-bold text-slate-900 placeholder:text-slate-300 flex-1"
               />
               <select
                 value={formData.currency}
-                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, currency: e.target.value })
+                  setScanHints((prev) => ({ ...prev, currency: undefined }))
+                }}
                 className="h-14 px-3 rounded-lg border border-slate-200 bg-white text-slate-900 font-semibold text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {allowedCurrencies.map((curr) => (
@@ -226,6 +356,11 @@ export function QuickAddExpense({
                 ))}
               </select>
             </div>
+            {(scanHints.amount || scanHints.currency) && (
+              <p className="text-xs text-blue-600">
+                💡 {scanHints.amount || scanHints.currency}
+              </p>
+            )}
             {formData.currency !== trip.baseCurrency && (
               <div className="space-y-2">
                 <p className="text-xs text-slate-500">
