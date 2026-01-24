@@ -301,6 +301,19 @@ export default function AddExpensePage() {
       })
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        
+        // Handle specific entitlement errors
+        if (errorData.error?.code === "NO_ACCESS") {
+          toast.error("Receipt scanning requires Plus or Pro plan")
+          return
+        }
+        
+        if (errorData.error?.code === "LIMIT_REACHED") {
+          toast.error(`You've used all ${errorData.error.limit} receipt scans for this year`)
+          return
+        }
+        
         throw new Error("Failed to extract receipt data")
       }
 

@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/db"
+import { checkReceiptScanEntitlement, incrementReceiptScanUsage } from "@/lib/entitlements"
 
 export const runtime = "nodejs"
 
@@ -107,7 +110,67 @@ interface ErrorResponse {
 }
 
 export async function POST(request: NextRequest) {
-  // Check API key first
+  // Check authentication
+  const session = await auth()
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: { code: "UNAUTHORIZED", message: "Authentication required" } },
+      { status: 401 }
+    )
+  }
+
+  // Get user with entitlement fields
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      isAdmin: true,
+      plan: true,
+      receiptScansUsed: true,
+      receiptScansResetAt: true,
+    },
+  })
+
+  if (!user) {
+    return NextResponse.json(
+      { error: { code: "USER_NOT_FOUND", message: "User not found" } },
+      { status: 404 }
+    )
+  }
+
+  // Check entitlements
+  const entitlementCheck = checkReceiptScanEntitlement(user)
+  
+  if (!entitlementCheck.allowed) {
+    if (entitlementCheck.reason === "no_access") {
+      return NextResponse.json(
+        { 
+          error: { 
+            code: "NO_ACCESS", 
+            message: "Receipt scanning requires Plus or Pro plan",
+            upgradeRequired: true,
+          } 
+        },
+        { status: 403 }
+      )
+    }
+    
+    if (entitlementCheck.reason === "limit_reached") {
+      return NextResponse.json(
+        { 
+          error: { 
+            code: "LIMIT_REACHED", 
+            message: `You've used all ${entitlementCheck.limit} receipt scans for this year`,
+            limit: entitlementCheck.limit,
+            upgradeRequired: true,
+          } 
+        },
+        { status: 403 }
+      )
+    }
+  }
+
+  // Check API key
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey || apiKey.trim() === "") {
     console.error("[Receipt] OPENAI_API_KEY not configured")
@@ -310,6 +373,18 @@ Return ONLY the JSON object, nothing else.`
           { error: { code: "EXTRACTION_INCOMPLETE", message: "Could not extract amount and currency from receipt" } },
           { status: 502 }
         )
+      }
+
+      // Increment usage count (successful scan)
+      const newUsageCount = incrementReceiptScanUsage(user)
+      if (newUsageCount !== user.receiptScansUsed) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { 
+            receiptScansUsed: newUsageCount,
+            receiptScansResetAt: user.receiptScansResetAt || new Date(),
+          },
+        })
       }
 
       return NextResponse.json(result, { status: 200 })
