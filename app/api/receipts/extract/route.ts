@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { checkReceiptScanEntitlement, incrementReceiptScanUsage } from "@/lib/entitlements"
+import { checkReceiptScanEntitlement, incrementReceiptScanUsage, type EntitlementUser, type PlanTier } from "@/lib/entitlements"
 
 export const runtime = "nodejs"
 
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Get user with entitlement fields
-  const user = await prisma.user.findUnique({
+  const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
       id: true,
@@ -131,11 +131,22 @@ export async function POST(request: NextRequest) {
     },
   })
 
-  if (!user) {
+  if (!dbUser) {
     return NextResponse.json(
       { error: { code: "USER_NOT_FOUND", message: "User not found" } },
       { status: 404 }
     )
+  }
+
+  // Normalize user for entitlement checks (handle null plan from DB)
+  const user: EntitlementUser = {
+    id: dbUser.id,
+    isAdmin: dbUser.isAdmin,
+    plan: dbUser.plan && (dbUser.plan === "free" || dbUser.plan === "plus" || dbUser.plan === "pro") 
+      ? (dbUser.plan as PlanTier) 
+      : undefined,
+    receiptScansUsed: dbUser.receiptScansUsed,
+    receiptScansResetAt: dbUser.receiptScansResetAt,
   }
 
   // Check entitlements
@@ -377,12 +388,12 @@ Return ONLY the JSON object, nothing else.`
 
       // Increment usage count (successful scan)
       const newUsageCount = incrementReceiptScanUsage(user)
-      if (newUsageCount !== user.receiptScansUsed) {
+      if (newUsageCount !== dbUser.receiptScansUsed) {
         await prisma.user.update({
-          where: { id: user.id },
+          where: { id: dbUser.id },
           data: { 
             receiptScansUsed: newUsageCount,
-            receiptScansResetAt: user.receiptScansResetAt || new Date(),
+            receiptScansResetAt: dbUser.receiptScansResetAt || new Date(),
           },
         })
       }

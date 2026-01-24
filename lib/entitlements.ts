@@ -5,7 +5,11 @@
 
 export type PlanTier = "free" | "plus" | "pro"
 
-interface User {
+/**
+ * Minimal user interface for entitlement checks
+ * Use this to normalize Prisma User objects before passing to entitlement functions
+ */
+export interface EntitlementUser {
   id: string
   isAdmin: boolean
   plan?: PlanTier
@@ -17,7 +21,7 @@ interface User {
  * Get user's plan tier
  * Defaults to 'free' if not set
  */
-export function getUserPlan(user: User): PlanTier {
+export function getUserPlan(user: EntitlementUser): PlanTier {
   return user.plan || "free"
 }
 
@@ -41,7 +45,7 @@ export function getReceiptScanLimit(plan: PlanTier): number {
  * Check if user can scan receipts
  * Admins always bypass limits
  */
-export function canScanReceipts(user: User): boolean {
+export function canScanReceipts(user: EntitlementUser): boolean {
   // Admin bypass
   if (user.isAdmin) {
     return true
@@ -69,7 +73,7 @@ export function canScanReceipts(user: User): boolean {
  * Get remaining receipt scans for the user
  * Returns Infinity for unlimited plans or admins
  */
-export function getRemainingReceiptScans(user: User): number {
+export function getRemainingReceiptScans(user: EntitlementUser): number {
   // Admin bypass
   if (user.isAdmin) {
     return Infinity
@@ -98,7 +102,7 @@ export function getRemainingReceiptScans(user: User): number {
  * Returns new usage count
  * Does NOT increment for admins
  */
-export function incrementReceiptScanUsage(user: User): number {
+export function incrementReceiptScanUsage(user: EntitlementUser): number {
   // Don't track for admins
   if (user.isAdmin) {
     return user.receiptScansUsed || 0
@@ -120,7 +124,7 @@ export function incrementReceiptScanUsage(user: User): number {
  * Placeholder logic - returns true if resetAt is more than 365 days ago
  * TODO: Integrate with actual subscription billing cycle
  */
-export function needsReceiptScanReset(user: User): boolean {
+export function needsReceiptScanReset(user: EntitlementUser): boolean {
   if (!user.receiptScansResetAt) {
     return true
   }
@@ -142,7 +146,7 @@ export interface EntitlementCheckResult {
   limit?: number
 }
 
-export function checkReceiptScanEntitlement(user: User): EntitlementCheckResult {
+export function checkReceiptScanEntitlement(user: EntitlementUser): EntitlementCheckResult {
   // Admin bypass
   if (user.isAdmin) {
     return {
