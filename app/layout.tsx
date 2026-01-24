@@ -5,9 +5,10 @@ import { Toaster } from "sonner";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
 import { SessionProvider } from "@/components/SessionProvider";
 
-// Font for Latin characters
+// Font for Latin characters (marketing pages)
 const manrope = Manrope({ 
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-manrope",
   display: "swap",
   fallback: ["system-ui", "-apple-system", "sans-serif"],
