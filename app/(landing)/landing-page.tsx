@@ -247,13 +247,13 @@ export function LandingPage() {
       </section>
 
       {/* Screens Section */}
-      <section className="py-16 px-6">
+      <section className="py-16 px-6 pb-8">
         <div className="container mx-auto max-w-4xl">
           {/* Outcome Statement */}
-          <div className="text-center pt-8">
+          <div className="text-center">
             <p 
               ref={outcomeRef}
-              className={`text-2xl md:text-3xl text-slate-900 font-semibold leading-relaxed transition-all duration-500 ease-out ${
+              className={`text-3xl md:text-4xl lg:text-5xl text-slate-900 font-semibold leading-relaxed transition-all duration-500 ease-out ${
                 isOutcomeVisible 
                   ? 'opacity-100 translate-y-0' 
                   : 'opacity-0 translate-y-3'
@@ -280,7 +280,7 @@ export function LandingPage() {
               Choose the plan that fits your travel style
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="md:grid md:grid-cols-3 md:gap-8 max-w-5xl mx-auto flex overflow-x-auto snap-x snap-mandatory md:overflow-visible gap-6 pb-4 md:pb-0 -mx-6 px-6 md:mx-0">
             {plans.map((plan) => {
               const isPopular = plan.popular
               const isPaidPlan = plan.priceYearly > 0
@@ -289,7 +289,7 @@ export function LandingPage() {
                 <div
                   key={plan.id}
                   className={`
-                    rounded-2xl p-8 transition-all
+                    rounded-2xl p-8 transition-all flex-shrink-0 w-[85vw] md:w-auto snap-center
                     ${
                       isPopular
                         ? "bg-gradient-to-br from-sky-500 to-blue-600 shadow-xl transform md:scale-105 relative"
