@@ -2,11 +2,23 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { useEffect, useRef } from "react"
 import { Zap, Globe2, TrendingUp, Check, CreditCard, BarChart3, Users } from "lucide-react"
 import { PhoneFrame } from "@/components/phone-frame"
 import { plans } from "@/lib/plans"
 
 export function LandingPage() {
+  const carouselRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    // Scroll to center phone on mount for mobile carousel
+    if (carouselRef.current) {
+      const container = carouselRef.current
+      const centerPosition = (container.scrollWidth - container.clientWidth) / 2
+      container.scrollLeft = centerPosition
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-slate-50" dir="ltr">
       {/* Hero Section */}
@@ -33,7 +45,10 @@ export function LandingPage() {
 
           {/* Phone Mockups */}
           <div className="relative max-w-5xl mx-auto">
-            <div className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory md:overflow-visible pb-4 md:pb-0 -mx-6 px-6 md:mx-0">
+            <div 
+              ref={carouselRef}
+              className="flex md:grid md:grid-cols-3 gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory md:overflow-visible pb-4 md:pb-0 -mx-6 px-6 md:mx-0 scroll-px-6"
+            >
               <div className="flex-shrink-0 w-[240px] md:w-auto snap-center">
               <PhoneFrame>
                 <div className="h-full bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60 p-4 overflow-hidden">
@@ -362,19 +377,13 @@ export function LandingPage() {
                 </PhoneFrame>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-medium text-slate-900 mb-2">
-                  Understand your patterns
-                </h3>
-                <p className="text-base text-slate-700 leading-relaxed">
-                  Clear breakdowns by category and day.{" "}
+                <p className="text-lg text-slate-700 leading-relaxed">
                   <span className="text-slate-900 font-semibold emphasis-fade-in">
-                    Most travelers find they{" "}
+                    Most travelers{" "}
                     <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
                       spend less
                     </span>
-                  </span>{" "}
-                  <span className="text-slate-900 font-semibold emphasis-fade-in">
-                    once they see the full picture.
+                    {" "}once they see where their money goes.
                   </span>
                 </p>
               </div>
