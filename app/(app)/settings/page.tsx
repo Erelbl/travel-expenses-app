@@ -44,7 +44,7 @@ export default async function SettingsPage() {
       initialBaseCurrency={user?.baseCurrency || "USD"}
       userPlan={(user?.plan as "free" | "plus" | "pro") || "free"}
       receiptScansUsed={user?.receiptScansUsed || 0}
-      receiptScansResetAt={user?.receiptScansResetAt}
+      receiptScansResetAt={user?.receiptScansResetAt ?? null}
     />
   )
 }
