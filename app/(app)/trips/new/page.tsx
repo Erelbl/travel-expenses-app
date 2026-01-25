@@ -49,6 +49,8 @@ export default function NewTripPage() {
     tripType: "" as "" | "solo" | "couple" | "family" | "friends",
     adults: 1,
     children: 0,
+    ageRange: "" as "" | "18_25" | "26_35" | "36_45" | "46_60" | "60_plus",
+    targetBudget: "" as string,
   })
 
   // Derived currencies based on planned countries
@@ -75,6 +77,11 @@ export default function NewTripPage() {
     setLoading(true)
 
     try {
+      // Normalize target budget (strip commas and convert to number)
+      const normalizedBudget = formData.targetBudget 
+        ? parseFloat(formData.targetBudget.replace(/,/g, ''))
+        : null
+      
       const tripData: CreateTrip = {
         name: formData.name,
         startDate: formData.startDate || null,
@@ -87,6 +94,8 @@ export default function NewTripPage() {
         adults: formData.tripType === 'family' ? formData.adults : null,
         children: formData.tripType === 'family' ? formData.children : null,
         travelStyle: undefined,
+        ageRange: formData.ageRange || undefined,
+        targetBudget: normalizedBudget !== null && !isNaN(normalizedBudget) ? normalizedBudget : undefined,
         isClosed: false,
         closedAt: null,
         members: [
@@ -313,6 +322,46 @@ export default function NewTripPage() {
                   </div>
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label htmlFor="ageRange">{t('createTrip.ageRange')}</Label>
+                <Select
+                  id="ageRange"
+                  value={formData.ageRange}
+                  onChange={(e) =>
+                    setFormData({ ...formData, ageRange: e.target.value as typeof formData.ageRange })
+                  }
+                >
+                  <option value="">{t('createTrip.ageRangeSelect')}</option>
+                  <option value="18_25">{t('createTrip.ageRange18_25')}</option>
+                  <option value="26_35">{t('createTrip.ageRange26_35')}</option>
+                  <option value="36_45">{t('createTrip.ageRange36_45')}</option>
+                  <option value="46_60">{t('createTrip.ageRange46_60')}</option>
+                  <option value="60_plus">{t('createTrip.ageRange60_plus')}</option>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="targetBudget">{t('settings.targetBudget')}</Label>
+                <Input
+                  id="targetBudget"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder={t('settings.targetBudgetPlaceholder')}
+                  value={formData.targetBudget}
+                  onChange={(e) => {
+                    // Allow input with or without commas
+                    const value = e.target.value
+                    // Only allow digits and commas
+                    if (value === '' || /^[\d,]+$/.test(value)) {
+                      setFormData({ ...formData, targetBudget: value })
+                    }
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t('settings.targetBudgetHelper')}
+                </p>
+              </div>
             </div>
 
             <div className="flex justify-end gap-4">
