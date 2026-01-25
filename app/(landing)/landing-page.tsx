@@ -9,8 +9,10 @@ import { plans } from "@/lib/plans"
 
 export function LandingPage() {
   const carouselRef = useRef<HTMLDivElement>(null)
+  const pricingCarouselRef = useRef<HTMLDivElement>(null)
   const outcomeRef = useRef<HTMLParagraphElement>(null)
   const [isOutcomeVisible, setIsOutcomeVisible] = useState(false)
+  const [activePricingCard, setActivePricingCard] = useState(0)
 
   useEffect(() => {
     // Scroll to center phone on mount for mobile carousel
@@ -55,8 +57,30 @@ export function LandingPage() {
     }
   }, [isOutcomeVisible])
 
+  useEffect(() => {
+    // Track active pricing card on scroll (mobile only)
+    const pricingContainer = pricingCarouselRef.current
+    if (!pricingContainer) return
+
+    const handleScroll = () => {
+      const scrollLeft = pricingContainer.scrollLeft
+      const cardWidth = pricingContainer.scrollWidth / plans.length
+      const activeIndex = Math.round(scrollLeft / cardWidth)
+      setActivePricingCard(Math.min(Math.max(activeIndex, 0), plans.length - 1))
+    }
+
+    pricingContainer.addEventListener('scroll', handleScroll)
+    return () => pricingContainer.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-slate-50" dir="ltr">
+    <>
+      <style jsx>{`
+        .pricing-carousel::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+      <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-slate-50" dir="ltr">
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-6">
         <div className="container mx-auto max-w-6xl">
@@ -280,23 +304,41 @@ export function LandingPage() {
               Choose the plan that fits your travel style
             </p>
           </div>
-          <div className="md:grid md:grid-cols-3 md:gap-8 max-w-5xl mx-auto flex overflow-x-auto snap-x snap-mandatory md:overflow-visible gap-4 pb-4 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-            {plans.map((plan) => {
-              const isPopular = plan.popular
-              const isPaidPlan = plan.priceYearly > 0
+          
+          {/* Mobile carousel wrapper with edge fade */}
+          <div className="relative md:max-w-5xl md:mx-auto">
+            {/* Left edge fade (mobile only) */}
+            <div className="absolute left-0 top-0 bottom-8 w-8 bg-gradient-to-r from-slate-50 to-transparent pointer-events-none z-10 md:hidden" />
+            
+            {/* Right edge fade (mobile only) */}
+            <div className="absolute right-0 top-0 bottom-8 w-8 bg-gradient-to-l from-slate-50 to-transparent pointer-events-none z-10 md:hidden" />
+            
+            {/* Pricing cards */}
+            <div 
+              ref={pricingCarouselRef}
+              className="pricing-carousel md:grid md:grid-cols-3 md:gap-8 flex overflow-x-auto snap-x snap-mandatory md:overflow-visible gap-4 pb-4 md:pb-0 px-5 md:px-0"
+              style={{ 
+                scrollbarWidth: 'none', 
+                msOverflowStyle: 'none',
+                WebkitOverflowScrolling: 'touch'
+              }}
+            >
+              {plans.map((plan) => {
+                const isPopular = plan.popular
+                const isPaidPlan = plan.priceYearly > 0
 
-              return (
-                <div
-                  key={plan.id}
-                  className={`
-                    rounded-2xl p-8 transition-all flex-shrink-0 w-[90vw] max-w-[400px] md:w-auto snap-center
-                    ${
-                      isPopular
-                        ? "bg-gradient-to-br from-sky-500 to-blue-600 shadow-xl transform md:scale-105 relative"
-                        : "bg-white shadow-sm border border-slate-200 hover:shadow-lg"
-                    }
-                  `}
-                >
+                return (
+                  <div
+                    key={plan.id}
+                    className={`
+                      rounded-2xl p-8 transition-all flex-shrink-0 w-[84vw] max-w-[380px] md:w-auto snap-start
+                      ${
+                        isPopular
+                          ? "bg-gradient-to-br from-sky-500 to-blue-600 shadow-xl transform md:scale-105 relative"
+                          : "bg-white shadow-sm border border-slate-200 hover:shadow-lg"
+                      }
+                    `}
+                  >
                   {isPopular && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold">
                       Most popular
@@ -400,7 +442,32 @@ export function LandingPage() {
               )
             })}
           </div>
+          
+          {/* Pagination dots (mobile only) */}
+          <div className="flex justify-center gap-2 mt-6 md:hidden">
+            {plans.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  if (pricingCarouselRef.current) {
+                    const cardWidth = pricingCarouselRef.current.scrollWidth / plans.length
+                    pricingCarouselRef.current.scrollTo({
+                      left: cardWidth * index,
+                      behavior: 'smooth'
+                    })
+                  }
+                }}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  activePricingCard === index 
+                    ? 'bg-sky-500 w-6' 
+                    : 'bg-slate-300'
+                }`}
+                aria-label={`Go to plan ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
+      </div>
       </section>
 
       {/* Final CTA */}
@@ -440,6 +507,7 @@ export function LandingPage() {
         </div>
       </footer>
     </div>
+    </>
   )
 }
 
