@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { checkReceiptScanEntitlement, incrementReceiptScanUsage, type EntitlementUser, type PlanTier } from "@/lib/entitlements"
+import { checkReceiptScanEntitlement, incrementReceiptScanUsage, needsReceiptScanReset, type EntitlementUser, type PlanTier } from "@/lib/entitlements"
 
 export const runtime = "nodejs"
 
@@ -152,6 +152,21 @@ export async function POST(request: NextRequest) {
   // Runtime check: Log admin effective plan (for verification)
   if (user.isAdmin) {
     console.log(`[Receipt] Admin user detected - effective plan: PRO (actual plan: ${user.plan || "free"})`)
+  }
+
+  // Check if user needs a yearly reset (new subscription period)
+  if (needsReceiptScanReset(user)) {
+    console.log(`[Receipt] User ${dbUser.id} needs yearly reset - resetting scan counter`)
+    await prisma.user.update({
+      where: { id: dbUser.id },
+      data: {
+        receiptScansUsed: 0,
+        receiptScansResetAt: new Date(),
+      },
+    })
+    // Update user object for entitlement checks
+    user.receiptScansUsed = 0
+    user.receiptScansResetAt = new Date()
   }
 
   // Check entitlements

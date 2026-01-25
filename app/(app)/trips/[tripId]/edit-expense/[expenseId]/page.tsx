@@ -75,6 +75,12 @@ export default function EditExpensePage() {
     category?: string
   }>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [receiptScanStatus, setReceiptScanStatus] = useState<{
+    plan: string
+    limit: number
+    remaining: number
+    used: number
+  } | null>(null)
   
   // FX Rate state
   const [fxRateStatus, setFxRateStatus] = useState<"checking" | "available" | "unavailable" | "manual">("checking")
@@ -107,7 +113,20 @@ export default function EditExpensePage() {
 
   useEffect(() => {
     loadData()
+    fetchReceiptScanStatus()
   }, [tripId, expenseId])
+
+  async function fetchReceiptScanStatus() {
+    try {
+      const response = await fetch("/api/receipts/status")
+      if (response.ok) {
+        const data = await response.json()
+        setReceiptScanStatus(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch receipt scan status:", error)
+    }
+  }
 
   async function loadData() {
     try {
@@ -346,6 +365,8 @@ export default function EditExpensePage() {
       const hasAnyData = result.amount || result.currency || result.date || result.merchant
       if (hasAnyData) {
         toast.success(t('addExpense.scanSuccess'))
+        // Refresh receipt scan status after successful scan
+        fetchReceiptScanStatus()
       } else {
         toast.error(t('addExpense.scanFailed'))
       }
@@ -542,22 +563,36 @@ export default function EditExpensePage() {
             <h2 className="text-sm font-semibold text-slate-700">
               {t('editExpense.title')}
             </h2>
-            <div>
+            <div className="flex items-center gap-2">
+              {receiptScanStatus && (
+                <div className="text-xs text-slate-600">
+                  {receiptScanStatus.plan === "free" ? (
+                    <span className="text-amber-600">Plus required</span>
+                  ) : receiptScanStatus.limit === Infinity ? (
+                    <span className="text-green-600 font-medium">Unlimited</span>
+                  ) : (
+                    <span className={receiptScanStatus.remaining === 0 ? "text-red-600 font-medium" : "text-slate-600"}>
+                      {receiptScanStatus.remaining} of {receiptScanStatus.limit}
+                    </span>
+                  )}
+                </div>
+              )}
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 onChange={handleReceiptScan}
                 className="hidden"
-                disabled={scanningReceipt}
+                disabled={scanningReceipt || (receiptScanStatus?.plan === "free")}
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={scanningReceipt}
-                className="flex items-center gap-2 text-sm text-slate-700 hover:bg-slate-100"
+                disabled={scanningReceipt || (receiptScanStatus?.plan === "free")}
+                className="flex items-center gap-2 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={receiptScanStatus?.plan === "free" ? "Upgrade to Plus or Pro to scan receipts" : undefined}
               >
                 <Camera className="h-4 w-4" />
                 {scanningReceipt ? t('addExpense.scanningReceipt') : t('addExpense.scanReceipt')}

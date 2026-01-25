@@ -27,6 +27,9 @@ export default async function SettingsPage() {
       nickname: true,
       email: true,
       baseCurrency: true,
+      plan: true,
+      receiptScansUsed: true,
+      receiptScansResetAt: true,
     },
   })
   
@@ -39,6 +42,9 @@ export default async function SettingsPage() {
       initialDisplayName={user?.nickname || ""}
       initialEmail={user?.email || ""}
       initialBaseCurrency={user?.baseCurrency || "USD"}
+      userPlan={(user?.plan as "free" | "plus" | "pro") || "free"}
+      receiptScansUsed={user?.receiptScansUsed || 0}
+      receiptScansResetAt={user?.receiptScansResetAt}
     />
   )
 }

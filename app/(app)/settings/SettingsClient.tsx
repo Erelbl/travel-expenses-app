@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, User, Settings as SettingsIcon, CreditCard, Shield, Check, LogOut, UserCog, Lock } from "lucide-react"
+import { ArrowLeft, User, Settings as SettingsIcon, CreditCard, Shield, Check, LogOut, UserCog, Lock, Camera, Infinity as InfinityIcon } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,7 @@ import { signOut } from "next-auth/react"
 import Link from "next/link"
 import { changePasswordAction } from "@/app/auth/actions"
 import { updateUserProfileAction } from "./actions"
+import { getEffectivePlan, getRemainingReceiptScans, getReceiptScanLimit } from "@/lib/entitlements"
 
 interface SettingsClientProps {
   isAdmin: boolean
@@ -25,9 +26,21 @@ interface SettingsClientProps {
   initialDisplayName: string
   initialEmail: string
   initialBaseCurrency: string
+  userPlan: "free" | "plus" | "pro"
+  receiptScansUsed: number
+  receiptScansResetAt: Date | null
 }
 
-export function SettingsClient({ isAdmin, initialFullName, initialDisplayName, initialEmail, initialBaseCurrency }: SettingsClientProps) {
+export function SettingsClient({ 
+  isAdmin, 
+  initialFullName, 
+  initialDisplayName, 
+  initialEmail, 
+  initialBaseCurrency,
+  userPlan,
+  receiptScansUsed,
+  receiptScansResetAt,
+}: SettingsClientProps) {
   const { t, locale } = useI18n()
   const router = useRouter()
   const isRTL = locale === 'he'
@@ -378,17 +391,81 @@ export function SettingsClient({ isAdmin, initialFullName, initialDisplayName, i
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-base font-semibold text-slate-900">
-                      {t('appSettings.planFree')}
+                    <h3 className="text-base font-semibold text-slate-900 capitalize">
+                      {isAdmin ? "Pro (Admin)" : userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
                     </h3>
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      {t('common.only')}
-                    </Badge>
+                    {userPlan === "pro" || isAdmin ? (
+                      <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+                        Premium
+                      </Badge>
+                    ) : userPlan === "plus" ? (
+                      <Badge className="bg-sky-50 text-sky-700 border-sky-200">
+                        Plus
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        Free
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-slate-600 mb-3">
-                    {t('appSettings.planFreeDesc')}
+                    {userPlan === "free" && t('appSettings.planFreeDesc')}
+                    {userPlan === "plus" && "For travelers who want more control"}
+                    {(userPlan === "pro" || isAdmin) && "For power users and teams"}
                   </p>
                   
+                  {/* Receipt Scanning Status */}
+                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 mb-3">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-100 shrink-0">
+                        <Camera className="h-5 w-5 text-sky-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-slate-900 mb-1">
+                          Receipt Scanning
+                        </h4>
+                        {(() => {
+                          const effectivePlan = getEffectivePlan({ 
+                            id: "current", 
+                            isAdmin, 
+                            plan: userPlan, 
+                            receiptScansUsed, 
+                            receiptScansResetAt 
+                          })
+                          const limit = getReceiptScanLimit(effectivePlan)
+                          const remaining = getRemainingReceiptScans({ 
+                            id: "current", 
+                            isAdmin, 
+                            plan: userPlan, 
+                            receiptScansUsed, 
+                            receiptScansResetAt 
+                          })
+                          
+                          if (limit === 0) {
+                            return (
+                              <p className="text-xs text-slate-600">
+                                Not available on Free plan. Upgrade to Plus or Pro to scan receipts.
+                              </p>
+                            )
+                          } else if (limit === Infinity) {
+                            return (
+                              <p className="text-xs text-slate-600 flex items-center gap-1">
+                                <span className="font-semibold text-green-600">Unlimited</span>
+                                <span>receipt scans</span>
+                              </p>
+                            )
+                          } else {
+                            return (
+                              <p className="text-xs text-slate-600">
+                                <span className="font-semibold text-sky-600">{remaining} of {limit}</span> scans remaining this year
+                              </p>
+                            )
+                          }
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
                       {t('appSettings.planFeatures')}
@@ -405,9 +482,11 @@ export function SettingsClient({ isAdmin, initialFullName, initialDisplayName, i
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full" disabled>
-                {t('appSettings.planUpgrade')}
-              </Button>
+              {userPlan === "free" && (
+                <Button variant="outline" className="w-full" disabled>
+                  {t('appSettings.planUpgrade')}
+                </Button>
+              )}
             </CardContent>
           </Card>
 
