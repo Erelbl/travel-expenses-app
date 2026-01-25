@@ -2,13 +2,15 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Zap, Globe2, TrendingUp, Check, CreditCard, BarChart3, Users } from "lucide-react"
 import { PhoneFrame } from "@/components/phone-frame"
 import { plans } from "@/lib/plans"
 
 export function LandingPage() {
   const carouselRef = useRef<HTMLDivElement>(null)
+  const outcomeRef = useRef<HTMLParagraphElement>(null)
+  const [isOutcomeVisible, setIsOutcomeVisible] = useState(false)
 
   useEffect(() => {
     // Scroll to center phone on mount for mobile carousel
@@ -18,6 +20,40 @@ export function LandingPage() {
       container.scrollLeft = centerPosition
     }
   }, [])
+
+  useEffect(() => {
+    // Intersection Observer for outcome animation
+    const outcomeElement = outcomeRef.current
+    if (!outcomeElement) return
+
+    // Fallback: show immediately if IntersectionObserver not supported
+    if (typeof IntersectionObserver === 'undefined') {
+      setIsOutcomeVisible(true)
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !isOutcomeVisible) {
+            setIsOutcomeVisible(true)
+          }
+        })
+      },
+      {
+        threshold: 0.3,
+        rootMargin: '0px'
+      }
+    )
+
+    observer.observe(outcomeElement)
+
+    return () => {
+      if (outcomeElement) {
+        observer.unobserve(outcomeElement)
+      }
+    }
+  }, [isOutcomeVisible])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-slate-50" dir="ltr">
@@ -213,117 +249,22 @@ export function LandingPage() {
       {/* Screens Section */}
       <section className="py-16 px-6">
         <div className="container mx-auto max-w-4xl">
-          <div className="space-y-12 scroll-fade-in">
-            {/* Feature 1: Dashboard */}
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-              <div className="flex-shrink-0 max-w-[240px]">
-                <PhoneFrame>
-                  <div className="h-full bg-gradient-to-b from-sky-50 to-slate-50 p-4 overflow-auto">
-                    <div className="mb-4">
-                      <h4 className="font-bold text-sm mb-2">Your Trips</h4>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
-                        <div className="font-bold text-sm mb-2">Paris 2024</div>
-                        <div className="flex items-center justify-between text-xs mb-2">
-                          <span className="text-slate-500">Total</span>
-                          <span className="font-semibold">€2,340</span>
-                        </div>
-                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full w-4/5 bg-sky-500 rounded-full" />
-                        </div>
-                        <div className="text-xs text-slate-500 mt-2">24 expenses • €3,000 budget</div>
-                      </div>
-                      <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100">
-                        <div className="font-bold text-sm mb-2">Tokyo Adventure</div>
-                        <div className="flex items-center justify-between text-xs mb-2">
-                          <span className="text-slate-500">Total</span>
-                          <span className="font-semibold">¥145,200</span>
-                        </div>
-                        <div className="text-xs text-slate-500 mt-2">18 expenses</div>
-                      </div>
-                      <div className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 opacity-60">
-                        <div className="font-bold text-sm mb-2">Barcelona Summer</div>
-                        <div className="text-xs text-slate-500">Closed • €890</div>
-                      </div>
-                    </div>
-                  </div>
-                </PhoneFrame>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">
-                  See where your money goes
-                </h3>
-                <p className="text-base text-slate-600 leading-relaxed">
-                  Every trip tracked. Every currency converted. Know your total at a glance.
-                </p>
-              </div>
-            </div>
-
-            {/* Feature 2: Add expense */}
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-              <div className="flex-shrink-0 max-w-[240px]">
-                <PhoneFrame>
-                  <div className="h-full bg-white p-4 flex flex-col">
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-bold text-sm">Add Expense</h4>
-                        <span className="text-xs text-slate-500">Paris 2024</span>
-                      </div>
-                      <div className="bg-sky-50 rounded-2xl p-4 mb-4">
-                        <div className="text-4xl font-bold text-slate-900 mb-1">€48.50</div>
-                        <div className="text-xs text-slate-500">EUR</div>
-                      </div>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <div className="text-xs text-slate-500 mb-2">Category</div>
-                      <div className="flex gap-2 overflow-x-auto pb-2">
-                        <div className="px-3 py-2 bg-sky-500 text-white rounded-xl text-xs font-semibold whitespace-nowrap">
-                          🍽️ Food
-                        </div>
-                        <div className="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-medium whitespace-nowrap">
-                          🚕 Transport
-                        </div>
-                        <div className="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-medium whitespace-nowrap">
-                          🏨 Hotel
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 mb-4 flex-1">
-                      <div>
-                        <div className="text-xs text-slate-500 mb-1">Merchant</div>
-                        <div className="bg-slate-50 rounded-xl px-3 py-2 text-sm">Le Café</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-slate-500 mb-1">Note</div>
-                        <div className="bg-slate-50 rounded-xl px-3 py-2 text-sm text-slate-400">Optional</div>
-                      </div>
-                    </div>
-
-                    <button className="w-full bg-sky-600 text-white py-3.5 rounded-xl font-bold text-sm">
-                      Save Expense
-                    </button>
-                  </div>
-                </PhoneFrame>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">
-                  Capture spending as it happens
-                </h3>
-                <p className="text-base text-slate-600 leading-relaxed">
-                  Quick entry while you're out. No receipts to sort through later.
-                </p>
-              </div>
-            </div>
-
-            {/* Outcome Statement */}
-            <div className="text-center pt-8">
-              <p className="text-2xl md:text-3xl text-slate-900 font-semibold leading-relaxed emphasis-fade-in">
-                Most travelers spend less once they see where their money goes.
-              </p>
-            </div>
+          {/* Outcome Statement */}
+          <div className="text-center pt-8">
+            <p 
+              ref={outcomeRef}
+              className={`text-2xl md:text-3xl text-slate-900 font-semibold leading-relaxed transition-all duration-500 ease-out ${
+                isOutcomeVisible 
+                  ? 'opacity-100 translate-y-0' 
+                  : 'opacity-0 translate-y-3'
+              }`}
+            >
+              Most travelers{" "}
+              <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
+                spend less
+              </span>
+              {" "}once they see where their money goes.
+            </p>
           </div>
         </div>
       </section>
