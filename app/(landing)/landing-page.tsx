@@ -306,15 +306,16 @@ export function LandingPage() {
           </div>
           
           {/* Mobile carousel wrapper */}
-          <div className="md:max-w-5xl md:mx-auto pt-4 md:pt-0">
+          <div className="md:max-w-5xl md:mx-auto pt-6 md:pt-0 overflow-visible">
             {/* Pricing cards */}
             <div 
               ref={pricingCarouselRef}
-              className="pricing-carousel md:grid md:grid-cols-3 md:gap-8 flex overflow-x-auto snap-x snap-mandatory md:overflow-visible gap-4 pb-6 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0"
+              className="pricing-carousel md:grid md:grid-cols-3 md:gap-8 flex overflow-x-auto overflow-y-visible snap-x snap-mandatory md:overflow-visible gap-4 pb-6 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0 scroll-py-6"
               style={{ 
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch'
+                WebkitOverflowScrolling: 'touch',
+                scrollPaddingTop: '1.5rem'
               }}
             >
               {plans.map((plan) => {
