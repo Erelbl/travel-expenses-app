@@ -196,7 +196,7 @@ export function LandingPage() {
       </section>
 
       {/* Screens Section */}
-      <section className="py-16 px-6 bg-gradient-to-b from-white via-sky-50/30 to-white">
+      <section className="py-16 px-6">
         <div className="container mx-auto max-w-4xl">
           <div className="space-y-12 scroll-fade-in">
             {/* Feature 1: Dashboard */}
@@ -362,11 +362,20 @@ export function LandingPage() {
                 </PhoneFrame>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                <h3 className="text-xl font-medium text-slate-900 mb-2">
                   Understand your patterns
                 </h3>
-                <p className="text-base text-slate-600 leading-relaxed">
-                  Clear breakdowns by category and day. Most travelers find they spend less once they see the full picture.
+                <p className="text-base text-slate-700 leading-relaxed">
+                  Clear breakdowns by category and day.{" "}
+                  <span className="text-slate-900 font-semibold emphasis-fade-in">
+                    Most travelers find they{" "}
+                    <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
+                      spend less
+                    </span>
+                  </span>{" "}
+                  <span className="text-slate-900 font-semibold emphasis-fade-in">
+                    once they see the full picture.
+                  </span>
                 </p>
               </div>
             </div>
