@@ -196,9 +196,9 @@ export function LandingPage() {
       </section>
 
       {/* Screens Section */}
-      <section className="py-16 px-6">
+      <section className="py-16 px-6 bg-gradient-to-b from-white via-sky-50/30 to-white">
         <div className="container mx-auto max-w-4xl">
-          <div className="space-y-12">
+          <div className="space-y-12 scroll-fade-in">
             {/* Feature 1: Dashboard */}
             <div className="flex flex-col md:flex-row gap-6 items-start">
               <div className="flex-shrink-0 max-w-[240px]">
