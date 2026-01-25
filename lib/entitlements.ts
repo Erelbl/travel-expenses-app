@@ -20,13 +20,28 @@ export interface EntitlementUser {
 /**
  * Get user's plan tier
  * Defaults to 'free' if not set
+ * NOTE: This returns the actual subscription plan, not the effective plan.
+ * For feature gating, use getEffectivePlan() instead.
  */
 export function getUserPlan(user: EntitlementUser): PlanTier {
   return user.plan || "free"
 }
 
 /**
+ * Get effective plan tier for feature gating
+ * Admin users are always treated as PRO
+ * This is the SINGLE SOURCE OF TRUTH for plan-based feature access
+ */
+export function getEffectivePlan(user: EntitlementUser): PlanTier {
+  if (user.isAdmin) {
+    return "pro"
+  }
+  return user.plan || "free"
+}
+
+/**
  * Get receipt scan limit for a plan
+ * NOTE: This operates on plan tier, not user. For user-aware limits, use checkReceiptScanEntitlement
  */
 export function getReceiptScanLimit(plan: PlanTier): number {
   switch (plan) {
@@ -43,23 +58,18 @@ export function getReceiptScanLimit(plan: PlanTier): number {
 
 /**
  * Check if user can scan receipts
- * Admins always bypass limits
+ * Uses effective plan (admins are treated as PRO)
  */
 export function canScanReceipts(user: EntitlementUser): boolean {
-  // Admin bypass
-  if (user.isAdmin) {
-    return true
-  }
-
-  const plan = getUserPlan(user)
-  const limit = getReceiptScanLimit(plan)
+  const effectivePlan = getEffectivePlan(user)
+  const limit = getReceiptScanLimit(effectivePlan)
 
   // Free plan has no access
   if (limit === 0) {
     return false
   }
 
-  // Pro has unlimited
+  // Pro has unlimited (includes admins)
   if (limit === Infinity) {
     return true
   }
@@ -71,23 +81,18 @@ export function canScanReceipts(user: EntitlementUser): boolean {
 
 /**
  * Get remaining receipt scans for the user
- * Returns Infinity for unlimited plans or admins
+ * Returns Infinity for unlimited plans (PRO) and admins
  */
 export function getRemainingReceiptScans(user: EntitlementUser): number {
-  // Admin bypass
-  if (user.isAdmin) {
-    return Infinity
-  }
-
-  const plan = getUserPlan(user)
-  const limit = getReceiptScanLimit(plan)
+  const effectivePlan = getEffectivePlan(user)
+  const limit = getReceiptScanLimit(effectivePlan)
 
   // Free plan
   if (limit === 0) {
     return 0
   }
 
-  // Pro or unlimited
+  // Pro or unlimited (includes admins)
   if (limit === Infinity) {
     return Infinity
   }
@@ -100,18 +105,13 @@ export function getRemainingReceiptScans(user: EntitlementUser): number {
 /**
  * Increment receipt scan usage
  * Returns new usage count
- * Does NOT increment for admins
+ * Does NOT increment for PRO users (includes admins) or FREE users
  */
 export function incrementReceiptScanUsage(user: EntitlementUser): number {
-  // Don't track for admins
-  if (user.isAdmin) {
-    return user.receiptScansUsed || 0
-  }
-
-  const plan = getUserPlan(user)
+  const effectivePlan = getEffectivePlan(user)
   
-  // Don't track for pro (unlimited) or free (no access)
-  if (plan === "pro" || plan === "free") {
+  // Don't track for pro (unlimited, includes admins) or free (no access)
+  if (effectivePlan === "pro" || effectivePlan === "free") {
     return user.receiptScansUsed || 0
   }
 
@@ -147,18 +147,8 @@ export interface EntitlementCheckResult {
 }
 
 export function checkReceiptScanEntitlement(user: EntitlementUser): EntitlementCheckResult {
-  // Admin bypass
-  if (user.isAdmin) {
-    return {
-      allowed: true,
-      reason: "allowed",
-      remaining: Infinity,
-      limit: Infinity,
-    }
-  }
-
-  const plan = getUserPlan(user)
-  const limit = getReceiptScanLimit(plan)
+  const effectivePlan = getEffectivePlan(user)
+  const limit = getReceiptScanLimit(effectivePlan)
   const used = user.receiptScansUsed || 0
   const remaining = getRemainingReceiptScans(user)
 
@@ -172,7 +162,7 @@ export function checkReceiptScanEntitlement(user: EntitlementUser): EntitlementC
     }
   }
 
-  // Pro plan - unlimited
+  // Pro plan - unlimited (includes admins via getEffectivePlan)
   if (limit === Infinity) {
     return {
       allowed: true,

@@ -149,6 +149,11 @@ export async function POST(request: NextRequest) {
     receiptScansResetAt: dbUser.receiptScansResetAt,
   }
 
+  // Runtime check: Log admin effective plan (for verification)
+  if (user.isAdmin) {
+    console.log(`[Receipt] Admin user detected - effective plan: PRO (actual plan: ${user.plan || "free"})`)
+  }
+
   // Check entitlements
   const entitlementCheck = checkReceiptScanEntitlement(user)
   
