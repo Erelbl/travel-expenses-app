@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { CountryDropdownWithSearch } from "@/components/CountryDropdownWithSearch"
 import { CreateTrip } from "@/lib/schemas/trip.schema"
 import { CURRENCIES } from "@/lib/utils/currency"
 import { COUNTRIES_DATA, getCountryName } from "@/lib/utils/countries.data"
@@ -173,25 +174,18 @@ export default function NewTripPage() {
             <div className="space-y-2">
               <Label htmlFor="plannedCountries">{t('createTrip.plannedCountries')}</Label>
               <p className="text-sm text-muted-foreground">{t('createTrip.plannedCountriesHelper')}</p>
-              <Select
+              <CountryDropdownWithSearch
                 id="plannedCountries"
                 value=""
-                onChange={(e) => {
-                  if (e.target.value) {
-                    addCountry(e.target.value)
-                    e.target.value = "" // Reset after selection
+                onChange={(countryCode) => {
+                  if (countryCode) {
+                    addCountry(countryCode)
                   }
                 }}
-              >
-                <option value="">{t('createTrip.selectCountries')}</option>
-                {COUNTRIES_DATA.filter(
-                  (country) => !formData.plannedCountries.includes(country.code)
-                ).map((country) => (
-                  <option key={country.code} value={country.code}>
-                    {flagEmoji(country.code)} {getCountryName(country.code, locale)}
-                  </option>
-                ))}
-              </Select>
+                placeholder={t('createTrip.selectCountries')}
+                excludeCountries={formData.plannedCountries}
+                flagEmoji={flagEmoji}
+              />
               {formData.plannedCountries.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {formData.plannedCountries.map((code) => {

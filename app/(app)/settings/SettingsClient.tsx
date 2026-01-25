@@ -266,9 +266,6 @@ export function SettingsClient({
                   <option value="male">{t('appSettings.genderMale')}</option>
                   <option value="female">{t('appSettings.genderFemale')}</option>
                 </Select>
-                <p className="text-xs text-slate-500">
-                  {t('appSettings.profileGenderHelper')}
-                </p>
               </div>
 
               <div className="space-y-2">
