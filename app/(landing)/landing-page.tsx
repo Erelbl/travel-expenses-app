@@ -33,13 +33,13 @@ export function LandingPage() {
               </span>
             </h1>
             <p className="text-xl text-slate-600 mb-10 leading-relaxed">
-              A simple way to understand your travel spending — and stay in control.
+              A simple way to understand your travel spending and stay in control.
             </p>
             <Link
               href="/auth/login"
               className="inline-block bg-gradient-to-r from-sky-500 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-sky-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl"
             >
-              Start your first trip — it's free
+              Start your first trip - it's free
             </Link>
           </div>
 
@@ -176,7 +176,7 @@ export function LandingPage() {
                 Travel together, effortlessly
               </h3>
               <p className="text-slate-600 text-sm">
-                Traveling with your partner or someone else? Share the trip and let everyone add expenses — no coordination, no calculations later.
+                Traveling with your partner or someone else? Share the trip and let everyone add expenses. No coordination, no calculations later.
               </p>
             </div>
             <div className="text-center">
@@ -318,75 +318,11 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* Feature 3: FX & insights */}
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-              <div className="flex-shrink-0 max-w-[240px]">
-                <PhoneFrame>
-                  <div className="h-full bg-gradient-to-b from-violet-50 via-sky-50 to-white p-4">
-                    <div className="mb-4">
-                      <h4 className="font-bold text-sm mb-1">Trip Insights</h4>
-                      <p className="text-xs text-slate-500">Paris 2024</p>
-                    </div>
-                    
-                    <div className="bg-gradient-to-br from-sky-500 to-blue-600 rounded-2xl p-4 text-white mb-4">
-                      <div className="text-xs opacity-90 mb-1">Total Spent</div>
-                      <div className="text-3xl font-bold mb-1">€2,340</div>
-                      <div className="text-xs opacity-90">of €3,000 budget</div>
-                      <div className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
-                        <div className="h-full w-4/5 bg-white rounded-full" />
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-3 mb-3 shadow-sm">
-                      <div className="text-xs font-semibold text-slate-700 mb-3">By Category</div>
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-amber-500" />
-                            <span className="text-xs">Food & Dining</span>
-                          </div>
-                          <span className="text-xs font-bold">€980</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-violet-500" />
-                            <span className="text-xs">Hotels</span>
-                          </div>
-                          <span className="text-xs font-bold">€850</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-sky-500" />
-                            <span className="text-xs">Transport</span>
-                          </div>
-                          <span className="text-xs font-bold">€510</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
-                      <div className="flex items-start gap-2">
-                        <span className="text-lg">💡</span>
-                        <div>
-                          <div className="text-xs font-bold text-emerald-700 mb-1">On track!</div>
-                          <div className="text-xs text-emerald-600">You're 22% under budget.</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </PhoneFrame>
-              </div>
-              <div className="flex-1">
-                <p className="text-lg text-slate-700 leading-relaxed">
-                  <span className="text-slate-900 font-semibold emphasis-fade-in">
-                    Most travelers{" "}
-                    <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-transparent">
-                      spend less
-                    </span>
-                    {" "}once they see where their money goes.
-                  </span>
-                </p>
-              </div>
+            {/* Outcome Statement */}
+            <div className="text-center pt-8">
+              <p className="text-2xl md:text-3xl text-slate-900 font-semibold leading-relaxed emphasis-fade-in">
+                Most travelers spend less once they see where their money goes.
+              </p>
             </div>
           </div>
         </div>
