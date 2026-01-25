@@ -156,9 +156,7 @@ export function LandingPage() {
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="w-14 h-14 bg-rose-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                <Users className="w-7 h-7 text-rose-600" />
-              </div>
+              <Users className="w-8 h-8 text-slate-600 mx-auto mb-4 stroke-[1.5]" />
               <h3 className="font-bold text-lg text-slate-900 mb-2">
                 Travel together, effortlessly
               </h3>
@@ -167,9 +165,7 @@ export function LandingPage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-14 h-14 bg-blue-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                <Globe2 className="w-7 h-7 text-blue-600" />
-              </div>
+              <Globe2 className="w-8 h-8 text-slate-600 mx-auto mb-4 stroke-[1.5]" />
               <h3 className="font-bold text-lg text-slate-900 mb-2">
                 Multi-currency, handled right.
               </h3>
@@ -178,9 +174,7 @@ export function LandingPage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-14 h-14 bg-emerald-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                <Zap className="w-7 h-7 text-emerald-600" />
-              </div>
+              <Zap className="w-8 h-8 text-slate-600 mx-auto mb-4 stroke-[1.5]" />
               <h3 className="font-bold text-lg text-slate-900 mb-2">
                 Simple while traveling.
               </h3>
@@ -189,9 +183,7 @@ export function LandingPage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-14 h-14 bg-violet-100 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-                <TrendingUp className="w-7 h-7 text-violet-600" />
-              </div>
+              <TrendingUp className="w-8 h-8 text-slate-600 mx-auto mb-4 stroke-[1.5]" />
               <h3 className="font-bold text-lg text-slate-900 mb-2">
                 Insights that actually help.
               </h3>
