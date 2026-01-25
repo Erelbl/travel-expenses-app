@@ -236,11 +236,11 @@ export function LandingPage() {
                 </PhoneFrame>
               </div>
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">
-                  Dashboard
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                  See where your money goes
                 </h3>
                 <p className="text-base text-slate-600 leading-relaxed">
-                  See all your trips at a glance. Total spending, currency breakdowns, and quick access to details.
+                  Every trip tracked. Every currency converted. Know your total at a glance.
                 </p>
               </div>
             </div>
@@ -294,11 +294,11 @@ export function LandingPage() {
                 </PhoneFrame>
               </div>
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">
-                  Add expense
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                  Capture spending as it happens
                 </h3>
                 <p className="text-base text-slate-600 leading-relaxed">
-                  Quick capture when you're out exploring. Amount, category, done.
+                  Quick entry while you're out. No receipts to sort through later.
                 </p>
               </div>
             </div>
@@ -362,11 +362,11 @@ export function LandingPage() {
                 </PhoneFrame>
               </div>
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">
-                  FX & insights
+                <h3 className="text-xl font-semibold text-slate-900 mb-2">
+                  Understand your patterns
                 </h3>
                 <p className="text-base text-slate-600 leading-relaxed">
-                  Automatic currency conversion and spending patterns. Know what you spent without doing math.
+                  Clear breakdowns by category and day. Most travelers find they spend less once they see the full picture.
                 </p>
               </div>
             </div>
