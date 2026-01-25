@@ -306,16 +306,15 @@ export function LandingPage() {
           </div>
           
           {/* Mobile carousel wrapper */}
-          <div className="md:max-w-5xl md:mx-auto pt-6 md:pt-0 overflow-visible">
+          <div className="md:max-w-5xl md:mx-auto overflow-visible">
             {/* Pricing cards */}
             <div 
               ref={pricingCarouselRef}
-              className="pricing-carousel md:grid md:grid-cols-3 md:gap-8 flex overflow-x-auto overflow-y-visible snap-x snap-mandatory md:overflow-visible gap-4 pb-6 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0 scroll-py-6"
+              className="pricing-carousel md:grid md:grid-cols-3 md:gap-8 flex overflow-x-auto overflow-y-visible snap-x snap-mandatory md:overflow-visible gap-4 pb-6 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0"
               style={{ 
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none',
-                WebkitOverflowScrolling: 'touch',
-                scrollPaddingTop: '1.5rem'
+                WebkitOverflowScrolling: 'touch'
               }}
             >
               {plans.map((plan) => {
@@ -329,13 +328,13 @@ export function LandingPage() {
                       rounded-2xl p-8 transition-all flex-shrink-0 w-[85vw] max-w-[400px] md:w-auto snap-center
                       ${
                         isPopular
-                          ? "bg-gradient-to-br from-sky-500 to-blue-600 shadow-xl transform md:scale-105 relative"
+                          ? "bg-gradient-to-br from-sky-500 to-blue-600 shadow-xl transform md:scale-105"
                           : "bg-white shadow-sm border border-slate-200 hover:shadow-lg"
                       }
                     `}
                   >
                   {isPopular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap">
+                    <div className="inline-block bg-yellow-400 text-slate-900 px-3 py-1 rounded-full text-xs font-semibold mb-4">
                       Most popular
                     </div>
                   )}
