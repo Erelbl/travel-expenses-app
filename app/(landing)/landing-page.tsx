@@ -294,7 +294,7 @@ export function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 px-6 bg-slate-50">
+      <section id="pricing" className="py-20 px-6 bg-slate-50 scroll-mt-20">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-extrabold text-slate-900 mb-4">
@@ -305,18 +305,12 @@ export function LandingPage() {
             </p>
           </div>
           
-          {/* Mobile carousel wrapper with edge fade */}
-          <div className="relative md:max-w-5xl md:mx-auto">
-            {/* Left edge fade (mobile only) */}
-            <div className="absolute left-0 top-0 bottom-8 w-8 bg-gradient-to-r from-slate-50 to-transparent pointer-events-none z-10 md:hidden" />
-            
-            {/* Right edge fade (mobile only) */}
-            <div className="absolute right-0 top-0 bottom-8 w-8 bg-gradient-to-l from-slate-50 to-transparent pointer-events-none z-10 md:hidden" />
-            
+          {/* Mobile carousel wrapper */}
+          <div className="md:max-w-5xl md:mx-auto pt-4 md:pt-0">
             {/* Pricing cards */}
             <div 
               ref={pricingCarouselRef}
-              className="pricing-carousel md:grid md:grid-cols-3 md:gap-8 flex overflow-x-auto snap-x snap-mandatory md:overflow-visible gap-4 pb-4 md:pb-0 px-5 md:px-0"
+              className="pricing-carousel md:grid md:grid-cols-3 md:gap-8 flex overflow-x-auto snap-x snap-mandatory md:overflow-visible gap-4 pb-6 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0"
               style={{ 
                 scrollbarWidth: 'none', 
                 msOverflowStyle: 'none',
@@ -331,7 +325,7 @@ export function LandingPage() {
                   <div
                     key={plan.id}
                     className={`
-                      rounded-2xl p-8 transition-all flex-shrink-0 w-[84vw] max-w-[380px] md:w-auto snap-start
+                      rounded-2xl p-8 transition-all flex-shrink-0 w-[85vw] max-w-[400px] md:w-auto snap-center
                       ${
                         isPopular
                           ? "bg-gradient-to-br from-sky-500 to-blue-600 shadow-xl transform md:scale-105 relative"
@@ -340,7 +334,7 @@ export function LandingPage() {
                     `}
                   >
                   {isPopular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-slate-900 px-4 py-1 rounded-full text-sm font-semibold whitespace-nowrap">
                       Most popular
                     </div>
                   )}
