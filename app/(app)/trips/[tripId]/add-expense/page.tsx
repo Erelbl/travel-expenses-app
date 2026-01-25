@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { PassportCard, StampBadge } from "@/components/ui/passport-card"
+import { CountrySelect } from "@/components/CountrySelect"
 import { tripsRepository, expensesRepository, ratesRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
 import { CreateExpense, ExpenseCategory } from "@/lib/schemas/expense.schema"
@@ -740,25 +741,18 @@ export default function AddExpensePage() {
                   <Badge variant="secondary" className="text-xs">{t('common.only')}</Badge>
                 </div>
               ) : (
-                // Multiple countries: show selector
+                // Multiple countries: show searchable selector
                 <>
-                  <Select
-                    id="country"
+                  <CountrySelect
                     value={formState.country}
-                    onChange={(e) => {
+                    onChange={(value) => {
                       setUserTouchedCountry(true)
-                      handleCountryChange(e.target.value)
+                      handleCountryChange(value)
                       setScanHints((prev) => ({ ...prev, country: undefined }))
                     }}
-                    className="premium-input h-14 bg-white text-base font-medium text-slate-900"
+                    placeholder={t('addExpense.country')}
                     required
-                  >
-                    {tripCountriesOptions.map((country) => (
-                      <option key={country.code} value={country.code}>
-                        {country.flag} {country.name}
-                      </option>
-                    ))}
-                  </Select>
+                  />
                   {scanHints.country && (
                     <p className="text-xs text-blue-600">
                       💡 {scanHints.country}

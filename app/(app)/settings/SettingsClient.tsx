@@ -26,6 +26,7 @@ interface SettingsClientProps {
   initialDisplayName: string
   initialEmail: string
   initialBaseCurrency: string
+  initialGender: "male" | "female"
   userPlan: "free" | "plus" | "pro"
   receiptScansUsed: number
   receiptScansResetAt: Date | null
@@ -37,6 +38,7 @@ export function SettingsClient({
   initialDisplayName, 
   initialEmail, 
   initialBaseCurrency,
+  initialGender,
   userPlan,
   receiptScansUsed,
   receiptScansResetAt,
@@ -49,6 +51,7 @@ export function SettingsClient({
   
   const [displayName, setDisplayName] = useState(initialDisplayName)
   const [fullName, setFullName] = useState(initialFullName)
+  const [gender, setGender] = useState<"male" | "female">(initialGender)
   const [formPreferences, setFormPreferences] = useState({
     ...preferences,
     baseCurrency: initialBaseCurrency,
@@ -65,9 +68,10 @@ export function SettingsClient({
 
   useEffect(() => {
     const nameChanged = displayName !== initialDisplayName || fullName !== initialFullName
+    const genderChanged = gender !== initialGender
     const prefsChanged = formPreferences.baseCurrency !== initialBaseCurrency
-    setHasChanges(nameChanged || prefsChanged)
-  }, [displayName, fullName, formPreferences, initialDisplayName, initialFullName, initialBaseCurrency])
+    setHasChanges(nameChanged || genderChanged || prefsChanged)
+  }, [displayName, fullName, gender, formPreferences, initialDisplayName, initialFullName, initialGender, initialBaseCurrency])
 
   async function handleSave() {
     setSaving(true)
@@ -76,6 +80,7 @@ export function SettingsClient({
         displayName: displayName,
         fullName: fullName,
         baseCurrency: formPreferences.baseCurrency,
+        gender: gender,
       })
 
       if (result.error) {
@@ -98,6 +103,7 @@ export function SettingsClient({
   function handleCancel() {
     setDisplayName(initialDisplayName)
     setFullName(initialFullName)
+    setGender(initialGender)
     setFormPreferences({
       ...preferences,
       baseCurrency: initialBaseCurrency,
@@ -245,6 +251,23 @@ export function SettingsClient({
                 />
                 <p className="text-xs text-slate-500">
                   Your full name (optional)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="gender" className="text-sm font-medium text-slate-700">
+                  {t('appSettings.profileGender')}
+                </Label>
+                <Select
+                  id="gender"
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as "male" | "female")}
+                >
+                  <option value="male">{t('appSettings.genderMale')}</option>
+                  <option value="female">{t('appSettings.genderFemale')}</option>
+                </Select>
+                <p className="text-xs text-slate-500">
+                  {t('appSettings.profileGenderHelper')}
                 </p>
               </div>
 

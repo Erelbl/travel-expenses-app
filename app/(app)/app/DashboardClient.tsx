@@ -24,11 +24,29 @@ interface TripWithStats {
 interface DashboardClientProps {
   trips: TripWithStats[]
   userName: string | null
+  userGender: "male" | "female"
 }
 
-export function DashboardClient({ trips, userName }: DashboardClientProps) {
+export function DashboardClient({ trips, userName, userGender }: DashboardClientProps) {
   const { t, locale } = useI18n()
   const isRTL = locale === 'he'
+  
+  // Gender-based greeting logic
+  const getGreeting = () => {
+    if (!userName) return null
+    
+    if (locale === 'he') {
+      // Hebrew greetings
+      return userGender === 'female' 
+        ? `ברוכה הבאה, ${userName}!`
+        : `ברוך הבא, ${userName}!`
+    } else {
+      // English greeting (gender-neutral)
+      return t('appDashboard.welcomeBack', { name: userName })
+    }
+  }
+  
+  const greeting = getGreeting()
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60">
@@ -48,7 +66,7 @@ export function DashboardClient({ trips, userName }: DashboardClientProps) {
             transition={{ delay: 0.1, duration: 0.25 }}
           >
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              {userName ? t('appDashboard.welcomeBack', { name: userName }) : t('appDashboard.welcome')}
+              {greeting || t('appDashboard.welcome')}
             </h1>
             <div className="text-sky-50/90 text-base md:text-lg mb-6">
               {/* Subtitle removed per UX requirements */}

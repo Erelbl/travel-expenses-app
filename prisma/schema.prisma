@@ -17,6 +17,7 @@ model User {
   image         String?
   baseCurrency  String    @default("USD")
   language      String    @default("en")
+  gender        String    @default("male")
   isAdmin       Boolean   @default(false)
   isDisabled    Boolean   @default(false)
   lastLoginAt   DateTime?

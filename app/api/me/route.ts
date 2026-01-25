@@ -23,6 +23,7 @@ export async function GET() {
         image: true,
         baseCurrency: true,
         language: true,
+        gender: true,
       },
     })
 
@@ -91,7 +92,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { name, nickname, image, baseCurrency, language } = body
+    const { name, nickname, image, baseCurrency, language, gender } = body
 
     // Validate
     const updates: any = {}
@@ -118,6 +119,12 @@ export async function PATCH(request: Request) {
       }
       updates.language = language
     }
+    if (gender !== undefined) {
+      if (!["male", "female"].includes(gender)) {
+        return NextResponse.json({ error: "gender must be male or female" }, { status: 400 })
+      }
+      updates.gender = gender
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
@@ -130,6 +137,7 @@ export async function PATCH(request: Request) {
         image: true,
         baseCurrency: true,
         language: true,
+        gender: true,
       },
     })
 

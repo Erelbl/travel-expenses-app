@@ -61,8 +61,18 @@ export default async function AppDashboardPage() {
     redirect("/auth/login")
   }
 
+  // Fetch user data to get nickname and gender
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { nickname: true, gender: true }
+  })
+
   const trips = await getTripsWithStats(session.user.id)
 
-  return <DashboardClient trips={trips} userName={session.user.name || null} />
+  return <DashboardClient 
+    trips={trips} 
+    userName={user?.nickname || null}
+    userGender={(user?.gender as "male" | "female") || "male"}
+  />
 }
 
