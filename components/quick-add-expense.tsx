@@ -250,7 +250,7 @@ export function QuickAddExpense({
         manualRateToBase: parsedManualRate && parsedManualRate > 0 ? parsedManualRate : undefined,
       }
 
-      const created =       const created = await expensesRepository.createExpense(expenseData)
+      const created = await expensesRepository.createExpense(expenseData)
       
       // Update last used currency
       setLastUsedCurrency(formData.currency)
