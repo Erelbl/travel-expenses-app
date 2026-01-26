@@ -93,7 +93,7 @@ export default function TripHomePage() {
       const closePromptDismissedVal = localStorage.getItem(`tw_close_prompt_dismissed_${tripId}`)
       setClosePromptDismissed(closePromptDismissedVal === 'true')
     }
-  }, [tripId])
+  }, [tripId, remountKey])
 
   async function loadData() {
     try {
