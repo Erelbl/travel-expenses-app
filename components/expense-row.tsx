@@ -109,7 +109,7 @@ export function ExpenseRow({ expense, trip, onClick, onEdit }: ExpenseRowProps) 
       {onEdit && canEdit && (
         <button
           onClick={handleEditClick}
-          className="opacity-0 group-hover:opacity-100 p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-white/60 transition-all shrink-0"
+          className="md:opacity-0 md:group-hover:opacity-100 p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-white/60 transition-all shrink-0"
           title={t('common.edit')}
         >
           <Pencil className="h-4 w-4" />
