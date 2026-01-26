@@ -55,22 +55,6 @@ export default function TripHomePage() {
   const [initialLoading, setInitialLoading] = useState(true)
   const [initialError, setInitialError] = useState(false)
 
-  // Quick Add
-  const [showQuickAdd, setShowQuickAdd] = useState(false)
-  // Exchange Rates
-  const [showRates, setShowRates] = useState(false)
-  // Expense filter (for shared trips)
-  const [showOnlyMine, setShowOnlyMine] = useState(false)
-  // Single unified insight dismissal state
-  const [dismissedInsights, setDismissedInsights] = useState<Map<string, number>>(new Map())
-  // Close trip prompt dismissal
-  const [closePromptDismissed, setClosePromptDismissed] = useState(false)
-  
-  // Filters and sorting
-  const [filterCategory, setFilterCategory] = useState<ExpenseCategory | "">("")
-  const [filterCurrency, setFilterCurrency] = useState<string>("")
-  const [sortDirection, setSortDirection] = useState<"newest" | "oldest">("newest")
-
   useEffect(() => {
     loadInitialData()
   }, [tripId])
