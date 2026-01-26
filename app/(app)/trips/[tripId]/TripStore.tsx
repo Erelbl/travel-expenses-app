@@ -11,6 +11,10 @@ interface TripStoreState {
   loading: boolean
   error: boolean
   refreshTrip: () => Promise<void>
+  addExpense: (expense: Expense) => void
+  updateExpense: (expenseId: string, updates: Partial<Expense>) => void
+  removeExpense: (expenseId: string) => void
+  updateTrip: (updates: Partial<Trip>) => void
 }
 
 const TripStoreContext = createContext<TripStoreState | null>(null)
@@ -76,6 +80,25 @@ export function TripStoreProvider({
     }
   }, [tripId, refreshTrip])
 
+  // Local state mutation methods
+  const addExpense = useCallback((expense: Expense) => {
+    setExpenses(prev => [expense, ...prev])
+  }, [])
+
+  const updateExpense = useCallback((expenseId: string, updates: Partial<Expense>) => {
+    setExpenses(prev => 
+      prev.map(exp => exp.id === expenseId ? { ...exp, ...updates } : exp)
+    )
+  }, [])
+
+  const removeExpense = useCallback((expenseId: string) => {
+    setExpenses(prev => prev.filter(exp => exp.id !== expenseId))
+  }, [])
+
+  const updateTrip = useCallback((updates: Partial<Trip>) => {
+    setTrip(prev => prev ? { ...prev, ...updates } : null)
+  }, [])
+
   return (
     <TripStoreContext.Provider
       value={{
@@ -84,6 +107,10 @@ export function TripStoreProvider({
         loading,
         error,
         refreshTrip,
+        addExpense,
+        updateExpense,
+        removeExpense,
+        updateTrip,
       }}
     >
       {children}

@@ -24,8 +24,6 @@ import {
 } from "@/lib/utils/countryCurrency"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { normalizeReceiptImageToJpeg } from "@/lib/utils/normalizeReceiptImage"
-import { forceTripReload } from "@/lib/utils/forceReload"
-
 const CATEGORIES: ExpenseCategory[] = [
   "Food",
   "Transport",
@@ -438,7 +436,7 @@ export default function EditExpensePage() {
         }
       }
 
-      await expensesRepository.updateExpense(expenseId, updates)
+      const updated = await expensesRepository.updateExpense(expenseId, updates)
       
       // Store manual FX rate for future use
       if (fxRateStatus === "manual" && fxRate) {
@@ -449,10 +447,11 @@ export default function EditExpensePage() {
         })
       }
       
-      toast.success(t('editExpense.success'))
+      // Mark that trip page needs refresh when it loads
+      sessionStorage.setItem(`trip_${tripId}_needs_refresh`, 'true')
       
-      // Force full reload to show updated expenses
-      forceTripReload(tripId)
+      toast.success(t('editExpense.success'))
+      router.push(`/trips/${tripId}`)
     } catch (error) {
       console.error("Failed to update expense:", error)
       setSaveError(true)
@@ -475,11 +474,12 @@ export default function EditExpensePage() {
         throw new Error('Failed to delete expense')
       }
 
+      // Mark that trip page needs refresh when it loads
+      sessionStorage.setItem(`trip_${tripId}_needs_refresh`, 'true')
+
       toast.success(t('editExpense.deleteSuccess'))
       setShowDeleteModal(false)
-      
-      // Force full reload to show updated expenses
-      forceTripReload(tripId)
+      router.push(`/trips/${tripId}`)
     } catch (error) {
       console.error("Failed to delete expense:", error)
       toast.error(t('editExpense.deleteError'))
