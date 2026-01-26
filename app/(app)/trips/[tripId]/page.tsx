@@ -420,7 +420,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
                       // Update local state immediately
                       updateTrip({
                         isClosed: true,
-                        closedAt: new Date(),
+                        closedAt: Date.now(),
                       })
                       toast.success(t("home.tripClosedIndicator"))
                     } catch (error) {
