@@ -783,7 +783,7 @@ export default function ReportsPage() {
 
             {filters.dateRange === "custom" && (
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <Label className="text-sm font-semibold">{t("reports.startDate")}</Label>
                   <Input
                     type="date"
@@ -792,7 +792,7 @@ export default function ReportsPage() {
                     className="text-base"
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <Label className="text-sm font-semibold">{t("reports.endDate")}</Label>
                   <Input
                     type="date"

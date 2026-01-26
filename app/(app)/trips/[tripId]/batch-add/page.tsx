@@ -321,7 +321,7 @@ export default function BatchAddPage() {
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <Label htmlFor="globalDate">{t("addExpense.date")}</Label>
                 <Input
                   id="globalDate"
@@ -338,7 +338,7 @@ export default function BatchAddPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <Label htmlFor="country">{t("addExpense.country")}</Label>
                 <Select
                   id="country"

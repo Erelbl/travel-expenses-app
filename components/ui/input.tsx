@@ -10,12 +10,12 @@ export interface InputProps
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, error, errorMessage, ...props }, ref) => {
     return (
-      <div className="w-full max-w-full">
+      <div className="w-full max-w-full min-w-0">
         <input
           type={type}
           className={cn(
             "premium-input flex h-10 w-full px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50 rtl:text-right",
-            type === "date" && "min-w-0 max-w-full",
+            type === "date" && "min-w-0 max-w-full box-border",
             error && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
             className
           )}

@@ -153,7 +153,7 @@ export default function NewTripPage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <Label htmlFor="startDate">{t('createTrip.startDate')} *</Label>
                 <Input
                   id="startDate"
@@ -166,7 +166,7 @@ export default function NewTripPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <Label htmlFor="endDate">{t('createTrip.endDateOptional')}</Label>
                 <Input
                   id="endDate"
