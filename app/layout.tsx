@@ -25,6 +25,14 @@ export const metadata: Metadata = {
   title: "מעקב הוצאות נסיעות | TravelWise",
   description: "מעקב הוצאות נסיעות מודרני לטיולים שלך",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: '/icon.png', sizes: '192x192', type: 'image/png' }
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
