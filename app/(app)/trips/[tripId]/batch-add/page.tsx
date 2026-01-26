@@ -18,6 +18,7 @@ import { getCurrentUserMember, canAddExpense } from "@/lib/utils/permissions"
 import { getTripAllowedCurrencies } from "@/lib/utils/countryCurrency"
 import { getCurrencySymbol } from "@/lib/utils/currency"
 import { batchAddExpenses, BatchExpenseInput } from "./actions"
+import { forceTripReload } from "@/lib/utils/forceReload"
 
 const CATEGORIES: ExpenseCategory[] = [
   "Food",
@@ -234,11 +235,10 @@ export default function BatchAddPage() {
       )
 
       if (result.success) {
-        // Mark that trip page needs refresh
-        sessionStorage.setItem(`trip_${tripId}_needs_refresh`, 'true')
-        
         toast.success(t("batchAdd.success", { count: result.created }))
-        router.push(`/trips/${tripId}`)
+        
+        // Force full reload to show all added expenses
+        forceTripReload(tripId)
       } else {
         // Handle row-specific errors
         if (result.errors && result.errors.length > 0) {

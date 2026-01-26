@@ -30,6 +30,7 @@ import {
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { getCurrentUserMember, canAddExpense } from "@/lib/utils/permissions"
 import { normalizeReceiptImageToJpeg } from "@/lib/utils/normalizeReceiptImage"
+import { forceTripReload } from "@/lib/utils/forceReload"
 
 const CATEGORIES: ExpenseCategory[] = [
   "Food",
@@ -468,11 +469,10 @@ export default function AddExpensePage() {
         })
       }
       
-      // Mark that trip page needs refresh
-      sessionStorage.setItem(`trip_${tripId}_needs_refresh`, 'true')
-      
       toast.success(t('addExpense.success'))
-      router.push(`/trips/${tripId}`)
+      
+      // Force full reload to show updated expenses
+      forceTripReload(tripId)
     } catch (error) {
       console.error("Failed to create expense:", error)
       setSaveError(true)

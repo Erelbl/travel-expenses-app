@@ -37,6 +37,7 @@ import { generateAllBannerInsights } from "@/lib/server/banner-insights"
 import { getCountryName as getCountryNameUtil } from "@/lib/utils/countries.data"
 import { formatCurrencyLocalized } from "@/lib/utils/currency"
 import { TripStoreProvider, useTripStore } from "./TripStore"
+import { forceTripReload } from "@/lib/utils/forceReload"
 
 const MAX_RECENT_EXPENSES = 15
 
@@ -418,8 +419,9 @@ function TripPageContent({ tripId }: { tripId: string }) {
                   onClick={async () => {
                     try {
                       await closeTrip(tripId)
-                      await refreshTrip()
                       toast.success(t("home.tripClosedIndicator"))
+                      // Force full reload to show closed trip state
+                      forceTripReload(tripId)
                     } catch (error) {
                       toast.error(t("common.errorMessage"))
                     }
@@ -462,8 +464,9 @@ function TripPageContent({ tripId }: { tripId: string }) {
                   const currency = country ? currencyForCountry(country) : null
                   try {
                     await updateCurrentLocation(tripId, country, currency)
-                    await refreshTrip()
                     toast.success(t("home.locationUpdated"))
+                    // Force full reload to show updated current country
+                    forceTripReload(tripId)
                   } catch (error) {
                     toast.error(t("common.errorMessage"))
                   }
@@ -490,8 +493,9 @@ function TripPageContent({ tripId }: { tripId: string }) {
                   onClick={async () => {
                     try {
                       await updateCurrentLocation(tripId, null, null)
-                      await refreshTrip()
                       toast.success(t("home.locationCleared"))
+                      // Force full reload to show cleared location
+                      forceTripReload(tripId)
                     } catch (error) {
                       toast.error(t("common.errorMessage"))
                     }

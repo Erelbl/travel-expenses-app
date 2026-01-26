@@ -19,6 +19,7 @@ import { getCurrentUserMember } from "@/lib/utils/permissions"
 import { getTripAllowedCurrencies } from "@/lib/utils/countryCurrency"
 import { getCurrencySymbol } from "@/lib/utils/currency"
 import { normalizeReceiptImageToJpeg } from "@/lib/utils/normalizeReceiptImage"
+import { forceTripReload } from "@/lib/utils/forceReload"
 
 const CATEGORIES: ExpenseCategory[] = [
   "Food",
@@ -249,21 +250,20 @@ export function QuickAddExpense({
         manualRateToBase: parsedManualRate && parsedManualRate > 0 ? parsedManualRate : undefined,
       }
 
-      const created = await expensesRepository.createExpense(expenseData)
+      const created =       const created = await expensesRepository.createExpense(expenseData)
       
       // Update last used currency
       setLastUsedCurrency(formData.currency)
       
       toast.success(t('addExpense.success'))
-      onExpenseAdded()
       onOpenChange(false)
-      
-      // Reset form
-      setTimeout(resetForm, 200)
       
       // Redirect to edit if requested
       if (redirectToEdit) {
         router.push(`/trips/${trip.id}/edit-expense/${created.id}`)
+      } else {
+        // Force full reload to show updated expenses list
+        forceTripReload(trip.id)
       }
     } catch (error) {
       console.error("Failed to create expense:", error)
