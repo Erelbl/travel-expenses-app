@@ -45,14 +45,6 @@ export async function updateCurrentLocation(
     },
   })
 
-  // 🐛 ROOT CAUSE #3: revalidatePath doesn't invalidate API route cache
-  // ISSUE: revalidatePath('/trips/${tripId}') only affects server components at that path
-  // PROBLEM: Client components fetch from '/api/trips/${tripId}' which is a different path
-  //          The API route cache is NOT invalidated by this revalidatePath call
-  // FIX: Either:
-  //      1. Add revalidatePath(`/api/trips/${tripId}`) here
-  //      2. Use revalidateTag with matching tags in API routes
-  //      3. Fix caching at the API route level (see route.ts comments)
   revalidatePath(`/trips/${tripId}`)
 }
 

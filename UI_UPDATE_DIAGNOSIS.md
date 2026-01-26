@@ -164,19 +164,15 @@ import { revalidateTag } from 'next/cache'
 revalidateTag(`trip-${tripId}`)
 ```
 
-## 📝 Files Requiring Changes
+## 📝 Files Changed
 
-### Critical Path (Option 1 - Recommended)
-1. ✅ `app/api/trips/[id]/route.ts` - Add diagnostic comments
-2. ✅ `app/api/trips/[id]/expenses/route.ts` - Add diagnostic comments
-3. ✅ `app/(app)/trips/[tripId]/actions.ts` - Add diagnostic comments
-4. ✅ `lib/data/api/trips-api.repository.ts` - Add diagnostic comments
-5. ✅ `lib/data/api/expenses-api.repository.ts` - Add diagnostic comments
-6. ✅ `app/(app)/trips/[tripId]/page.tsx` - Add diagnostic comments
-
-### To Implement Fix (NOT DONE YET - awaiting approval)
-- Same 6 files above need actual code changes
-- Additional server actions that call revalidatePath (if Option 3)
+### ✅ FIXES IMPLEMENTED (Option 1)
+1. ✅ `app/api/trips/[id]/route.ts` - Added `export const dynamic = 'force-dynamic'`
+2. ✅ `app/api/trips/[id]/expenses/route.ts` - Added `export const dynamic = 'force-dynamic'`
+3. ✅ `lib/data/api/trips-api.repository.ts` - Added `{ cache: 'no-store' }` to all fetch calls
+4. ✅ `lib/data/api/expenses-api.repository.ts` - Added `{ cache: 'no-store' }` to all fetch calls
+5. ✅ `app/(app)/trips/[tripId]/actions.ts` - Cleaned up diagnostic comments
+6. ✅ `app/(app)/trips/[tripId]/page.tsx` - Cleaned up diagnostic comments
 
 ## 🧪 Testing After Fix
 
