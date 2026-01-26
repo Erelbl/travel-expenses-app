@@ -92,6 +92,19 @@ export default function TripHomePage() {
   }, [tripId])
 
   async function loadData() {
+    // 🐛 ROOT CAUSE #6: Client component relies on cached fetch responses
+    // ISSUE: This function fetches data via API repositories which use fetch()
+    // PROBLEM: Even when called after mutations (e.g., onExpenseAdded callback),
+    //          the fetch() calls return cached data from Next.js Data Cache
+    // WHY: The fetch() calls in ApiTripsRepository and ApiExpensesRepository
+    //      don't have cache: 'no-store' options, and the API route responses are cached
+    // CHAIN: Mutation → Server Action → revalidatePath (wrong path) → 
+    //        loadData() → fetch() → Returns CACHED data → UI doesn't update
+    // FIX: Either:
+    //      1. Fix caching in API routes (add dynamic = 'force-dynamic')
+    //      2. Fix caching in repository fetch calls (add cache: 'no-store')
+    //      3. Fix revalidatePath to target API routes (add '/api/trips/...' paths)
+    //      4. Use router.refresh() + revalidatePath together
     try {
       setLoading(true)
       setError(false)

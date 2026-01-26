@@ -3,6 +3,11 @@ import { ExpensesRepository } from "@/lib/data/repositories"
 
 export class ApiExpensesRepository implements ExpensesRepository {
   async listExpenses(tripId: string): Promise<Expense[]> {
+    // 🐛 ROOT CAUSE #5: fetch() without cache options uses default caching
+    // ISSUE: This fetch call is cached by Next.js Data Cache
+    // PROBLEM: After creating/updating/deleting expenses, the list shows stale data
+    //          until manual refresh because the cache is not invalidated
+    // FIX: Add { cache: 'no-store' } or { next: { revalidate: 0 } } to fetch options
     const res = await fetch(`/api/trips/${tripId}/expenses`)
     if (!res.ok) throw new Error('Failed to fetch expenses')
     return res.json()

@@ -5,6 +5,16 @@ import { logError } from '@/lib/utils/logger'
 
 const tripsRepository = new PrismaTripsRepository()
 
+// 🐛 ROOT CAUSE #1: Missing cache configuration
+// ISSUE: GET route handlers are cached by default in Next.js 15
+// PROBLEM: When client components fetch this endpoint, responses are cached
+//          and don't update after mutations until manual refresh
+// FIX: Add one of the following:
+//      - export const dynamic = 'force-dynamic'  (disable caching)
+//      - export const revalidate = 0  (disable caching)
+//      - Add cache: 'no-store' to fetch() calls in ApiTripsRepository
+//      - Use cache tags and revalidate by tag instead of path
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

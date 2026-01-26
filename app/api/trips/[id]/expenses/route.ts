@@ -5,6 +5,16 @@ import { logError } from '@/lib/utils/logger'
 
 const expensesRepository = new PrismaExpensesRepository()
 
+// 🐛 ROOT CAUSE #2: Missing cache configuration for expenses endpoint
+// ISSUE: GET route handlers are cached by default in Next.js 15
+// PROBLEM: After creating/updating/deleting an expense, the expense list
+//          doesn't update until manual refresh because fetch() returns cached data
+// FIX: Add one of the following:
+//      - export const dynamic = 'force-dynamic'  (disable caching)
+//      - export const revalidate = 0  (disable caching)
+//      - Add cache: 'no-store' to fetch() calls in ApiExpensesRepository
+//      - Use cache tags and revalidate by tag instead of path
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }

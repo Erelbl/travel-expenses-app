@@ -13,6 +13,11 @@ export class ApiTripsRepository implements TripsRepository {
   }
 
   async getTrip(tripId: string): Promise<Trip | null> {
+    // 🐛 ROOT CAUSE #4: fetch() without cache options uses default caching
+    // ISSUE: This fetch call is cached by Next.js Data Cache
+    // PROBLEM: After mutations (via server actions or POST/PATCH), this returns stale data
+    //          until the cache is explicitly invalidated or a hard refresh occurs
+    // FIX: Add { cache: 'no-store' } or { next: { revalidate: 0 } } to fetch options
     const res = await fetch(`/api/trips/${tripId}`)
     if (res.status === 404) return null
     if (!res.ok) throw new Error('Failed to fetch trip')
