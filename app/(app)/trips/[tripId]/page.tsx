@@ -49,6 +49,10 @@ export default function TripHomePage() {
   const router = useRouter()
   const tripId = params.tripId as string
   const isRTL = locale === "he"
+  
+  // Force remount when returning from mutations by using search params as key
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+  const remountKey = searchParams.get('t') || 'default'
 
   const [trip, setTrip] = useState<Trip | null>(null)
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -285,7 +289,7 @@ export default function TripHomePage() {
   })
 
   return (
-    <div className="min-h-screen pb-20 md:pb-6 bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60" dir={isRTL ? "rtl" : "ltr"}>
+    <div key={remountKey} className="min-h-screen pb-20 md:pb-6 bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60" dir={isRTL ? "rtl" : "ltr"}>
       {/* Offline Banner */}
       <OfflineBanner />
       

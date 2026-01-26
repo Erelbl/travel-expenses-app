@@ -235,7 +235,7 @@ export default function BatchAddPage() {
 
       if (result.success) {
         toast.success(t("batchAdd.success", { count: result.created }))
-        router.replace(`/trips/${tripId}`)
+        router.replace(`/trips/${tripId}?t=${Date.now()}`)
         router.refresh()
       } else {
         // Handle row-specific errors
