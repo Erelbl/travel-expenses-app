@@ -469,7 +469,8 @@ export default function AddExpensePage() {
       }
       
       toast.success(t('addExpense.success'))
-      router.push(`/trips/${tripId}`)
+      router.replace(`/trips/${tripId}`)
+      router.refresh()
     } catch (error) {
       console.error("Failed to create expense:", error)
       setSaveError(true)

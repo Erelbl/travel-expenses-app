@@ -449,7 +449,8 @@ export default function EditExpensePage() {
       }
       
       toast.success(t('editExpense.success'))
-      router.push(`/trips/${tripId}`)
+      router.replace(`/trips/${tripId}`)
+      router.refresh()
     } catch (error) {
       console.error("Failed to update expense:", error)
       setSaveError(true)
@@ -474,7 +475,8 @@ export default function EditExpensePage() {
 
       toast.success(t('editExpense.deleteSuccess'))
       setShowDeleteModal(false)
-      router.push(`/trips/${tripId}`)
+      router.replace(`/trips/${tripId}`)
+      router.refresh()
     } catch (error) {
       console.error("Failed to delete expense:", error)
       toast.error(t('editExpense.deleteError'))
