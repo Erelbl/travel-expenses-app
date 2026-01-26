@@ -468,9 +468,11 @@ export default function AddExpensePage() {
         })
       }
       
+      // Mark that trip page needs refresh
+      sessionStorage.setItem(`trip_${tripId}_needs_refresh`, 'true')
+      
       toast.success(t('addExpense.success'))
-      router.replace(`/trips/${tripId}?t=${Date.now()}`)
-      router.refresh()
+      router.push(`/trips/${tripId}`)
     } catch (error) {
       console.error("Failed to create expense:", error)
       setSaveError(true)

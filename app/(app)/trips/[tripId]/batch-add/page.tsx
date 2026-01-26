@@ -234,9 +234,11 @@ export default function BatchAddPage() {
       )
 
       if (result.success) {
+        // Mark that trip page needs refresh
+        sessionStorage.setItem(`trip_${tripId}_needs_refresh`, 'true')
+        
         toast.success(t("batchAdd.success", { count: result.created }))
-        router.replace(`/trips/${tripId}?t=${Date.now()}`)
-        router.refresh()
+        router.push(`/trips/${tripId}`)
       } else {
         // Handle row-specific errors
         if (result.errors && result.errors.length > 0) {

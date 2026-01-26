@@ -36,6 +36,7 @@ import { generateInsights, selectInsightToDisplay } from "@/lib/server/insights"
 import { generateAllBannerInsights } from "@/lib/server/banner-insights"
 import { getCountryName as getCountryNameUtil } from "@/lib/utils/countries.data"
 import { formatCurrencyLocalized } from "@/lib/utils/currency"
+import { TripStoreProvider, useTripStore } from "./TripStore"
 
 const MAX_RECENT_EXPENSES = 15
 
@@ -49,15 +50,11 @@ export default function TripHomePage() {
   const router = useRouter()
   const tripId = params.tripId as string
   const isRTL = locale === "he"
-  
-  // Force remount when returning from mutations by using search params as key
-  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
-  const remountKey = searchParams.get('t') || 'default'
 
-  const [trip, setTrip] = useState<Trip | null>(null)
-  const [expenses, setExpenses] = useState<Expense[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const [initialTrip, setInitialTrip] = useState<Trip | null>(null)
+  const [initialExpenses, setInitialExpenses] = useState<Expense[]>([])
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [initialError, setInitialError] = useState(false)
 
   // Quick Add
   const [showQuickAdd, setShowQuickAdd] = useState(false)
@@ -76,29 +73,13 @@ export default function TripHomePage() {
   const [sortDirection, setSortDirection] = useState<"newest" | "oldest">("newest")
 
   useEffect(() => {
-    loadData()
-    // Load dismissed insights from localStorage
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(`tw_insights_dismissed_${tripId}`)
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored)
-          setDismissedInsights(new Map(Object.entries(parsed)))
-        } catch (e) {
-          console.error('Failed to parse dismissed insights:', e)
-        }
-      }
-      
-      // Check if close prompt was dismissed
-      const closePromptDismissedVal = localStorage.getItem(`tw_close_prompt_dismissed_${tripId}`)
-      setClosePromptDismissed(closePromptDismissedVal === 'true')
-    }
-  }, [tripId, remountKey])
+    loadInitialData()
+  }, [tripId])
 
-  async function loadData() {
+  async function loadInitialData() {
     try {
-      setLoading(true)
-      setError(false)
+      setInitialLoading(true)
+      setInitialError(false)
       const [tripData, expensesData] = await Promise.all([
         tripsRepository.getTrip(tripId),
         expensesRepository.listExpenses(tripId),
@@ -109,18 +90,18 @@ export default function TripHomePage() {
         return
       }
 
-      setTrip(tripData)
-      setExpenses(expensesData)
+      setInitialTrip(tripData)
+      setInitialExpenses(expensesData)
     } catch (error) {
       console.error("Failed to load data:", error)
-      setError(true)
+      setInitialError(true)
     } finally {
-      setLoading(false)
+      setInitialLoading(false)
     }
   }
 
   // Loading state
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="min-h-screen pb-20 md:pb-6 bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60" dir={isRTL ? "rtl" : "ltr"}>
         <div className="relative overflow-hidden bg-gradient-to-br from-sky-400/90 via-blue-500/90 to-indigo-500/90 border-b border-white/10">
@@ -151,7 +132,7 @@ export default function TripHomePage() {
   }
 
   // Error state
-  if (error || !trip) {
+  if (initialError || !initialTrip) {
     return (
       <div className="min-h-screen pb-20 md:pb-6 bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60" dir={isRTL ? "rtl" : "ltr"}>
         <div className="relative overflow-hidden bg-gradient-to-br from-sky-400/90 via-blue-500/90 to-indigo-500/90 border-b border-white/10">
@@ -166,12 +147,69 @@ export default function TripHomePage() {
           <ErrorState
             title={t('common.errorTitle')}
             message={t('common.errorMessage')}
-            onRetry={loadData}
+            onRetry={loadInitialData}
             retryLabel={t('common.retry')}
           />
         </div>
       </div>
     )
+  }
+
+  // Render content with TripStoreProvider
+  return (
+    <TripStoreProvider
+      tripId={tripId}
+      initialTrip={initialTrip}
+      initialExpenses={initialExpenses}
+    >
+      <TripPageContent tripId={tripId} />
+    </TripStoreProvider>
+  )
+}
+
+function TripPageContent({ tripId }: { tripId: string }) {
+  const { t, locale } = useI18n()
+  const router = useRouter()
+  const isRTL = locale === "he"
+  const { trip, expenses, refreshTrip } = useTripStore()
+
+  // Quick Add
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
+  // Exchange Rates
+  const [showRates, setShowRates] = useState(false)
+  // Expense filter (for shared trips)
+  const [showOnlyMine, setShowOnlyMine] = useState(false)
+  // Single unified insight dismissal state
+  const [dismissedInsights, setDismissedInsights] = useState<Map<string, number>>(new Map())
+  // Close trip prompt dismissal
+  const [closePromptDismissed, setClosePromptDismissed] = useState(false)
+  
+  // Filters and sorting
+  const [filterCategory, setFilterCategory] = useState<ExpenseCategory | "">("")
+  const [filterCurrency, setFilterCurrency] = useState<string>("")
+  const [sortDirection, setSortDirection] = useState<"newest" | "oldest">("newest")
+
+  useEffect(() => {
+    // Load dismissed insights from localStorage
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(`tw_insights_dismissed_${tripId}`)
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          setDismissedInsights(new Map(Object.entries(parsed)))
+        } catch (e) {
+          console.error('Failed to parse dismissed insights:', e)
+        }
+      }
+      
+      // Check if close prompt was dismissed
+      const closePromptDismissedVal = localStorage.getItem(`tw_close_prompt_dismissed_${tripId}`)
+      setClosePromptDismissed(closePromptDismissedVal === 'true')
+    }
+  }, [tripId])
+
+  if (!trip) {
+    return null
   }
 
   // Calculate summary using reports utilities (after checking trip exists)
@@ -289,7 +327,7 @@ export default function TripHomePage() {
   })
 
   return (
-    <div key={remountKey} className="min-h-screen pb-20 md:pb-6 bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="min-h-screen pb-20 md:pb-6 bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60" dir={isRTL ? "rtl" : "ltr"}>
       {/* Offline Banner */}
       <OfflineBanner />
       
@@ -380,7 +418,7 @@ export default function TripHomePage() {
                   onClick={async () => {
                     try {
                       await closeTrip(tripId)
-                      await loadData()
+                      await refreshTrip()
                       toast.success(t("home.tripClosedIndicator"))
                     } catch (error) {
                       toast.error(t("common.errorMessage"))
@@ -424,7 +462,7 @@ export default function TripHomePage() {
                   const currency = country ? currencyForCountry(country) : null
                   try {
                     await updateCurrentLocation(tripId, country, currency)
-                    await loadData()
+                    await refreshTrip()
                     toast.success(t("home.locationUpdated"))
                   } catch (error) {
                     toast.error(t("common.errorMessage"))
@@ -452,7 +490,7 @@ export default function TripHomePage() {
                   onClick={async () => {
                     try {
                       await updateCurrentLocation(tripId, null, null)
-                      await loadData()
+                      await refreshTrip()
                       toast.success(t("home.locationCleared"))
                     } catch (error) {
                       toast.error(t("common.errorMessage"))
@@ -852,7 +890,7 @@ export default function TripHomePage() {
           open={showQuickAdd}
           onOpenChange={setShowQuickAdd}
           trip={trip}
-          onExpenseAdded={loadData}
+          onExpenseAdded={refreshTrip}
         />
       )}
 
