@@ -487,7 +487,7 @@ export function LandingPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2 text-white">
-              <Image src="/brand/logo.png" alt="TravelWise" width={32} height={32} className="h-8 w-8 rounded-lg" />
+              <Image src="/brand/Logo2-png-final.png" alt="TravelWise" width={32} height={32} className="h-8 w-8 rounded-lg" />
               <span className="font-bold text-lg">TravelWise</span>
             </div>
             <div className="flex flex-wrap justify-center gap-6 text-sm">

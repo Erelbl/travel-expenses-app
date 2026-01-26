@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plane } from "lucide-react"
+import Image from "next/image"
 
 export function GlobalLoader() {
   const [show, setShow] = useState(false)
@@ -39,7 +39,7 @@ export function GlobalLoader() {
               }}
               className="w-16 h-16 rounded-full bg-sky-500/10 flex items-center justify-center"
             >
-              <Plane className="h-8 w-8 text-sky-600" />
+              <Image src="/brand/Logo2-png-final.png" alt="TravelWise" width={32} height={32} className="rounded-lg" />
             </motion.div>
             <motion.div
               animate={{ opacity: [0.5, 1, 0.5] }}

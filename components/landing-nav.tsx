@@ -20,7 +20,7 @@ export function LandingNav({ variant = "marketing" }: LandingNavProps) {
     >
       <div className="container mx-auto flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 max-w-7xl">
         <Link href="/" className="flex items-center gap-2 text-lg sm:text-xl font-bold text-slate-900">
-          <Image src="/brand/logo.png" alt="TravelWise" width={32} height={32} className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg" />
+          <Image src="/brand/Logo2-png-final.png" alt="TravelWise" width={32} height={32} className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg" />
           <span>TravelWise</span>
         </Link>
         <div className="flex items-center gap-2 sm:gap-4">
