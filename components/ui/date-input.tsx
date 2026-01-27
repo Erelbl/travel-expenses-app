@@ -9,7 +9,7 @@ const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
     return (
       <Input
         type="date"
-        className={cn("h-10", className)}
+        className={cn("h-10 w-full min-w-0 max-w-full", className)}
         ref={ref}
         {...props}
       />
