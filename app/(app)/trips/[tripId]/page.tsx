@@ -4,11 +4,12 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X, Lightbulb, Settings, ArrowUpDown } from "lucide-react"
+import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X, Lightbulb, Settings, ArrowUpDown, Share2 } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { FloatingAddButton } from "@/components/floating-add-button"
 import { QuickAddExpense } from "@/components/quick-add-expense"
 import { ExchangeRatesModal } from "@/components/exchange-rates-modal"
+import { ShareTripModal } from "@/components/share-trip-modal"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { canAddExpense, canEditExpense, getCurrentUserMember } from "@/lib/utils/permissions"
 import { ExpenseRow } from "@/components/expense-row"
@@ -160,6 +161,8 @@ function TripPageContent({ tripId }: { tripId: string }) {
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   // Exchange Rates
   const [showRates, setShowRates] = useState(false)
+  // Share Trip
+  const [showShare, setShowShare] = useState(false)
   // Expense filter (for shared trips)
   const [showOnlyMine, setShowOnlyMine] = useState(false)
   // Single unified insight dismissal state
@@ -326,6 +329,15 @@ function TripPageContent({ tripId }: { tripId: string }) {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              {/* Share button */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setShowShare(true)}
+                className="text-white/90 hover:text-white hover:bg-white/10"
+              >
+                <Share2 className="h-5 w-5" />
+              </Button>
               {/* Settings link */}
               <Link href={`/trips/${tripId}/settings`}>
                 <Button variant="ghost" size="icon" className="text-white/90 hover:text-white hover:bg-white/10">
@@ -894,6 +906,15 @@ function TripPageContent({ tripId }: { tripId: string }) {
         <ExchangeRatesModal
           open={showRates}
           onOpenChange={setShowRates}
+          trip={trip}
+        />
+      )}
+
+      {/* Share Trip Modal */}
+      {trip && (
+        <ShareTripModal
+          open={showShare}
+          onOpenChange={setShowShare}
           trip={trip}
         />
       )}
