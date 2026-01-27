@@ -6,7 +6,7 @@ import { formatCurrency } from "@/lib/utils/currency"
 import { formatDateShort } from "@/lib/utils/date"
 import { getCountryName } from "@/lib/utils/countries.data"
 import { getCategoryColors } from "@/lib/utils/categoryColors"
-import { getMemberName, canEditExpense } from "@/lib/utils/permissions"
+import { canEditExpense } from "@/lib/utils/permissions"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { Pencil } from "lucide-react"
 
@@ -29,8 +29,17 @@ export function ExpenseRow({ expense, trip, onClick, onEdit }: ExpenseRowProps) 
   // Check if this is a shared trip (multiple members)
   const isSharedTrip = trip && trip.members.length > 1
   
-  // Get creator name if in shared trip
-  const creatorName = trip ? getMemberName(trip, expense.createdByMemberId) : null
+  // Get creator name from user info
+  const getCreatorDisplayName = (): string | null => {
+    if (!expense.createdByUser) return null
+    if (expense.createdByUser.name) return expense.createdByUser.name
+    if (expense.createdByUser.email) {
+      // Use email prefix (before @) if no name
+      return expense.createdByUser.email.split('@')[0]
+    }
+    return null
+  }
+  const creatorName = getCreatorDisplayName()
   
   // Check if current user can edit this expense
   const canEdit = trip ? canEditExpense(trip, expense) : true
@@ -94,7 +103,7 @@ export function ExpenseRow({ expense, trip, onClick, onEdit }: ExpenseRowProps) 
           {isSharedTrip && creatorName && (
             <>
               <span className="text-slate-400">•</span>
-              <span>{t("expense.addedBy")} {creatorName}</span>
+              <span className="text-slate-500">{t("expense.enteredBy")} {creatorName}</span>
             </>
           )}
         </div>

@@ -423,7 +423,8 @@
     "goToTrips": "Go to My Trips"
   },
   "expense": {
-    "addedBy": "Added by"
+    "addedBy": "Added by",
+    "enteredBy": "Entered by"
   },
   "nav": {
     "dashboard": "Home",

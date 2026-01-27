@@ -11,6 +11,12 @@ type ExpenseRow = Prisma.ExpenseGetPayload<{
     id: true
     tripId: true
     createdById: true
+    createdBy: {
+      select: {
+        name: true
+        email: true
+      }
+    }
     title: true
     category: true
     countryCode: true
@@ -39,6 +45,12 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         id: true,
         tripId: true,
         createdById: true,
+        createdBy: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
         title: true,
         category: true,
         countryCode: true,
@@ -76,6 +88,10 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       note: e.note ?? undefined,
       paidByMemberId: e.createdById,
       createdByMemberId: e.createdById,
+      createdByUser: {
+        name: e.createdBy.name,
+        email: e.createdBy.email,
+      },
       date: e.expenseDate.toISOString().split('T')[0],
       createdAt: e.createdAt.getTime(),
       numberOfNights: e.nights ?? undefined,
@@ -96,6 +112,12 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         id: true,
         tripId: true,
         createdById: true,
+        createdBy: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
         title: true,
         category: true,
         countryCode: true,
@@ -133,6 +155,10 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       note: e.note ?? undefined,
       paidByMemberId: e.createdById,
       createdByMemberId: e.createdById,
+      createdByUser: {
+        name: e.createdBy.name,
+        email: e.createdBy.email,
+      },
       date: e.expenseDate.toISOString().split('T')[0],
       createdAt: e.createdAt.getTime(),
       numberOfNights: e.nights ?? undefined,
@@ -211,30 +237,68 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       },
     })
     
+    // Fetch the created expense with user relation
+    const createdWithUser = await prisma.expense.findUnique({
+      where: { id: created.id },
+      select: {
+        id: true,
+        tripId: true,
+        createdById: true,
+        createdBy: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        title: true,
+        category: true,
+        countryCode: true,
+        currency: true,
+        amount: true,
+        convertedAmount: true,
+        fxRate: true,
+        fxDate: true,
+        manualRateToBase: true,
+        expenseDate: true,
+        usageDate: true,
+        nights: true,
+        note: true,
+        createdAt: true,
+      },
+    })
+    
+    if (!createdWithUser) {
+      throw new Error('Failed to fetch created expense')
+    }
+    
     return {
-      id: created.id,
-      tripId: created.tripId,
-      amount: created.amount,
-      currency: created.currency,
+      id: createdWithUser.id,
+      tripId: createdWithUser.tripId,
+      amount: createdWithUser.amount,
+      currency: createdWithUser.currency,
       baseCurrency: "",
-      fxRateUsed: created.fxRate ?? undefined,
-      fxRateDate: created.fxDate?.toISOString().split('T')[0],
-      convertedAmount: created.convertedAmount ?? undefined,
-      fxRateSource: created.manualRateToBase ? "manual" as const : (created.fxRate ? "auto" as const : undefined),
-      manualRateToBase: created.manualRateToBase ?? undefined,
-      amountInBase: created.convertedAmount ?? undefined,
-      category: created.category as any,
-      country: created.countryCode,
-      merchant: created.title,
-      note: created.note ?? undefined,
-      paidByMemberId: created.createdById,
-      createdByMemberId: created.createdById,
-      date: created.expenseDate.toISOString().split('T')[0],
-      createdAt: created.createdAt.getTime(),
-      numberOfNights: created.nights ?? undefined,
-      isFutureExpense: !!created.usageDate,
-      usageDate: created.usageDate?.toISOString().split('T')[0],
-      pricePerNight: created.nights && created.convertedAmount ? created.convertedAmount / created.nights : undefined,
+      fxRateUsed: createdWithUser.fxRate ?? undefined,
+      fxRateDate: createdWithUser.fxDate?.toISOString().split('T')[0],
+      convertedAmount: createdWithUser.convertedAmount ?? undefined,
+      fxRateSource: createdWithUser.manualRateToBase ? "manual" as const : (createdWithUser.fxRate ? "auto" as const : undefined),
+      manualRateToBase: createdWithUser.manualRateToBase ?? undefined,
+      amountInBase: createdWithUser.convertedAmount ?? undefined,
+      category: createdWithUser.category as any,
+      country: createdWithUser.countryCode,
+      merchant: createdWithUser.title,
+      note: createdWithUser.note ?? undefined,
+      paidByMemberId: createdWithUser.createdById,
+      createdByMemberId: createdWithUser.createdById,
+      createdByUser: {
+        name: createdWithUser.createdBy.name,
+        email: createdWithUser.createdBy.email,
+      },
+      date: createdWithUser.expenseDate.toISOString().split('T')[0],
+      createdAt: createdWithUser.createdAt.getTime(),
+      numberOfNights: createdWithUser.nights ?? undefined,
+      isFutureExpense: !!createdWithUser.usageDate,
+      usageDate: createdWithUser.usageDate?.toISOString().split('T')[0],
+      pricePerNight: createdWithUser.nights && createdWithUser.convertedAmount ? createdWithUser.convertedAmount / createdWithUser.nights : undefined,
     }
   }
 

@@ -37,6 +37,10 @@ export const ExpenseSchema = z.object({
   note: z.string().optional(),
   paidByMemberId: z.string().optional(),
   createdByMemberId: z.string().optional(), // Who added this expense (for shared trips)
+  createdByUser: z.object({
+    name: z.string().nullable(),
+    email: z.string().nullable(),
+  }).optional(), // User who created the expense (name and email)
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
   createdAt: z.number(),
   
