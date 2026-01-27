@@ -126,8 +126,8 @@ const Calendar = ({ selected, onSelect, locale = "en", disabled, dir = "ltr" }: 
         <tbody>
           {/* Build weeks */}
           {(() => {
-            const weeks: JSX.Element[] = []
-            let days: JSX.Element[] = []
+            const weeks: React.ReactElement[] = []
+            let days: React.ReactElement[] = []
             
             // Add empty cells for days before month starts
             for (let i = 0; i < firstDayOfMonth; i++) {
