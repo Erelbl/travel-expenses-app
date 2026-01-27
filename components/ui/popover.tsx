@@ -19,13 +19,23 @@ const Popover = ({ open, onOpenChange, children }: PopoverProps) => {
       }
     }
 
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onOpenChange(false)
+      }
+    }
+
     if (open) {
       document.addEventListener("mousedown", handleClickOutside)
-      return () => document.removeEventListener("mousedown", handleClickOutside)
+      document.addEventListener("keydown", handleEscape)
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside)
+        document.removeEventListener("keydown", handleEscape)
+      }
     }
   }, [open, onOpenChange])
 
-  return <div ref={ref}>{children}</div>
+  return <div ref={ref} className="relative">{children}</div>
 }
 
 interface PopoverTriggerProps {
@@ -46,13 +56,16 @@ interface PopoverContentProps {
   children: React.ReactNode
   className?: string
   align?: "start" | "center" | "end"
+  side?: "top" | "bottom" | "left" | "right"
 }
 
-const PopoverContent = ({ children, className, align = "start" }: PopoverContentProps) => {
+const PopoverContent = ({ children, className, align = "start", side = "bottom" }: PopoverContentProps) => {
   return (
     <div
       className={cn(
-        "absolute z-50 mt-2 rounded-lg border border-slate-200 bg-white p-3 shadow-lg",
+        "absolute z-50 rounded-md border border-slate-200 bg-white shadow-md outline-none animate-in fade-in-0 zoom-in-95",
+        side === "bottom" && "mt-2",
+        side === "top" && "mb-2 bottom-full",
         align === "start" && "left-0",
         align === "center" && "left-1/2 -translate-x-1/2",
         align === "end" && "right-0",
@@ -63,6 +76,10 @@ const PopoverContent = ({ children, className, align = "start" }: PopoverContent
     </div>
   )
 }
+
+Popover.displayName = "Popover"
+PopoverTrigger.displayName = "PopoverTrigger"
+PopoverContent.displayName = "PopoverContent"
 
 export { Popover, PopoverTrigger, PopoverContent }
 

@@ -21,6 +21,7 @@ interface DatePickerInputProps {
 const DatePickerInput = React.forwardRef<HTMLDivElement, DatePickerInputProps>(
   ({ id, value, onChange, placeholder, disabled, required, min, className, locale = "en" }, ref) => {
     const [open, setOpen] = React.useState(false)
+    const isRTL = locale === "he"
 
     const selectedDate = value ? new Date(value) : undefined
 
@@ -42,6 +43,8 @@ const DatePickerInput = React.forwardRef<HTMLDivElement, DatePickerInputProps>(
     const isDateDisabled = (date: Date) => {
       if (!min) return false
       const minDate = new Date(min)
+      minDate.setHours(0, 0, 0, 0)
+      date.setHours(0, 0, 0, 0)
       return date < minDate
     }
 
@@ -57,28 +60,29 @@ const DatePickerInput = React.forwardRef<HTMLDivElement, DatePickerInputProps>(
               id={id}
               disabled={disabled}
               className={cn(
-                "premium-input flex h-10 w-full min-w-0 max-w-full items-center justify-between px-3 py-2 text-sm text-left font-normal disabled:cursor-not-allowed disabled:opacity-50",
+                "premium-input flex h-10 w-full min-w-0 max-w-full items-center justify-between px-3 py-2 text-sm font-normal disabled:cursor-not-allowed disabled:opacity-50",
                 !value && "text-slate-400",
+                isRTL && "text-right",
                 className
               )}
+              dir={isRTL ? "rtl" : "ltr"}
             >
               <span className="truncate">
-                {value ? formatDate(value) : (placeholder || "Pick a date")}
+                {value ? formatDate(value) : (placeholder || (isRTL ? "בחר תאריך" : "Pick a date"))}
               </span>
-              <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              <CalendarIcon className={cn("h-4 w-4 shrink-0 opacity-50", isRTL ? "mr-2" : "ml-2")} />
             </button>
           </PopoverTrigger>
           {open && (
-            <div className="relative">
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  selected={selectedDate}
-                  onSelect={handleSelect}
-                  locale={locale}
-                  disabled={isDateDisabled}
-                />
-              </PopoverContent>
-            </div>
+            <PopoverContent className="w-auto p-0" align="start" side="bottom">
+              <Calendar
+                selected={selectedDate}
+                onSelect={handleSelect}
+                locale={locale}
+                disabled={isDateDisabled}
+                dir={isRTL ? "rtl" : "ltr"}
+              />
+            </PopoverContent>
           )}
         </Popover>
         {required && (
