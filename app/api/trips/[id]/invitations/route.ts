@@ -42,23 +42,33 @@ export async function POST(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
+  const { id: tripId } = await context.params
+  let invitedEmail = ""
+  let userId = ""
+  
   try {
+    console.log("[INVITE] Step: auth_check, tripId:", tripId)
     const session = await auth()
     if (!session?.user?.id) {
+      console.log("[INVITE] Error: unauthorized")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    userId = session.user.id
 
-    const { id: tripId } = await context.params
+    console.log("[INVITE] Step: parse_body, userId:", userId)
     const body = await req.json()
-    const { invitedEmail, role } = body
+    const { invitedEmail: email, role } = body
+    invitedEmail = email
 
     if (!invitedEmail || !role) {
+      console.log("[INVITE] Error: missing_fields")
       return NextResponse.json(
         { error: "invitedEmail and role are required" },
         { status: 400 }
       )
     }
 
+    console.log("[INVITE] Step: verify_trip_access, invitedEmail:", invitedEmail)
     // Verify user is owner or editor of this trip
     const trip = await prisma.trip.findFirst({
       where: {
@@ -78,18 +88,30 @@ export async function POST(
     })
 
     if (!trip) {
+      console.log("[INVITE] Error: not_authorized")
       return NextResponse.json({ error: "Not authorized to invite users" }, { status: 403 })
     }
 
+    console.log("[INVITE] Step: before_create_invitation")
     const invitation = await invitationsRepository.createInvitation(
       tripId,
       invitedEmail,
       role
     )
 
+    console.log("[INVITE] Step: success, token:", invitation.token)
     return NextResponse.json(invitation)
   } catch (error) {
-    console.error("Failed to create invitation:", error)
+    console.error("[INVITE] Error: internal_error", {
+      tripId,
+      invitedEmail,
+      userId,
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      } : String(error),
+    })
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

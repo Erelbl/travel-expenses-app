@@ -23,14 +23,22 @@ export async function sendInviteEmail({
   role,
   acceptUrl,
 }: SendInviteEmailParams): Promise<void> {
+  console.log("[EMAIL] Getting Resend client")
   const resend = getResendClient()
   
   const roleDescription = role === 'editor' 
     ? 'You can view and add expenses to this trip.'
     : 'You can view expenses for this trip.'
   
-  await resend.emails.send({
-    from: process.env.EMAIL_FROM || "TravelWise <onboarding@resend.dev>",
+  const fromEmail = process.env.EMAIL_FROM || "TravelWise <onboarding@resend.dev>"
+  console.log("[EMAIL] Sending email", {
+    from: fromEmail,
+    to,
+    subject: `${inviterName} invited you to join ${tripName}`,
+  })
+  
+  const result = await resend.emails.send({
+    from: fromEmail,
     to,
     subject: `${inviterName} invited you to join ${tripName}`,
     html: `
@@ -84,5 +92,7 @@ export async function sendInviteEmail({
       </html>
     `,
   })
+  
+  console.log("[EMAIL] Email sent successfully, result:", result)
 }
 

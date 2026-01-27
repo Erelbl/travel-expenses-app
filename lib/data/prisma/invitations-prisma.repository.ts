@@ -20,39 +20,80 @@ export class PrismaInvitationsRepository {
     invitedEmail: string,
     role: MemberRole
   ): Promise<TripInvitation> {
+    console.log("[INVITE_REPO] Step: normalize_email", { tripId, invitedEmail })
     const normalizedEmail = invitedEmail.toLowerCase()
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
-    // Check if pending invite already exists
-    const existingInvite = await prisma.tripInvitation.findFirst({
-      where: {
-        tripId,
-        invitedEmail: normalizedEmail,
-        status: "PENDING",
-        expiresAt: { gt: new Date() },
-      },
-    })
+    console.log("[INVITE_REPO] Step: check_existing_invite")
+    try {
+      // Check if pending invite already exists
+      const existingInvite = await prisma.tripInvitation.findFirst({
+        where: {
+          tripId,
+          invitedEmail: normalizedEmail,
+          status: "PENDING",
+          expiresAt: { gt: new Date() },
+        },
+      })
 
-    if (existingInvite) {
-      // Reuse existing pending invite
-      return {
-        id: existingInvite.id,
-        tripId: existingInvite.tripId,
-        invitedEmail: existingInvite.invitedEmail,
-        role: existingInvite.role.toLowerCase() as MemberRole,
-        token: existingInvite.token,
-        status: existingInvite.status,
-        createdAt: existingInvite.createdAt.getTime(),
-        expiresAt: existingInvite.expiresAt.getTime(),
-        acceptedAt: existingInvite.acceptedAt?.getTime() ?? null,
+      if (existingInvite) {
+        console.log("[INVITE_REPO] Found existing invite, reusing:", existingInvite.id)
+        // Reuse existing pending invite - resend email
+        const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+        const acceptUrl = `${appUrl}/invites/${existingInvite.token}`
+        
+        // Get trip info for email
+        const trip = await prisma.trip.findUnique({
+          where: { id: tripId },
+          select: {
+            name: true,
+            owner: {
+              select: { name: true, email: true },
+            },
+          },
+        })
+        
+        if (trip) {
+          console.log("[INVITE_REPO] Step: resend_email")
+          try {
+            await sendInviteEmail({
+              to: normalizedEmail,
+              tripName: trip.name,
+              inviterName: trip.owner.name || trip.owner.email || "A friend",
+              role: existingInvite.role.toLowerCase(),
+              acceptUrl,
+            })
+            console.log("[INVITE_REPO] Email resent successfully")
+          } catch (emailError) {
+            console.error("[INVITE_REPO] Failed to resend email:", emailError)
+          }
+        }
+        
+        return {
+          id: existingInvite.id,
+          tripId: existingInvite.tripId,
+          invitedEmail: existingInvite.invitedEmail,
+          role: existingInvite.role.toLowerCase() as MemberRole,
+          token: existingInvite.token,
+          status: existingInvite.status,
+          createdAt: existingInvite.createdAt.getTime(),
+          expiresAt: existingInvite.expiresAt.getTime(),
+          acceptedAt: existingInvite.acceptedAt?.getTime() ?? null,
+        }
       }
+    } catch (checkError) {
+      console.error("[INVITE_REPO] Error checking existing invite:", checkError)
+      // Continue to create new one
     }
 
+    console.log("[INVITE_REPO] Step: check_user_exists")
     // Check if user exists
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     })
+    console.log("[INVITE_REPO] User exists:", !!user)
 
+    console.log("[INVITE_REPO] Step: create_db_record")
     // Create new invitation
     const invitation = await prisma.tripInvitation.create({
       data: {
@@ -74,11 +115,35 @@ export class PrismaInvitationsRepository {
         },
       },
     })
+    console.log("[INVITE_REPO] DB record created, token:", invitation.token)
+
+    // Verify env vars for email
+    console.log("[INVITE_REPO] Step: check_env_vars")
+    const resendApiKey = process.env.RESEND_API_KEY
+    const emailFrom = process.env.EMAIL_FROM
+    const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL
+    
+    if (!resendApiKey) {
+      console.error("[INVITE_REPO] RESEND_API_KEY is not set!")
+      throw new Error("RESEND_API_KEY environment variable is required")
+    }
+    if (!emailFrom) {
+      console.warn("[INVITE_REPO] EMAIL_FROM is not set, will use default")
+    }
+    if (!appUrl) {
+      console.warn("[INVITE_REPO] NEXTAUTH_URL/NEXT_PUBLIC_APP_URL not set, using localhost")
+    }
+    
+    console.log("[INVITE_REPO] Env check:", {
+      hasResendKey: !!resendApiKey,
+      emailFrom: emailFrom || "default",
+      appUrl: appUrl || "localhost:3000",
+    })
 
     // Send invite email
-    const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    const acceptUrl = `${appUrl}/invites/${invitation.token}`
+    const acceptUrl = `${appUrl || "http://localhost:3000"}/invites/${invitation.token}`
     
+    console.log("[INVITE_REPO] Step: send_email", { acceptUrl })
     try {
       await sendInviteEmail({
         to: normalizedEmail,
@@ -87,8 +152,17 @@ export class PrismaInvitationsRepository {
         role: invitation.role.toLowerCase(),
         acceptUrl,
       })
+      console.log("[INVITE_REPO] Email sent successfully")
     } catch (error) {
-      console.error("Failed to send invite email:", error)
+      console.error("[INVITE_REPO] Failed to send invite email:", {
+        error: error instanceof Error ? {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        } : String(error),
+        to: normalizedEmail,
+        acceptUrl,
+      })
       // Continue anyway - invitation is created
     }
 
