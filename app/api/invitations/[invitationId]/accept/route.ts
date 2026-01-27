@@ -53,7 +53,9 @@ export async function POST(
       },
     })
 
+    let createdMembership = false
     if (existingMember) {
+      console.log(`[INVITE_ACCEPT] User ${session.user.id} already member of trip ${invitation.tripId}`)
       // Already a member, just redirect
       return NextResponse.json({
         tripId: invitation.tripId,
@@ -69,9 +71,13 @@ export async function POST(
         role: invitation.role.toUpperCase() as any,
       },
     })
+    createdMembership = true
+    console.log(`[INVITE_ACCEPT] Created TripMember for user ${session.user.id} on trip ${invitation.tripId}`)
 
     // Delete the invitation after successful acceptance
     await invitationsRepository.deleteInvitation(invitationId)
+
+    console.log(`[INVITE_ACCEPT] Accepted invitation ${invitationId}, tripId: ${invitation.tripId}, userId: ${session.user.id}, createdMembership: ${createdMembership}`)
 
     return NextResponse.json({
       tripId: invitation.tripId,

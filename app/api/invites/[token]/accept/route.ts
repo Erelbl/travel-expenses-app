@@ -70,6 +70,7 @@ export async function POST(
     })
 
     let alreadyMember = false
+    let createdMembership = false
     if (existingMember) {
       alreadyMember = true
     } else {
@@ -81,13 +82,14 @@ export async function POST(
           role: invitation.role,
         },
       })
+      createdMembership = true
       console.log(`[INVITE_ACCEPT] Created TripMember for user ${session.user.id} on trip ${invitation.tripId}`)
     }
 
     // Mark invitation as accepted
     await invitationsRepository.acceptInvitation(token, session.user.id)
 
-    console.log(`[INVITE_ACCEPT] Accepted invite ${token}, tripId: ${invitation.tripId}, userId: ${session.user.id}, alreadyMember: ${alreadyMember}`)
+    console.log(`[INVITE_ACCEPT] Accepted invite ${token}, tripId: ${invitation.tripId}, userId: ${session.user.id}, alreadyMember: ${alreadyMember}, createdMembership: ${createdMembership}`)
 
     return NextResponse.json({
       tripId: invitation.tripId,
