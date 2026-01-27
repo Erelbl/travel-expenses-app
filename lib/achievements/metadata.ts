@@ -2,8 +2,9 @@ import { AchievementKey } from "@prisma/client"
 
 export interface AchievementMetadata {
   key: AchievementKey
-  title: string
-  description: string
+  titleKey: string
+  descriptionKey: string
+  unlockMessageKey: string
   icon: string
   color: string
 }
@@ -11,43 +12,49 @@ export interface AchievementMetadata {
 export const ACHIEVEMENT_METADATA: Record<AchievementKey, AchievementMetadata> = {
   [AchievementKey.FIRST_EXPENSE_LOGGED]: {
     key: AchievementKey.FIRST_EXPENSE_LOGGED,
-    title: "First Steps",
-    description: "Logged your first expense",
+    titleKey: "achievements.firstExpense.title",
+    descriptionKey: "achievements.firstExpense.description",
+    unlockMessageKey: "achievements.firstExpense.unlockMessage",
     icon: "🎯",
     color: "from-blue-400 to-blue-600",
   },
   [AchievementKey.EXPENSES_ON_3_DAYS]: {
     key: AchievementKey.EXPENSES_ON_3_DAYS,
-    title: "Tracking Habit",
-    description: "Logged expenses on 3 different days",
+    titleKey: "achievements.threeDay.title",
+    descriptionKey: "achievements.threeDay.description",
+    unlockMessageKey: "achievements.threeDay.unlockMessage",
     icon: "📅",
     color: "from-green-400 to-green-600",
   },
   [AchievementKey.TEN_EXPENSES_LOGGED]: {
     key: AchievementKey.TEN_EXPENSES_LOGGED,
-    title: "Detailed Tracker",
-    description: "Logged 10 expenses",
+    titleKey: "achievements.tenExpenses.title",
+    descriptionKey: "achievements.tenExpenses.description",
+    unlockMessageKey: "achievements.tenExpenses.unlockMessage",
     icon: "📊",
     color: "from-purple-400 to-purple-600",
   },
   [AchievementKey.FIRST_TRIP_COMPLETED]: {
     key: AchievementKey.FIRST_TRIP_COMPLETED,
-    title: "Journey Complete",
-    description: "Completed your first trip",
+    titleKey: "achievements.firstTripCompleted.title",
+    descriptionKey: "achievements.firstTripCompleted.description",
+    unlockMessageKey: "achievements.firstTripCompleted.unlockMessage",
     icon: "✈️",
     color: "from-amber-400 to-amber-600",
   },
   [AchievementKey.THREE_TRIPS_LOGGED]: {
     key: AchievementKey.THREE_TRIPS_LOGGED,
-    title: "Frequent Traveler",
-    description: "Created 3 trips",
+    titleKey: "achievements.threeTrips.title",
+    descriptionKey: "achievements.threeTrips.description",
+    unlockMessageKey: "achievements.threeTrips.unlockMessage",
     icon: "🌍",
     color: "from-cyan-400 to-cyan-600",
   },
   [AchievementKey.EXPENSES_IN_2_COUNTRIES]: {
     key: AchievementKey.EXPENSES_IN_2_COUNTRIES,
-    title: "Globe Trotter",
-    description: "Logged expenses in 2 different countries",
+    titleKey: "achievements.twoCountries.title",
+    descriptionKey: "achievements.twoCountries.description",
+    unlockMessageKey: "achievements.twoCountries.unlockMessage",
     icon: "🗺️",
     color: "from-pink-400 to-pink-600",
   },

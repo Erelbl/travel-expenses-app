@@ -583,6 +583,44 @@
     "prev": "הקודם",
     "next": "הבא",
     "tripsStats": "סטטיסטיקות טיולים"
+  },
+  "achievements": {
+    "title": "הישגים",
+    "subtitle": "{unlocked} מתוך {total} נפתחו",
+    "unlocked": "הישג חדש נפתח!",
+    "continue": "המשך",
+    "viewAchievements": "צפה בהישגים שלך",
+    "trackProgress": "עקוב אחר ההתקדמות שלך ופתח הישגים תוך כדי שימוש ב-TravelWise.",
+    "firstExpense": {
+      "title": "צעדים ראשונים",
+      "description": "רשמת את ההוצאה הראשונה שלך",
+      "unlockMessage": "התחלת לעקוב אחר הטיולים שלך"
+    },
+    "threeDay": {
+      "title": "הרגל מעקב",
+      "description": "רשמת הוצאות ב-3 ימים שונים",
+      "unlockMessage": "בניית הרגלי מעקב טובים"
+    },
+    "tenExpenses": {
+      "title": "מעקב מפורט",
+      "description": "רשמת 10 הוצאות",
+      "unlockMessage": "אתה שומר רישומים מפורטים"
+    },
+    "firstTripCompleted": {
+      "title": "מסע שהושלם",
+      "description": "השלמת את הטיול הראשון שלך",
+      "unlockMessage": "המסע הראשון שלך הושלם"
+    },
+    "threeTrips": {
+      "title": "נוסע תדיר",
+      "description": "יצרת 3 טיולים",
+      "unlockMessage": "אתה הופך לנוסע תדיר"
+    },
+    "twoCountries": {
+      "title": "מטייל עולמי",
+      "description": "רשמת הוצאות ב-2 מדינות שונות",
+      "unlockMessage": "אתה מגלה את העולם"
+    }
   }
 }
 

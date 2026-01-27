@@ -205,16 +205,16 @@ export function SettingsClient({
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Trophy className="h-5 w-5 text-sky-600" />
-                Achievements
+                {t('achievements.title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-slate-600 mb-4">
-                Track your progress and unlock achievements as you use TravelWise.
+                {t('achievements.trackProgress')}
               </p>
               <Link href="/settings/achievements">
                 <Button variant="outline" className="w-full">
-                  View Your Achievements
+                  {t('achievements.viewAchievements')}
                 </Button>
               </Link>
             </CardContent>

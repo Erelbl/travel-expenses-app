@@ -1,22 +1,25 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Lock } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { AchievementKey } from "@prisma/client"
 import { Button } from "@/components/ui/button"
-import { getAllAchievements, getAchievementMetadata } from "@/lib/achievements/metadata"
+import { getAllAchievements } from "@/lib/achievements/metadata"
+import { useI18n } from "@/lib/i18n/I18nProvider"
 
 interface AchievementsClientProps {
   unlockedKeys: AchievementKey[]
 }
 
 export function AchievementsClient({ unlockedKeys }: AchievementsClientProps) {
+  const { t, locale } = useI18n()
   const router = useRouter()
   const allAchievements = getAllAchievements()
   const unlockedSet = new Set(unlockedKeys)
+  const isRTL = locale === "he"
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50" dir={isRTL ? "rtl" : "ltr"}>
       <div className="sticky top-0 z-10 border-b bg-white">
         <div className="container mx-auto max-w-4xl">
           <div className="flex items-center gap-4 p-4">
@@ -24,9 +27,12 @@ export function AchievementsClient({ unlockedKeys }: AchievementsClientProps) {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-slate-900">Achievements</h1>
+              <h1 className="text-xl font-bold text-slate-900">{t("achievements.title")}</h1>
               <p className="text-sm text-slate-500">
-                {unlockedKeys.length} of {allAchievements.length} unlocked
+                {t("achievements.subtitle", {
+                  unlocked: unlockedKeys.length,
+                  total: allAchievements.length,
+                })}
               </p>
             </div>
           </div>
@@ -71,14 +77,9 @@ export function AchievementsClient({ unlockedKeys }: AchievementsClientProps) {
                         </>
                       ) : (
                         <>
-                          {/* Locked: gray */}
-                          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-3xl grayscale">
+                          {/* Not unlocked: grayscale only */}
+                          <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-slate-200 text-3xl grayscale opacity-40">
                             {achievement.icon}
-                          </div>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-400 text-white shadow-sm">
-                              <Lock className="h-3.5 w-3.5" />
-                            </div>
                           </div>
                         </>
                       )}
@@ -91,14 +92,14 @@ export function AchievementsClient({ unlockedKeys }: AchievementsClientProps) {
                           isUnlocked ? "text-slate-900" : "text-slate-500"
                         }`}
                       >
-                        {achievement.title}
+                        {t(achievement.titleKey)}
                       </h3>
                       <p
                         className={`text-sm ${
                           isUnlocked ? "text-slate-600" : "text-slate-400"
                         }`}
                       >
-                        {achievement.description}
+                        {t(achievement.descriptionKey)}
                       </p>
                     </div>
                   </div>

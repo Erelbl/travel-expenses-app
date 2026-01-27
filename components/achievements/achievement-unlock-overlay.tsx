@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { AchievementKey } from "@prisma/client"
 import { getAchievementMetadata } from "@/lib/achievements/metadata"
+import { useI18n } from "@/lib/i18n/I18nProvider"
 
 interface AchievementUnlockOverlayProps {
   achievements: AchievementKey[]
@@ -13,6 +14,7 @@ export function AchievementUnlockOverlay({
   achievements,
   onClose,
 }: AchievementUnlockOverlayProps) {
+  const { t } = useI18n()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
 
@@ -72,23 +74,23 @@ export function AchievementUnlockOverlay({
 
             {/* Title */}
             <h2 className="mb-2 text-2xl font-bold text-slate-900">
-              Achievement Unlocked!
+              {t("achievements.unlocked")}
             </h2>
 
             {/* Achievement name */}
             <h3 className="mb-2 text-xl font-semibold text-slate-800">
-              {currentAchievement.title}
+              {t(currentAchievement.titleKey)}
             </h3>
 
             {/* Description */}
-            <p className="mb-6 text-slate-600">{currentAchievement.description}</p>
+            <p className="mb-6 text-slate-600">{t(currentAchievement.unlockMessageKey)}</p>
 
             {/* Continue button */}
             <button
               onClick={handleContinue}
               className={`rounded-lg bg-gradient-to-r ${currentAchievement.color} px-8 py-3 font-semibold text-white shadow-lg transition-transform hover:scale-105 active:scale-95`}
             >
-              Continue
+              {t("achievements.continue")}
             </button>
 
             {/* Progress indicator */}
