@@ -1,4 +1,7 @@
 {
-  "buildCommand": "prisma generate && next build"
+  "buildCommand": "prisma migrate deploy && prisma generate && next build",
+  "env": {
+    "PRISMA_MIGRATE_ADVISORY_LOCK_TIMEOUT": "60000"
+  }
 }
 

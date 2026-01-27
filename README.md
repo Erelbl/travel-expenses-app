@@ -116,6 +116,9 @@ travel-expenses-app/
    # Database (Neon PostgreSQL)
    DATABASE_URL="postgresql://..."
    
+   # Prisma migrations (optional - increase timeout if deploy fails with P1002)
+   PRISMA_MIGRATE_ADVISORY_LOCK_TIMEOUT=60000
+   
    # NextAuth (Authentication)
    AUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
    NEXTAUTH_URL="http://localhost:3000"  # Your app URL (production: https://yourdomain.com)
