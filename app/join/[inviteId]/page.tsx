@@ -214,8 +214,8 @@ export default function JoinTripPage() {
     )
   }
 
-  // Authenticated but email doesn't match
-  if (emailMismatch || (session?.user?.email && 
+  // Authenticated but email doesn't match (only check if invitedEmail exists)
+  if (emailMismatch || (invitation.invitedEmail && session?.user?.email && 
       session.user.email.toLowerCase() !== invitation.invitedEmail.toLowerCase())) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4" dir={isRTL ? "rtl" : "ltr"}>

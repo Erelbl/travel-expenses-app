@@ -40,14 +40,21 @@ export async function POST(
 
     // Verify email matches (only if invitedEmail was specified)
     if (invitation.invitedEmail) {
-      const userEmail = session.user.email.toLowerCase()
       const invitedEmail = invitation.invitedEmail.toLowerCase()
+      const currentEmail = session.user.email?.toLowerCase()
+      
+      if (!currentEmail) {
+        return NextResponse.json(
+          { error: "User email not available" },
+          { status: 401 }
+        )
+      }
 
-      if (userEmail !== invitedEmail) {
+      if (invitedEmail !== currentEmail) {
         return NextResponse.json(
           {
             error: "Email mismatch",
-            message: `This invitation is for ${invitedEmail}, but you are signed in as ${userEmail}`,
+            message: `This invitation is for ${invitedEmail}, but you are signed in as ${currentEmail}`,
           },
           { status: 403 }
         )

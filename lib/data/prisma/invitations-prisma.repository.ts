@@ -102,11 +102,14 @@ export class PrismaInvitationsRepository {
     }
 
     console.log("[INVITE_REPO] Step: check_user_exists")
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
-    })
-    console.log("[INVITE_REPO] User exists:", !!user)
+    // Check if user exists (only if email provided)
+    let user = null
+    if (normalizedEmail) {
+      user = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      })
+      console.log("[INVITE_REPO] User exists:", !!user)
+    }
 
     console.log("[INVITE_REPO] Step: create_db_record")
     // Create new invitation

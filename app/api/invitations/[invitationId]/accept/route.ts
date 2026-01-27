@@ -22,15 +22,27 @@ export async function POST(
       return NextResponse.json({ error: "Invitation not found or expired" }, { status: 404 })
     }
 
-    // Verify email matches
-    if (invitation.invitedEmail.toLowerCase() !== session.user.email.toLowerCase()) {
-      return NextResponse.json(
-        { 
-          error: "Email mismatch",
-          message: `This invitation is for ${invitation.invitedEmail}. Please sign in with that email address.`
-        },
-        { status: 403 }
-      )
+    // Verify email matches (only if invitedEmail was specified)
+    if (invitation.invitedEmail) {
+      const invitedEmail = invitation.invitedEmail.toLowerCase()
+      const currentEmail = session.user.email?.toLowerCase()
+      
+      if (!currentEmail) {
+        return NextResponse.json(
+          { error: "User email not available" },
+          { status: 401 }
+        )
+      }
+      
+      if (invitedEmail !== currentEmail) {
+        return NextResponse.json(
+          { 
+            error: "Email mismatch",
+            message: `This invitation is for ${invitation.invitedEmail}. Please sign in with that email address.`
+          },
+          { status: 403 }
+        )
+      }
     }
 
     // Check if user is already a member
