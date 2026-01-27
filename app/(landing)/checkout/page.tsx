@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { useState } from "react"
 import { Check } from "lucide-react"
 import { LandingNav } from "@/components/landing-nav"
 import { getPlanById, type PlanId } from "@/lib/plans"
@@ -9,6 +10,8 @@ import { getPlanById, type PlanId } from "@/lib/plans"
 export default function CheckoutPage() {
   const searchParams = useSearchParams()
   const planParam = searchParams.get("plan") || "plus"
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
   // Validate and get plan
   const validPlans: PlanId[] = ["free", "plus", "pro"]
@@ -41,6 +44,39 @@ export default function CheckoutPage() {
       "Basic currency support",
       "Simple insights",
     ],
+  }
+
+  const handleCheckout = async () => {
+    if (selectedPlanId === "free") return
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch("/api/billing/paddle/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ plan: selectedPlanId }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout")
+      }
+
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error("No checkout URL received")
+      }
+    } catch (err) {
+      console.error("Checkout error:", err)
+      setError(err instanceof Error ? err.message : "Something went wrong")
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -119,13 +155,19 @@ export default function CheckoutPage() {
           {/* CTA Section */}
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200 text-center">
             <button
-              disabled
-              className="w-full bg-slate-300 text-slate-500 px-8 py-4 rounded-xl font-semibold text-lg mb-3 cursor-not-allowed"
+              onClick={handleCheckout}
+              disabled={isLoading || selectedPlanId === "free"}
+              className="w-full bg-sky-600 text-white px-8 py-4 rounded-xl font-semibold text-lg mb-3 hover:bg-sky-700 transition-colors disabled:bg-slate-300 disabled:text-slate-500 disabled:cursor-not-allowed"
             >
-              Payments coming soon
+              {isLoading ? "Creating checkout..." : "Continue to payment"}
             </button>
+            {error && (
+              <p className="text-red-600 text-sm mb-3">
+                {error}
+              </p>
+            )}
             <p className="text-slate-600 text-sm mb-6">
-              We're finalizing payments. You'll be able to upgrade very soon.
+              Secure payment via Paddle (Sandbox mode)
             </p>
             <Link
               href="/pricing"
