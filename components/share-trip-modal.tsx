@@ -87,13 +87,7 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
       setInvites([invite, ...invites])
       setInvitedEmail("")
       
-      // Copy link immediately
-      const url = `${window.location.origin}/join/${invite.id}`
-      await navigator.clipboard.writeText(url)
-      setCopiedId(invite.id)
-      setTimeout(() => setCopiedId(null), 2000)
-      
-      toast.success(t("share.linkCreated"))
+      toast.success(t("share.inviteSent"))
     } catch (error) {
       console.error("Failed to create invite:", error)
       toast.error(error instanceof Error ? error.message : t("share.error"))
@@ -209,7 +203,7 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
             </div>
             
             <p className="text-xs text-slate-500">
-              {t("share.linkExpiry")}
+              {t("share.inviteEmailInfo")}
             </p>
             
             {selectedRole === "editor" && (
@@ -223,7 +217,7 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
           {invites.length > 0 && (
             <div className="space-y-3">
               <Label className="text-sm font-semibold text-slate-700">
-                {t("share.activeLinks")} ({invites.length})
+                {t("share.pendingInvites")} ({invites.length})
               </Label>
               
               <div className="space-y-2">
@@ -249,18 +243,6 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
                     </div>
                     
                     <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleCopyLink(invite.id)}
-                        className="h-8 w-8"
-                      >
-                        {copiedId === invite.id ? (
-                          <Check className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

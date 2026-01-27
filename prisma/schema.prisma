@@ -36,6 +36,7 @@ model User {
   sessions           Session[]
   verificationTokens EmailVerificationToken[]
   achievements       UserAchievement[]
+  invitations        TripInvitation[]
 }
 
 enum TripType {
@@ -202,18 +203,31 @@ model ExchangeRateCache {
   @@index([date])
 }
 
-model TripInvitation {
-  id           String     @id @default(cuid())
-  tripId       String
-  invitedEmail String
-  role         MemberRole
-  createdAt    DateTime   @default(now())
-  expiresAt    DateTime
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
 
-  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+model TripInvitation {
+  id            String           @id @default(cuid())
+  tripId        String
+  invitedEmail  String
+  invitedUserId String?
+  token         String           @unique @default(cuid())
+  role          MemberRole
+  status        InvitationStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+  expiresAt     DateTime
+  acceptedAt    DateTime?
+
+  trip        Trip  @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  invitedUser User? @relation(fields: [invitedUserId], references: [id], onDelete: SetNull)
 
   @@index([tripId])
   @@index([invitedEmail])
+  @@index([token])
+  @@index([invitedUserId])
 }
 
 enum AchievementKey {
