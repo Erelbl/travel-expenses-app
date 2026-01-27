@@ -12,16 +12,17 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
+  // Initialize with default, update on mount
   const [locale, setLocaleState] = useState<Locale>('en');
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     // Initialize locale on mount
     const storedLocale = getStoredLocale();
     const initialLocale = storedLocale || detectLocale();
-    setLocaleState(initialLocale);
+    if (initialLocale !== locale) {
+      setLocaleState(initialLocale);
+    }
     updateDocumentLocale(initialLocale);
-    setMounted(true);
   }, []);
 
   const setLocale = (newLocale: Locale) => {
@@ -38,11 +39,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   };
 
   const t = (key: string, params?: Record<string, string | number>) => translateFn(key, locale, params);
-
-  // Prevent hydration mismatch
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <I18nContext.Provider value={{ locale, setLocale, t }}>

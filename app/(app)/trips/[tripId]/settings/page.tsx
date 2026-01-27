@@ -155,7 +155,6 @@ export default function TripSettingsPage() {
       ])
       
       toast.success(t('settings.changesSaved'))
-      router.refresh()
       await loadData()
     } catch (error) {
       console.error("Failed to update trip:", error)
@@ -185,7 +184,6 @@ export default function TripSettingsPage() {
     try {
       await closeTrip(tripId)
       toast.success(t('settings.closeTripSuccess'))
-      router.refresh()
       await loadData()
     } catch (error) {
       console.error("Failed to close trip:", error)
@@ -202,7 +200,6 @@ export default function TripSettingsPage() {
     try {
       await reopenTrip(tripId)
       toast.success(t('settings.reopenTripSuccess'))
-      router.refresh()
       await loadData()
     } catch (error) {
       console.error("Failed to reopen trip:", error)

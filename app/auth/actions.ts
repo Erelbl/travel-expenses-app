@@ -7,7 +7,13 @@ import { redirect } from "next/navigation"
 import { Resend } from "resend"
 import crypto from "crypto"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not configured")
+  }
+  return new Resend(apiKey)
+}
 
 export async function signUpAction(formData: FormData) {
   try {
@@ -126,6 +132,7 @@ export async function sendVerificationEmail(userId: string) {
   const verificationUrl = `${process.env.NEXTAUTH_URL}/auth/verify?token=${token}`
 
   try {
+    const resend = getResendClient()
     await resend.emails.send({
       from: process.env.EMAIL_FROM || "onboarding@resend.dev",
       to: user.email,
