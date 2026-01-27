@@ -213,7 +213,7 @@ enum InvitationStatus {
 model TripInvitation {
   id            String           @id @default(cuid())
   tripId        String
-  invitedEmail  String
+  invitedEmail  String?
   invitedUserId String?
   token         String           @unique @default(cuid())
   role          MemberRole

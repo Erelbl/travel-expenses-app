@@ -28,23 +28,30 @@ export async function POST(
       return NextResponse.json({ error: "Invitation expired" }, { status: 410 })
     }
 
+    // Check if revoked
+    if (invitation.status === "REVOKED") {
+      return NextResponse.json({ error: "Invitation revoked" }, { status: 410 })
+    }
+
     // Check if already accepted
     if (invitation.status === "ACCEPTED") {
       return NextResponse.json({ error: "Invitation already used" }, { status: 410 })
     }
 
-    // Verify email matches
-    const userEmail = session.user.email.toLowerCase()
-    const invitedEmail = invitation.invitedEmail.toLowerCase()
+    // Verify email matches (only if invitedEmail was specified)
+    if (invitation.invitedEmail) {
+      const userEmail = session.user.email.toLowerCase()
+      const invitedEmail = invitation.invitedEmail.toLowerCase()
 
-    if (userEmail !== invitedEmail) {
-      return NextResponse.json(
-        {
-          error: "Email mismatch",
-          message: `This invitation is for ${invitedEmail}, but you are signed in as ${userEmail}`,
-        },
-        { status: 403 }
-      )
+      if (userEmail !== invitedEmail) {
+        return NextResponse.json(
+          {
+            error: "Email mismatch",
+            message: `This invitation is for ${invitedEmail}, but you are signed in as ${userEmail}`,
+          },
+          { status: 403 }
+        )
+      }
     }
 
     // Check if user is already a member
@@ -67,10 +74,13 @@ export async function POST(
           role: invitation.role,
         },
       })
+      console.log(`[INVITE_ACCEPT] Created TripMember for user ${session.user.id} on trip ${invitation.tripId}`)
     }
 
     // Mark invitation as accepted
     await invitationsRepository.acceptInvitation(token, session.user.id)
+
+    console.log(`[INVITE_ACCEPT] Accepted invite ${token}, tripId: ${invitation.tripId}, userId: ${session.user.id}, alreadyMember: ${alreadyMember}`)
 
     return NextResponse.json({
       tripId: invitation.tripId,

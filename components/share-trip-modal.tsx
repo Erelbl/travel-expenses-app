@@ -15,7 +15,7 @@ import { useI18n } from "@/lib/i18n/I18nProvider"
 interface TripInvitation {
   id: string
   tripId: string
-  invitedEmail: string
+  invitedEmail: string | null
   role: MemberRole
   token: string
   createdAt: number
@@ -115,12 +115,30 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
     }
   }
 
-  function handleWhatsAppShare() {
+  async function handleWhatsAppShare() {
     if (!currentInvite) return
     
     const url = `${window.location.origin}/invites/${currentInvite.token}`
-    const text = encodeURIComponent(`${t("share.whatsappMessage")} ${url}`)
-    window.open(`https://wa.me/?text=${text}`, '_blank')
+    const text = `${t("share.whatsappMessage")} ${url}`
+    
+    // Use Web Share API if available (mobile)
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: t("share.title"),
+          text: text,
+        })
+        return
+      } catch (err) {
+        // User cancelled or error - fallback to WhatsApp Web
+        if ((err as Error).name === 'AbortError') {
+          return
+        }
+      }
+    }
+    
+    // Fallback to WhatsApp Web for desktop
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 
   async function handleRevokeInvite() {
@@ -233,58 +251,56 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
             </div>
           )}
 
-          {/* Create New Invite */}
-          {!currentInvite && (
-            <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
-              <Label className="text-sm font-semibold text-slate-700">
-                {t("share.createLink")}
-              </Label>
-              
-              <div className="space-y-3">
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    type="email"
-                    value={invitedEmail}
-                    onChange={(e) => setInvitedEmail(e.target.value)}
-                    placeholder={t("share.emailOptional")}
-                    className="pl-10"
-                    onKeyDown={(e) => e.key === "Enter" && handleCreateInvite()}
-                  />
-                </div>
-                
-                <div className="flex gap-3">
-                  <Select
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value as MemberRole)}
-                    className="flex-1"
-                  >
-                    <option value="viewer">{t("settings.roleViewer")} - {t("share.canView")}</option>
-                    <option value="editor">{t("settings.roleEditor")} - {t("share.canAddEdit")}</option>
-                  </Select>
-                  
-                  <Button
-                    onClick={handleCreateInvite}
-                    disabled={creating}
-                    className="shrink-0"
-                  >
-                    <Link2 className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-                    {t("share.create")}
-                  </Button>
-                </div>
+          {/* Email Invite Section - Always visible */}
+          <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
+            <Label className="text-sm font-semibold text-slate-700">
+              {currentInvite ? t("share.sendAnotherInvite") : t("share.createLink")}
+            </Label>
+            
+            <div className="space-y-3">
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  type="email"
+                  value={invitedEmail}
+                  onChange={(e) => setInvitedEmail(e.target.value)}
+                  placeholder={t("share.emailOptional")}
+                  className="pl-10"
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateInvite()}
+                />
               </div>
               
-              <p className="text-xs text-slate-500">
-                {t("share.inviteEmailInfo")}
-              </p>
-              
-              {selectedRole === "editor" && (
-                <p className="text-xs text-amber-600">
-                  {t("share.editorWarning")}
-                </p>
-              )}
+              <div className="flex gap-3">
+                <Select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value as MemberRole)}
+                  className="flex-1"
+                >
+                  <option value="viewer">{t("settings.roleViewer")} - {t("share.canView")}</option>
+                  <option value="editor">{t("settings.roleEditor")} - {t("share.canAddEdit")}</option>
+                </Select>
+                
+                <Button
+                  onClick={handleCreateInvite}
+                  disabled={creating}
+                  className="shrink-0"
+                >
+                  <Link2 className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                  {t("share.create")}
+                </Button>
+              </div>
             </div>
-          )}
+            
+            <p className="text-xs text-slate-500">
+              {t("share.inviteEmailInfo")}
+            </p>
+            
+            {selectedRole === "editor" && (
+              <p className="text-xs text-amber-600">
+                {t("share.editorWarning")}
+              </p>
+            )}
+          </div>
 
           {/* Current Members */}
           <div className="space-y-3 pt-3 border-t border-slate-100">

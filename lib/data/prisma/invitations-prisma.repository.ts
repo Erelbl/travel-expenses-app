@@ -5,7 +5,7 @@ import { sendInviteEmail } from "@/lib/email/invite-email"
 export interface TripInvitation {
   id: string
   tripId: string
-  invitedEmail: string
+  invitedEmail: string | null
   role: MemberRole
   token: string
   status: string
@@ -27,7 +27,7 @@ export class PrismaInvitationsRepository {
     role: MemberRole
   ): Promise<InvitationResult> {
     console.log("[INVITE_REPO] Step: normalize_email", { tripId, invitedEmail })
-    const normalizedEmail = invitedEmail?.toLowerCase() || ""
+    const normalizedEmail = invitedEmail?.toLowerCase() || null
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
     let emailSent = false
     let emailError: string | undefined
