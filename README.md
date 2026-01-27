@@ -114,7 +114,8 @@ travel-expenses-app/
    Create a `.env` or `.env.local` file in the project root with:
    ```bash
    # Database (Neon PostgreSQL)
-   DATABASE_URL="postgresql://..."
+   DATABASE_URL="postgresql://..."  # Pooled connection
+   DIRECT_URL="postgresql://..."    # Direct connection (required for migrations)
    
    # Prisma migrations (optional - increase timeout if deploy fails with P1002)
    PRISMA_MIGRATE_ADVISORY_LOCK_TIMEOUT=60000
