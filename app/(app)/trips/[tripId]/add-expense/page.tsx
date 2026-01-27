@@ -9,7 +9,7 @@ import { OfflineBanner } from "@/components/OfflineBanner"
 import { Button } from "@/components/ui/button"
 import { PrimaryButton } from "@/components/ui/primary-button"
 import { Input } from "@/components/ui/input"
-import { DateInput } from "@/components/ui/date-input"
+import { DatePickerInput } from "@/components/ui/date-picker-input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -774,14 +774,15 @@ export default function AddExpensePage() {
             <Label htmlFor="date" className="font-semibold text-slate-800">
               {t('addExpense.date')} <span className="text-red-500">*</span>
             </Label>
-            <DateInput
+            <DatePickerInput
               id="date"
               value={formState.date}
               onChange={(e) => {
                 setFormState({ ...formState, date: e.target.value })
                 setScanHints((prev) => ({ ...prev, date: undefined }))
               }}
-              className="premium-input h-14 bg-white text-base font-medium text-slate-900"
+              className="h-14 bg-white text-base font-medium text-slate-900"
+              locale={locale}
               required
             />
             {scanHints.date && (
@@ -843,13 +844,14 @@ export default function AddExpensePage() {
               <Label htmlFor="usageDate" className="font-semibold text-slate-800">
                 {t('addExpense.usageDate')} <span className="text-red-500">*</span>
               </Label>
-              <DateInput
+              <DatePickerInput
                 id="usageDate"
                 value={formState.usageDate}
                 onChange={(e) =>
                   setFormState({ ...formState, usageDate: e.target.value })
                 }
-                className="premium-input h-14 bg-white text-base font-medium text-slate-900"
+                className="h-14 bg-white text-base font-medium text-slate-900"
+                locale={locale}
                 required={formState.isFutureExpense}
                 min={formState.date}
               />

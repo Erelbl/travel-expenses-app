@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { PrimaryButton } from "@/components/ui/primary-button"
 import { Input } from "@/components/ui/input"
-import { DateInput } from "@/components/ui/date-input"
+import { DatePickerInput } from "@/components/ui/date-picker-input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { tripsRepository } from "@/lib/data"
@@ -324,7 +324,7 @@ export default function BatchAddPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 min-w-0">
                 <Label htmlFor="globalDate">{t("addExpense.date")}</Label>
-                <DateInput
+                <DatePickerInput
                   id="globalDate"
                   value={globalDate}
                   onChange={(e) => {
@@ -335,6 +335,7 @@ export default function BatchAddPage() {
                     )
                   }}
                   className="h-12 bg-white"
+                  locale={locale}
                 />
               </div>
 

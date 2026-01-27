@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { DateInput } from "@/components/ui/date-input"
+import { DatePickerInput } from "@/components/ui/date-picker-input"
 import { Badge } from "@/components/ui/badge"
 import { Modal, ModalHeader, ModalTitle, ModalContent, ModalClose } from "@/components/ui/modal"
 import { StatCardSkeleton, ReportCardSkeleton } from "@/components/ui/skeleton"
@@ -786,18 +786,20 @@ export default function ReportsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2 min-w-0">
                   <Label className="text-sm font-semibold">{t("reports.startDate")}</Label>
-                  <DateInput
+                  <DatePickerInput
                     value={filters.startDate || ""}
                     onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
                     className="text-base"
+                    locale={locale}
                   />
                 </div>
                 <div className="space-y-2 min-w-0">
                   <Label className="text-sm font-semibold">{t("reports.endDate")}</Label>
-                  <DateInput
+                  <DatePickerInput
                     value={filters.endDate || ""}
                     onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
                     className="text-base"
+                    locale={locale}
                   />
                 </div>
               </div>

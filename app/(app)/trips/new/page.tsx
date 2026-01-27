@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { DateInput } from "@/components/ui/date-input"
+import { DatePickerInput } from "@/components/ui/date-picker-input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
@@ -156,24 +156,26 @@ export default function NewTripPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 min-w-0">
                 <Label htmlFor="startDate">{t('createTrip.startDate')} *</Label>
-                <DateInput
+                <DatePickerInput
                   id="startDate"
                   value={formData.startDate}
                   onChange={(e) =>
                     setFormData({ ...formData, startDate: e.target.value })
                   }
+                  locale={locale}
                   required
                 />
               </div>
 
               <div className="space-y-2 min-w-0">
                 <Label htmlFor="endDate">{t('createTrip.endDateOptional')}</Label>
-                <DateInput
+                <DatePickerInput
                   id="endDate"
                   value={formData.endDate}
                   onChange={(e) =>
                     setFormData({ ...formData, endDate: e.target.value })
                   }
+                  locale={locale}
                   min={formData.startDate}
                 />
               </div>

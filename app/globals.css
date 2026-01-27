@@ -57,26 +57,6 @@ body {
   background-color: var(--background);
 }
 
-/* Fix date input overflow on mobile */
-input[type="date"] {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-/* Normalize date input internal rendering to match text inputs */
-input[type="date"]::-webkit-date-and-time-value {
-  text-align: start;
-  height: 100%;
-  line-height: normal;
-  padding: 0;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator {
-  margin: 0;
-  padding: 0;
-}
 
 /* Direction utilities */
 .ltr {
