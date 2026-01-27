@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repository'
 import { logError } from '@/lib/utils/logger'
+import { unlockNewAchievements } from '@/lib/achievements/achievements'
 
 const expensesRepository = new PrismaExpensesRepository()
 
@@ -46,7 +47,11 @@ export async function POST(
     }
     const body = await request.json()
     const expense = await expensesRepository.createExpense({ ...body, createdById: session.user.id })
-    return NextResponse.json(expense)
+    
+    // Check for newly unlocked achievements
+    const { newlyUnlocked } = await unlockNewAchievements(session.user.id)
+    
+    return NextResponse.json({ ...expense, newlyUnlocked })
   } catch (error) {
     logError('API /trips/[id]/expenses POST', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })

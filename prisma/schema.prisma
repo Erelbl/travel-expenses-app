@@ -35,6 +35,7 @@ model User {
   accounts           Account[]
   sessions           Session[]
   verificationTokens EmailVerificationToken[]
+  achievements       UserAchievement[]
 }
 
 enum TripType {
@@ -213,4 +214,25 @@ model TripInvitation {
 
   @@index([tripId])
   @@index([invitedEmail])
+}
+
+enum AchievementKey {
+  FIRST_EXPENSE_LOGGED
+  EXPENSES_ON_3_DAYS
+  TEN_EXPENSES_LOGGED
+  FIRST_TRIP_COMPLETED
+  THREE_TRIPS_LOGGED
+  EXPENSES_IN_2_COUNTRIES
+}
+
+model UserAchievement {
+  id         String         @id @default(cuid())
+  userId     String
+  key        AchievementKey
+  unlockedAt DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([userId])
 }

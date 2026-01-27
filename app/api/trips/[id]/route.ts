@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
 import { logError } from '@/lib/utils/logger'
+import { unlockNewAchievements } from '@/lib/achievements/achievements'
 
 const tripsRepository = new PrismaTripsRepository()
 
@@ -56,7 +57,11 @@ export async function PATCH(
     
     const body = await request.json()
     const trip = await tripsRepository.updateTrip(id, body)
-    return NextResponse.json(trip)
+    
+    // Check for newly unlocked achievements (e.g., if trip was closed)
+    const { newlyUnlocked } = await unlockNewAchievements(session.user.id)
+    
+    return NextResponse.json({ ...trip, newlyUnlocked })
   } catch (error) {
     logError('API /trips/[id] PATCH', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })

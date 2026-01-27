@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, User, Settings as SettingsIcon, CreditCard, Shield, Check, LogOut, UserCog, Lock, Camera, Infinity as InfinityIcon } from "lucide-react"
+import { ArrowLeft, User, Settings as SettingsIcon, CreditCard, Shield, Check, LogOut, UserCog, Lock, Camera, Infinity as InfinityIcon, Trophy } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -200,6 +200,26 @@ export function SettingsClient({
 
       <div className="container mx-auto max-w-4xl px-4 py-6 pb-8">
         <div className="space-y-8">
+          {/* Achievements Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Trophy className="h-5 w-5 text-sky-600" />
+                Achievements
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-600 mb-4">
+                Track your progress and unlock achievements as you use TravelWise.
+              </p>
+              <Link href="/settings/achievements">
+                <Button variant="outline" className="w-full">
+                  View Your Achievements
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
