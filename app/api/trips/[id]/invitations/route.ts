@@ -93,14 +93,18 @@ export async function POST(
     }
 
     console.log("[INVITE] Step: before_create_invitation")
-    const invitation = await invitationsRepository.createInvitation(
+    const result = await invitationsRepository.createInvitation(
       tripId,
-      invitedEmail,
+      invitedEmail || null,
       role
     )
 
-    console.log("[INVITE] Step: success, token:", invitation.token)
-    return NextResponse.json(invitation)
+    console.log("[INVITE] Step: success, token:", result.invitation.token, "emailSent:", result.emailSent)
+    return NextResponse.json({
+      ...result.invitation,
+      emailSent: result.emailSent,
+      emailError: result.emailError,
+    })
   } catch (error) {
     console.error("[INVITE] Error: internal_error", {
       tripId,

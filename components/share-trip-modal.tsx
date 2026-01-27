@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Copy, Check, Link2, Trash2, Users, Mail } from "lucide-react"
+import { Copy, Check, Link2, Trash2, Users, Mail, X } from "lucide-react"
 import { toast } from "sonner"
 import { Modal, ModalHeader, ModalTitle, ModalContent, ModalClose } from "@/components/ui/modal"
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,7 @@ interface TripInvitation {
   tripId: string
   invitedEmail: string
   role: MemberRole
+  token: string
   createdAt: number
   expiresAt: number
 }
@@ -33,47 +34,42 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
 
   const [selectedRole, setSelectedRole] = useState<MemberRole>("viewer")
   const [invitedEmail, setInvitedEmail] = useState("")
-  const [invites, setInvites] = useState<TripInvitation[]>([])
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [currentInvite, setCurrentInvite] = useState<TripInvitation | null>(null)
+  const [copied, setCopied] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [revoking, setRevoking] = useState(false)
 
-  // Load existing invites
+  // Load current pending invite
   useEffect(() => {
     if (open) {
-      loadInvites()
+      loadCurrentInvite()
     }
   }, [open, trip.id])
 
-  async function loadInvites() {
+  async function loadCurrentInvite() {
     try {
       const res = await fetch(`/api/trips/${trip.id}/invitations`)
-      if (!res.ok) throw new Error("Failed to load invitations")
+      if (!res.ok) return
       const data = await res.json()
-      setInvites(data)
+      // Get the first pending invite (there should only be one)
+      if (data && data.length > 0) {
+        setCurrentInvite(data[0])
+      } else {
+        setCurrentInvite(null)
+      }
     } catch (error) {
       console.error("Failed to load invitations:", error)
     }
   }
 
   async function handleCreateInvite() {
-    if (!invitedEmail.trim()) {
-      toast.error("Please enter an email address")
-      return
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(invitedEmail)) {
-      toast.error("Please enter a valid email address")
-      return
-    }
-
     setCreating(true)
     try {
       const res = await fetch(`/api/trips/${trip.id}/invitations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          invitedEmail: invitedEmail.trim().toLowerCase(),
+          invitedEmail: invitedEmail.trim() || null,
           role: selectedRole,
         }),
       })
@@ -83,11 +79,20 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
         throw new Error(error.error || "Failed to create invitation")
       }
 
-      const invite = await res.json()
-      setInvites([invite, ...invites])
+      const result = await res.json()
+      setCurrentInvite(result)
       setInvitedEmail("")
       
-      toast.success(t("share.inviteSent"))
+      // Show appropriate message
+      if (result.emailError) {
+        toast.warning(t("share.emailFailedWarning"))
+      } else if (result.emailSent) {
+        toast.success(t("share.inviteSent"))
+      } else {
+        toast.success(t("share.linkCreated"))
+      }
+      
+      await loadCurrentInvite()
     } catch (error) {
       console.error("Failed to create invite:", error)
       toast.error(error instanceof Error ? error.message : t("share.error"))
@@ -96,31 +101,48 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
     }
   }
 
-  async function handleCopyLink(inviteId: string) {
+  async function handleCopyLink() {
+    if (!currentInvite) return
+    
     try {
-      const url = `${window.location.origin}/join/${inviteId}`
+      const url = `${window.location.origin}/invites/${currentInvite.token}`
       await navigator.clipboard.writeText(url)
-      setCopiedId(inviteId)
-      setTimeout(() => setCopiedId(null), 2000)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
       toast.success(t("share.linkCopied"))
     } catch (error) {
       toast.error(t("share.copyError"))
     }
   }
 
-  async function handleDeleteInvite(inviteId: string) {
+  function handleWhatsAppShare() {
+    if (!currentInvite) return
+    
+    const url = `${window.location.origin}/invites/${currentInvite.token}`
+    const text = encodeURIComponent(`${t("share.whatsappMessage")} ${url}`)
+    window.open(`https://wa.me/?text=${text}`, '_blank')
+  }
+
+  async function handleRevokeInvite() {
+    if (!currentInvite) return
+    
+    if (!confirm(t("share.revokeConfirm"))) return
+    
+    setRevoking(true)
     try {
-      const res = await fetch(`/api/trips/${trip.id}/invitations/${inviteId}`, {
-        method: "DELETE",
+      const res = await fetch(`/api/trips/${trip.id}/invitations/${currentInvite.token}/revoke`, {
+        method: "POST",
       })
 
-      if (!res.ok) throw new Error("Failed to delete invitation")
+      if (!res.ok) throw new Error("Failed to revoke invitation")
 
-      setInvites(invites.filter((i) => i.id !== inviteId))
-      toast.success(t("share.linkDeleted"))
+      setCurrentInvite(null)
+      toast.success(t("share.linkRevoked"))
     } catch (error) {
-      console.error("Failed to delete invitation:", error)
+      console.error("Failed to revoke invite:", error)
       toast.error(t("share.error"))
+    } finally {
+      setRevoking(false)
     }
   }
 
@@ -137,12 +159,7 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
     }
   }
 
-  function formatExpiry(expiresAt: number): string {
-    const days = Math.ceil((expiresAt - Date.now()) / (1000 * 60 * 60 * 24))
-    if (days <= 0) return t("share.expired")
-    if (days === 1) return t("share.expiresIn1Day")
-    return t("share.expiresInDays", { days: days.toString() })
-  }
+  const inviteUrl = currentInvite ? `${typeof window !== 'undefined' ? window.location.origin : ''}/invites/${currentInvite.token}` : ""
 
   return (
     <Modal open={open} onOpenChange={onOpenChange} size="lg">
@@ -162,99 +179,110 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
             <p className="font-semibold text-lg text-slate-900">{trip.name}</p>
           </div>
 
-          {/* Create New Invite */}
-          <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
-            <Label className="text-sm font-semibold text-slate-700">
-              {t("share.createLink")}
-            </Label>
-            
-            <div className="space-y-3">
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input
-                  type="email"
-                  value={invitedEmail}
-                  onChange={(e) => setInvitedEmail(e.target.value)}
-                  placeholder="colleague@example.com"
-                  className="pl-10"
-                  onKeyDown={(e) => e.key === "Enter" && handleCreateInvite()}
-                />
-              </div>
-              
-              <div className="flex gap-3">
-                <Select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value as MemberRole)}
-                  className="flex-1"
-                >
-                  <option value="viewer">{t("settings.roleViewer")} - {t("share.canView")}</option>
-                  <option value="editor">{t("settings.roleEditor")} - {t("share.canAddEdit")}</option>
-                </Select>
-                
-                <Button
-                  onClick={handleCreateInvite}
-                  disabled={creating || !invitedEmail.trim()}
-                  className="shrink-0"
-                >
-                  <Link2 className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-                  {t("share.create")}
-                </Button>
-              </div>
-            </div>
-            
-            <p className="text-xs text-slate-500">
-              {t("share.inviteEmailInfo")}
-            </p>
-            
-            {selectedRole === "editor" && (
-              <p className="text-xs text-amber-600">
-                {t("share.editorWarning")}
-              </p>
-            )}
-          </div>
-
-          {/* Existing Invites */}
-          {invites.length > 0 && (
-            <div className="space-y-3">
+          {/* Current Share Link */}
+          {currentInvite && (
+            <div className="space-y-3 p-4 bg-sky-50 rounded-xl border border-sky-200">
               <Label className="text-sm font-semibold text-slate-700">
-                {t("share.pendingInvites")} ({invites.length})
+                {t("share.shareLink")}
               </Label>
               
-              <div className="space-y-2">
-                {invites.map((invite) => (
-                  <div
-                    key={invite.id}
-                    className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg"
+              <div className="space-y-3">
+                <Input
+                  value={inviteUrl}
+                  readOnly
+                  className="text-sm"
+                />
+                
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    onClick={handleCopyLink}
+                    variant="outline"
+                    className="flex-1"
                   >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-slate-900 truncate">
-                            {invite.invitedEmail}
-                          </span>
-                          <Badge variant="outline" className="shrink-0">
-                            {getRoleLabel(invite.role)}
-                          </Badge>
-                        </div>
-                        <span className="text-xs text-slate-500">
-                          {formatExpiry(invite.expiresAt)}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteInvite(invite.id)}
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                    {copied ? (
+                      <Check className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                    ) : (
+                      <Copy className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                    )}
+                    {t("share.copy")}
+                  </Button>
+                  
+                  <Button
+                    onClick={handleWhatsAppShare}
+                    variant="outline"
+                    className="flex-1 bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+                  >
+                    {t("share.whatsapp")}
+                  </Button>
+                  
+                  <Button
+                    onClick={handleRevokeInvite}
+                    disabled={revoking}
+                    variant="outline"
+                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
+                  >
+                    <X className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                    {t("share.revoke")}
+                  </Button>
+                </div>
+                
+                <p className="text-xs text-slate-500">
+                  {t("share.linkExpiresInfo")}
+                </p>
               </div>
+            </div>
+          )}
+
+          {/* Create New Invite */}
+          {!currentInvite && (
+            <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
+              <Label className="text-sm font-semibold text-slate-700">
+                {t("share.createLink")}
+              </Label>
+              
+              <div className="space-y-3">
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    type="email"
+                    value={invitedEmail}
+                    onChange={(e) => setInvitedEmail(e.target.value)}
+                    placeholder={t("share.emailOptional")}
+                    className="pl-10"
+                    onKeyDown={(e) => e.key === "Enter" && handleCreateInvite()}
+                  />
+                </div>
+                
+                <div className="flex gap-3">
+                  <Select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value as MemberRole)}
+                    className="flex-1"
+                  >
+                    <option value="viewer">{t("settings.roleViewer")} - {t("share.canView")}</option>
+                    <option value="editor">{t("settings.roleEditor")} - {t("share.canAddEdit")}</option>
+                  </Select>
+                  
+                  <Button
+                    onClick={handleCreateInvite}
+                    disabled={creating}
+                    className="shrink-0"
+                  >
+                    <Link2 className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                    {t("share.create")}
+                  </Button>
+                </div>
+              </div>
+              
+              <p className="text-xs text-slate-500">
+                {t("share.inviteEmailInfo")}
+              </p>
+              
+              {selectedRole === "editor" && (
+                <p className="text-xs text-amber-600">
+                  {t("share.editorWarning")}
+                </p>
+              )}
             </div>
           )}
 
@@ -283,4 +311,3 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
     </Modal>
   )
 }
-

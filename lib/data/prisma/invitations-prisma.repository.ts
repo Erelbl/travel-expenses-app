@@ -14,15 +14,23 @@ export interface TripInvitation {
   acceptedAt: number | null
 }
 
+export interface InvitationResult {
+  invitation: TripInvitation
+  emailSent: boolean
+  emailError?: string
+}
+
 export class PrismaInvitationsRepository {
   async createInvitation(
     tripId: string,
-    invitedEmail: string,
+    invitedEmail: string | null,
     role: MemberRole
-  ): Promise<TripInvitation> {
+  ): Promise<InvitationResult> {
     console.log("[INVITE_REPO] Step: normalize_email", { tripId, invitedEmail })
-    const normalizedEmail = invitedEmail.toLowerCase()
+    const normalizedEmail = invitedEmail?.toLowerCase() || ""
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    let emailSent = false
+    let emailError: string | undefined
 
     console.log("[INVITE_REPO] Step: check_existing_invite")
     try {
@@ -30,7 +38,6 @@ export class PrismaInvitationsRepository {
       const existingInvite = await prisma.tripInvitation.findFirst({
         where: {
           tripId,
-          invitedEmail: normalizedEmail,
           status: "PENDING",
           expiresAt: { gt: new Date() },
         },
@@ -38,47 +45,55 @@ export class PrismaInvitationsRepository {
 
       if (existingInvite) {
         console.log("[INVITE_REPO] Found existing invite, reusing:", existingInvite.id)
-        // Reuse existing pending invite - resend email
-        const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-        const acceptUrl = `${appUrl}/invites/${existingInvite.token}`
         
-        // Get trip info for email
-        const trip = await prisma.trip.findUnique({
-          where: { id: tripId },
-          select: {
-            name: true,
-            owner: {
-              select: { name: true, email: true },
+        // Try to send email if provided
+        if (normalizedEmail) {
+          const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+          const acceptUrl = `${appUrl}/invites/${existingInvite.token}`
+          
+          const trip = await prisma.trip.findUnique({
+            where: { id: tripId },
+            select: {
+              name: true,
+              owner: {
+                select: { name: true, email: true },
+              },
             },
-          },
-        })
-        
-        if (trip) {
-          console.log("[INVITE_REPO] Step: resend_email")
-          try {
-            await sendInviteEmail({
-              to: normalizedEmail,
-              tripName: trip.name,
-              inviterName: trip.owner.name || trip.owner.email || "A friend",
-              role: existingInvite.role.toLowerCase(),
-              acceptUrl,
-            })
-            console.log("[INVITE_REPO] Email resent successfully")
-          } catch (emailError) {
-            console.error("[INVITE_REPO] Failed to resend email:", emailError)
+          })
+          
+          if (trip) {
+            console.log("[INVITE_REPO] Step: resend_email")
+            try {
+              await sendInviteEmail({
+                to: normalizedEmail,
+                tripName: trip.name,
+                inviterName: trip.owner.name || trip.owner.email || "A friend",
+                role: existingInvite.role.toLowerCase(),
+                acceptUrl,
+              })
+              console.log("[INVITE_REPO] Email resent successfully")
+              emailSent = true
+            } catch (err) {
+              console.error("[INVITE_REPO] Failed to resend email:", err)
+              emailError = err instanceof Error ? err.message : "Email send failed"
+            }
           }
         }
         
         return {
-          id: existingInvite.id,
-          tripId: existingInvite.tripId,
-          invitedEmail: existingInvite.invitedEmail,
-          role: existingInvite.role.toLowerCase() as MemberRole,
-          token: existingInvite.token,
-          status: existingInvite.status,
-          createdAt: existingInvite.createdAt.getTime(),
-          expiresAt: existingInvite.expiresAt.getTime(),
-          acceptedAt: existingInvite.acceptedAt?.getTime() ?? null,
+          invitation: {
+            id: existingInvite.id,
+            tripId: existingInvite.tripId,
+            invitedEmail: existingInvite.invitedEmail,
+            role: existingInvite.role.toLowerCase() as MemberRole,
+            token: existingInvite.token,
+            status: existingInvite.status,
+            createdAt: existingInvite.createdAt.getTime(),
+            expiresAt: existingInvite.expiresAt.getTime(),
+            acceptedAt: existingInvite.acceptedAt?.getTime() ?? null,
+          },
+          emailSent,
+          emailError,
         }
       }
     } catch (checkError) {
@@ -143,39 +158,47 @@ export class PrismaInvitationsRepository {
     // Send invite email
     const acceptUrl = `${appUrl || "http://localhost:3000"}/invites/${invitation.token}`
     
-    console.log("[INVITE_REPO] Step: send_email", { acceptUrl })
-    try {
-      await sendInviteEmail({
-        to: normalizedEmail,
-        tripName: invitation.trip.name,
-        inviterName: invitation.trip.owner.name || invitation.trip.owner.email || "A friend",
-        role: invitation.role.toLowerCase(),
-        acceptUrl,
-      })
-      console.log("[INVITE_REPO] Email sent successfully")
-    } catch (error) {
-      console.error("[INVITE_REPO] Failed to send invite email:", {
-        error: error instanceof Error ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        } : String(error),
-        to: normalizedEmail,
-        acceptUrl,
-      })
-      // Continue anyway - invitation is created
+    // Send email if provided
+    if (normalizedEmail) {
+      console.log("[INVITE_REPO] Step: send_email", { acceptUrl })
+      try {
+        await sendInviteEmail({
+          to: normalizedEmail,
+          tripName: invitation.trip.name,
+          inviterName: invitation.trip.owner.name || invitation.trip.owner.email || "A friend",
+          role: invitation.role.toLowerCase(),
+          acceptUrl,
+        })
+        console.log("[INVITE_REPO] Email sent successfully")
+        emailSent = true
+      } catch (error) {
+        console.error("[INVITE_REPO] Failed to send invite email:", {
+          error: error instanceof Error ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          } : String(error),
+          to: normalizedEmail,
+          acceptUrl,
+        })
+        emailError = error instanceof Error ? error.message : "Email send failed"
+      }
     }
 
     return {
-      id: invitation.id,
-      tripId: invitation.tripId,
-      invitedEmail: invitation.invitedEmail,
-      role: invitation.role.toLowerCase() as MemberRole,
-      token: invitation.token,
-      status: invitation.status,
-      createdAt: invitation.createdAt.getTime(),
-      expiresAt: invitation.expiresAt.getTime(),
-      acceptedAt: invitation.acceptedAt?.getTime() ?? null,
+      invitation: {
+        id: invitation.id,
+        tripId: invitation.tripId,
+        invitedEmail: invitation.invitedEmail,
+        role: invitation.role.toLowerCase() as MemberRole,
+        token: invitation.token,
+        status: invitation.status,
+        createdAt: invitation.createdAt.getTime(),
+        expiresAt: invitation.expiresAt.getTime(),
+        acceptedAt: invitation.acceptedAt?.getTime() ?? null,
+      },
+      emailSent,
+      emailError,
     }
   }
 
@@ -291,6 +314,15 @@ export class PrismaInvitationsRepository {
         status: "ACCEPTED",
         invitedUserId: userId,
         acceptedAt: new Date(),
+      },
+    })
+  }
+
+  async revokeInvitation(token: string): Promise<void> {
+    await prisma.tripInvitation.update({
+      where: { token },
+      data: {
+        status: "REVOKED",
       },
     })
   }

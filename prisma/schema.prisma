@@ -207,6 +207,7 @@ enum InvitationStatus {
   PENDING
   ACCEPTED
   DECLINED
+  REVOKED
 }
 
 model TripInvitation {
