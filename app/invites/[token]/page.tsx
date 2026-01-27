@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import Link from "next/link"
-import { getTranslations } from "next-intl/server"
+import { t as translateFn, type Locale } from "@/lib/i18n"
+import { headers } from "next/headers"
 
 interface PageProps {
   params: Promise<{ token: string }>
@@ -14,7 +15,13 @@ interface PageProps {
 export default async function AcceptInvitePage({ params }: PageProps) {
   const { token } = await params
   const session = await auth()
-  const t = await getTranslations()
+  
+  // Detect locale from headers or default to English
+  const headersList = await headers()
+  const acceptLanguage = headersList.get("accept-language") || ""
+  const locale: Locale = acceptLanguage.toLowerCase().includes("he") ? "he" : "en"
+  
+  const t = (key: string, params?: Record<string, string | number>) => translateFn(key, locale, params)
 
   // Get invitation
   const invitation = await prisma.tripInvitation.findUnique({
