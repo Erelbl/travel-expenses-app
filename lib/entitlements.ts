@@ -34,9 +34,20 @@ export function getUserPlan(user: EntitlementUser): PlanTier {
  */
 export function getEffectivePlan(user: EntitlementUser): PlanTier {
   if (user.isAdmin) {
+    // Debug logging in non-production environments
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[Entitlements] Admin bypass: user ${user.id} → effective plan: PRO (actual: ${user.plan || "free"})`)
+    }
     return "pro"
   }
-  return user.plan || "free"
+  const effectivePlan = user.plan || "free"
+  
+  // Debug logging in non-production environments
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[Entitlements] Regular user: ${user.id} → effective plan: ${effectivePlan}`)
+  }
+  
+  return effectivePlan
 }
 
 /**
@@ -152,6 +163,11 @@ export function checkReceiptScanEntitlement(user: EntitlementUser): EntitlementC
   const used = user.receiptScansUsed || 0
   const remaining = getRemainingReceiptScans(user)
 
+  // Debug logging in non-production environments
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[Entitlements] Receipt scan check: user=${user.id}, isAdmin=${user.isAdmin}, effectivePlan=${effectivePlan}, limit=${limit}, used=${used}, remaining=${remaining}`)
+  }
+
   // Free plan - no access
   if (limit === 0) {
     return {
@@ -164,6 +180,9 @@ export function checkReceiptScanEntitlement(user: EntitlementUser): EntitlementC
 
   // Pro plan - unlimited (includes admins via getEffectivePlan)
   if (limit === Infinity) {
+    if (process.env.NODE_ENV !== "production" && user.isAdmin) {
+      console.log(`[Entitlements] ✓ Admin bypass active: unlimited receipt scans`)
+    }
     return {
       allowed: true,
       reason: "allowed",
