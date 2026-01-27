@@ -9,6 +9,7 @@ import { OfflineBanner } from "@/components/OfflineBanner"
 import { Button } from "@/components/ui/button"
 import { PrimaryButton } from "@/components/ui/primary-button"
 import { Input } from "@/components/ui/input"
+import { DateInput } from "@/components/ui/date-input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -793,9 +794,8 @@ export default function EditExpensePage() {
             <Label htmlFor="date" className="font-semibold text-slate-800">
               {t('addExpense.date')} <span className="text-red-500">*</span>
             </Label>
-            <Input
+            <DateInput
               id="date"
-              type="date"
               value={formState.date}
               onChange={(e) => {
                 setFormState({ ...formState, date: e.target.value })
@@ -863,9 +863,8 @@ export default function EditExpensePage() {
               <Label htmlFor="usageDate" className="font-semibold text-slate-800">
                 {t('addExpense.usageDate')} <span className="text-red-500">*</span>
               </Label>
-              <Input
+              <DateInput
                 id="usageDate"
-                type="date"
                 value={formState.usageDate}
                 onChange={(e) =>
                   setFormState({ ...formState, usageDate: e.target.value })

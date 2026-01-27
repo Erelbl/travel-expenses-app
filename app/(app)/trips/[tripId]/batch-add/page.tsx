@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { PrimaryButton } from "@/components/ui/primary-button"
 import { Input } from "@/components/ui/input"
+import { DateInput } from "@/components/ui/date-input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { tripsRepository } from "@/lib/data"
@@ -323,9 +324,8 @@ export default function BatchAddPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 min-w-0">
                 <Label htmlFor="globalDate">{t("addExpense.date")}</Label>
-                <Input
+                <DateInput
                   id="globalDate"
-                  type="date"
                   value={globalDate}
                   onChange={(e) => {
                     setGlobalDate(e.target.value)

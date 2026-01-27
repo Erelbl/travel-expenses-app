@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DateInput } from "@/components/ui/date-input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -333,9 +334,8 @@ export default function TripSettingsPage() {
                   <Label htmlFor="startDate" className="text-sm font-medium text-slate-700">
                     {t('createTrip.startDate')}
                   </Label>
-                  <Input
+                  <DateInput
                     id="startDate"
-                    type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                   />
@@ -346,9 +346,8 @@ export default function TripSettingsPage() {
                   <Label htmlFor="endDate" className="text-sm font-medium text-slate-700">
                     {t('createTrip.endDateOptional')}
                   </Label>
-                  <Input
+                  <DateInput
                     id="endDate"
-                    type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                   />
