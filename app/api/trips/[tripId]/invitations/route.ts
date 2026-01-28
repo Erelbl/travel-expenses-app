@@ -13,7 +13,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: tripId } = await context.params
+    const { tripId } = await context.params
 
     // Verify user has access to this trip
     const trip = await prisma.trip.findFirst({
@@ -42,7 +42,7 @@ export async function POST(
   req: NextRequest,
   context: { params: Promise<{ tripId: string }> }
 ) {
-  const { id: tripId } = await context.params
+  const { tripId } = await context.params
   let invitedEmail = ""
   let userId = ""
   
