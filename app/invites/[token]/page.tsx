@@ -178,26 +178,23 @@ export default async function AcceptInvitePage({ params }: PageProps) {
   console.log(`[INVITE_ACCEPT] start token=${token} userId=${session.user.id} email=${session.user.email}`)
 
   try {
-    // Check if user is already a member
-    const existingMember = await prisma.tripMember.findFirst({
+    // Upsert membership (single source of truth for shared access)
+    const membership = await prisma.tripMember.upsert({
       where: {
-        tripId: invitation.tripId,
-        userId: session.user.id,
-      },
-    })
-
-    let membershipCreated = false
-    if (!existingMember) {
-      // Add user as member
-      await prisma.tripMember.create({
-        data: {
+        tripId_userId: {
           tripId: invitation.tripId,
           userId: session.user.id,
-          role: invitation.role,
         },
-      })
-      membershipCreated = true
-    }
+      },
+      update: {
+        role: invitation.role, // Update role if already exists
+      },
+      create: {
+        tripId: invitation.tripId,
+        userId: session.user.id,
+        role: invitation.role,
+      },
+    })
 
     // Mark invitation as accepted
     await prisma.tripInvitation.update({
@@ -209,7 +206,7 @@ export default async function AcceptInvitePage({ params }: PageProps) {
       },
     })
 
-    console.log(`[INVITE_ACCEPT] success tripId=${invitation.tripId} membershipCreated=${membershipCreated}`)
+    console.log(`[INVITE_ACCEPT] success tripId=${invitation.tripId} membershipUpserted=true userId=${session.user.id}`)
 
     // Redirect to trip
     redirect(`/trips/${invitation.tripId}`)

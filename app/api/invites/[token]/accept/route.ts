@@ -61,39 +61,34 @@ export async function POST(
       }
     }
 
-    // Check if user is already a member
-    const existingMember = await prisma.tripMember.findFirst({
+    // Upsert membership (single source of truth for shared access)
+    const membership = await prisma.tripMember.upsert({
       where: {
+        tripId_userId: {
+          tripId: invitation.tripId,
+          userId: session.user.id,
+        },
+      },
+      update: {
+        role: invitation.role,
+      },
+      create: {
         tripId: invitation.tripId,
         userId: session.user.id,
+        role: invitation.role,
       },
     })
 
-    let alreadyMember = false
-    let createdMembership = false
-    if (existingMember) {
-      alreadyMember = true
-    } else {
-      // Add user as member
-      await prisma.tripMember.create({
-        data: {
-          tripId: invitation.tripId,
-          userId: session.user.id,
-          role: invitation.role,
-        },
-      })
-      createdMembership = true
-      console.log(`[INVITE_ACCEPT] Created TripMember for user ${session.user.id} on trip ${invitation.tripId}`)
-    }
+    const wasExisting = membership.createdAt < new Date(Date.now() - 1000) // Created more than 1 sec ago
 
     // Mark invitation as accepted
     await invitationsRepository.acceptInvitation(token, session.user.id)
 
-    console.log(`[INVITE_ACCEPT] Accepted invite ${token}, tripId: ${invitation.tripId}, userId: ${session.user.id}, alreadyMember: ${alreadyMember}, createdMembership: ${createdMembership}`)
+    console.log(`[INVITE_ACCEPT] Accepted invite ${token}, tripId: ${invitation.tripId}, userId: ${session.user.id}, membershipUpserted: true, alreadyMember: ${wasExisting}`)
 
     return NextResponse.json({
       tripId: invitation.tripId,
-      alreadyMember,
+      alreadyMember: wasExisting,
     })
   } catch (error) {
     console.error("Failed to accept invitation:", error)

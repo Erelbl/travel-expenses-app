@@ -11,7 +11,7 @@ export class PrismaTripsRepository implements TripsRepository {
       where: {
         OR: [
           { ownerId: userId },
-          { members: { some: { userId } } }
+          { members: { some: { userId } } } // Single source of truth for shared access
         ]
       },
       select: {
@@ -40,6 +40,10 @@ export class PrismaTripsRepository implements TripsRepository {
       },
       orderBy: { createdAt: "desc" },
         })
+        
+        const ownedCount = trips.filter(t => t.owner.id === userId).length
+        const sharedCount = trips.length - ownedCount
+        console.log(`[MY_TRIPS] userId=${userId} total=${trips.length} owned=${ownedCount} shared=${sharedCount}`)
         
         return trips.map(t => ({
       id: t.id,
