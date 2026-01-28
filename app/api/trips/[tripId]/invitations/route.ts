@@ -5,7 +5,7 @@ import { invitationsRepository } from "@/lib/data/prisma/invitations-prisma.repo
 
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ tripId: string }> }
 ) {
   try {
     const session = await auth()
@@ -40,7 +40,7 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ tripId: string }> }
 ) {
   const { id: tripId } = await context.params
   let invitedEmail = ""

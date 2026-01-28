@@ -5,7 +5,7 @@ import { invitationsRepository } from "@/lib/data/prisma/invitations-prisma.repo
 
 export async function DELETE(
   req: NextRequest,
-  context: { params: Promise<{ id: string; invitationId: string }> }
+  context: { params: Promise<{ tripId: string; invitationId: string }> }
 ) {
   try {
     const session = await auth()

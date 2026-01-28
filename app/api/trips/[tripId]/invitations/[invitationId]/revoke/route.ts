@@ -5,7 +5,7 @@ import { invitationsRepository } from "@/lib/data/prisma/invitations-prisma.repo
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ id: string; invitationId: string }> }
+  context: { params: Promise<{ tripId: string; invitationId: string }> }
 ) {
   try {
     const session = await auth()
@@ -13,7 +13,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: tripId, invitationId } = await context.params
+    const { tripId, invitationId } = await context.params
 
     // Verify user is owner or editor of this trip
     const trip = await prisma.trip.findFirst({
