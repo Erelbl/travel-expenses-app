@@ -209,7 +209,9 @@ const costPerAdultInsight: InsightEvaluator = {
 const countryComparisonInsight: InsightEvaluator = {
   isEligible: (trip, expenses) => {
     const countries = new Set(expenses.map(e => e.country))
-    return countries.size >= 2
+    // Guard: Only show if trip has 2+ distinct countries
+    const tripCountries = new Set(trip.countries || [])
+    return countries.size >= 2 && tripCountries.size >= 2
   },
   calculate: (trip, expenses) => {
     // Calculate daily average per country

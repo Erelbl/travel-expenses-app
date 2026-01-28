@@ -548,7 +548,7 @@ export default function AddExpensePage() {
                     <span className="text-green-600 font-medium">Unlimited</span>
                   ) : (
                     <span className={receiptScanStatus.remaining === 0 ? "text-red-600 font-medium" : "text-slate-600"}>
-                      {receiptScanStatus.remaining} of {receiptScanStatus.limit}
+                      {receiptScanStatus.remaining}/{receiptScanStatus.limit}
                     </span>
                   )}
                 </div>

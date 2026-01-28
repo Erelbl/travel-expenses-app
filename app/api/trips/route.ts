@@ -5,6 +5,8 @@ import { logError } from '@/lib/utils/logger'
 
 const tripsRepository = new PrismaTripsRepository()
 
+export const revalidate = 30
+
 export async function GET() {
   try {
     const session = await auth()
@@ -13,7 +15,12 @@ export async function GET() {
     }
 
     const trips = await tripsRepository.listTrips(session.user.id)
-    return NextResponse.json(trips)
+    
+    return NextResponse.json(trips, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
+      }
+    })
   } catch (error) {
     logError('API /trips GET', error)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

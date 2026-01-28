@@ -23,16 +23,20 @@ const DatePickerInput = React.forwardRef<HTMLDivElement, DatePickerInputProps>(
     const [open, setOpen] = React.useState(false)
     const isRTL = locale === "he"
 
-    const selectedDate = value ? new Date(value) : undefined
+    const selectedDate = value ? new Date(value + 'T00:00:00') : undefined
 
     const handleSelect = (date: Date) => {
-      const isoString = date.toISOString().split("T")[0]
+      // Normalize to local date to avoid timezone shifts
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const isoString = `${year}-${month}-${day}`
       onChange?.({ target: { value: isoString } })
       setOpen(false)
     }
 
     const formatDate = (dateString: string) => {
-      const date = new Date(dateString)
+      const date = new Date(dateString + 'T00:00:00')
       return date.toLocaleDateString(locale === "he" ? "he-IL" : "en-US", {
         year: "numeric",
         month: "short",
@@ -42,10 +46,11 @@ const DatePickerInput = React.forwardRef<HTMLDivElement, DatePickerInputProps>(
 
     const isDateDisabled = (date: Date) => {
       if (!min) return false
-      const minDate = new Date(min)
+      const minDate = new Date(min + 'T00:00:00')
+      const compareDate = new Date(date)
       minDate.setHours(0, 0, 0, 0)
-      date.setHours(0, 0, 0, 0)
-      return date < minDate
+      compareDate.setHours(0, 0, 0, 0)
+      return compareDate < minDate
     }
 
     return (
@@ -74,7 +79,7 @@ const DatePickerInput = React.forwardRef<HTMLDivElement, DatePickerInputProps>(
             </button>
           </PopoverTrigger>
           {open && (
-            <PopoverContent className="w-auto p-0" align="start" side="bottom">
+            <PopoverContent className="w-auto p-0 z-[100]" align="start" side="bottom" sideOffset={4}>
               <Calendar
                 selected={selectedDate}
                 onSelect={handleSelect}

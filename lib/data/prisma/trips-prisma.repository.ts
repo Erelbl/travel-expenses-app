@@ -11,7 +11,7 @@ export class PrismaTripsRepository implements TripsRepository {
       where: {
         OR: [
           { ownerId: userId },
-          { members: { some: { userId } } } // Single source of truth for shared access
+          { members: { some: { userId } } }
         ]
       },
       select: {
@@ -21,14 +21,7 @@ export class PrismaTripsRepository implements TripsRepository {
         endDate: true,
         baseCurrency: true,
         countries: true,
-        tripType: true,
-        adults: true,
-        children: true,
-        travelStyle: true,
-        ageRange: true,
-        targetBudget: true,
         isClosed: true,
-        closedAt: true,
         createdAt: true,
         owner: { select: { id: true, name: true } },
         members: {
@@ -53,14 +46,8 @@ export class PrismaTripsRepository implements TripsRepository {
       baseCurrency: t.baseCurrency,
       countries: t.countries,
       plannedCountries: t.countries,
-      tripType: t.tripType?.toLowerCase() as any ?? undefined,
-      adults: t.adults ?? undefined,
-      children: t.children ?? undefined,
-      travelStyle: t.travelStyle?.toLowerCase() as any ?? undefined,
-      ageRange: t.ageRange ? t.ageRange.replace('AGE_', '').toLowerCase() as any : undefined,
-      targetBudget: t.targetBudget ?? undefined,
       isClosed: t.isClosed,
-      closedAt: t.closedAt?.getTime() ?? null,
+      closedAt: null,
       itineraryLegs: [],
       members: [
         { id: t.owner.id, name: t.owner.name ?? "Owner", role: "owner" as const },
@@ -74,7 +61,7 @@ export class PrismaTripsRepository implements TripsRepository {
         }))
       },
       [`trips-list-${userId}`],
-      { revalidate: 15, tags: [`trips-${userId}`] }
+      { revalidate: 30, tags: [`trips-${userId}`] }
     )()
   }
 

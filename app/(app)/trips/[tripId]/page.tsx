@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X, Lightbulb, Settings, ArrowUpDown, Share2 } from "lucide-react"
+import { Plus, DollarSign, TrendingUp, Calendar, BarChart3, Zap, Coins, Users, Filter, MapPin, X, Lightbulb, Settings, ArrowUpDown, Share2, Search } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { FloatingAddButton } from "@/components/floating-add-button"
 import { QuickAddExpense } from "@/components/quick-add-expense"
@@ -173,6 +173,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
   // Filters and sorting
   const [filterCategory, setFilterCategory] = useState<ExpenseCategory | "">("")
   const [filterCurrency, setFilterCurrency] = useState<string>("")
+  const [filterText, setFilterText] = useState<string>("")
   const [sortDirection, setSortDirection] = useState<"newest" | "oldest">("newest")
 
   useEffect(() => {
@@ -286,6 +287,16 @@ function TripPageContent({ tripId }: { tripId: string }) {
     filteredExpenses = filteredExpenses.filter((e) => e.currency === filterCurrency)
   }
 
+  // Filter by text search (case-insensitive, searches title and note)
+  if (filterText.trim()) {
+    const searchLower = filterText.toLowerCase().trim()
+    filteredExpenses = filteredExpenses.filter((e) => {
+      const titleMatch = e.merchant?.toLowerCase().includes(searchLower)
+      const noteMatch = e.note?.toLowerCase().includes(searchLower)
+      return titleMatch || noteMatch
+    })
+  }
+
   // Get unique currencies from all expenses for filter dropdown
   const availableCurrencies = Array.from(new Set(expenses.map((e) => e.currency))).sort()
 
@@ -303,7 +314,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
     .slice(0, MAX_RECENT_EXPENSES)
   
   // Check if filters are active
-  const hasActiveFilters = filterCategory !== "" || filterCurrency !== ""
+  const hasActiveFilters = filterCategory !== "" || filterCurrency !== "" || filterText !== ""
 
   // Calculate trip day info for time context
   const tripDayInfo = getTripDayInfo(trip.startDate, trip.endDate)
@@ -787,14 +798,37 @@ function TripPageContent({ tripId }: { tripId: string }) {
               </div>
             </div>
             
-            {/* Filter and Sort Controls */}
+            {/* Compact Inline Filters */}
             {expenses.length > 0 && (
-              <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex flex-wrap gap-2 items-center">
+                {/* Text Search */}
+                <div className="relative flex-1 min-w-[160px]">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder={t("filters.searchPlaceholder") || "Search..."}
+                    value={filterText}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setFilterText(value)
+                    }}
+                    className="w-full h-9 pl-8 pr-8 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  />
+                  {filterText && (
+                    <button
+                      onClick={() => setFilterText("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
                 {/* Category Filter */}
                 <Select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value as ExpenseCategory | "")}
-                  className="flex-1 text-sm"
+                  className="h-9 text-sm min-w-[120px]"
                 >
                   <option value="">{t("filters.allCategories")}</option>
                   {CATEGORIES.map((cat) => (
@@ -808,7 +842,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
                 <Select
                   value={filterCurrency}
                   onChange={(e) => setFilterCurrency(e.target.value)}
-                  className="flex-1 text-sm"
+                  className="h-9 text-sm min-w-[100px]"
                 >
                   <option value="">{t("filters.allCurrencies")}</option>
                   {availableCurrencies.map((curr) => (
@@ -821,13 +855,11 @@ function TripPageContent({ tripId }: { tripId: string }) {
                 {/* Sort Direction */}
                 <button
                   onClick={() => setSortDirection(sortDirection === "newest" ? "oldest" : "newest")}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-medium text-slate-700 transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-2.5 h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-medium text-slate-700 transition-colors whitespace-nowrap"
+                  title={sortDirection === "newest" ? t("home.newestFirst") : t("home.oldestFirst")}
                 >
-                  <ArrowUpDown className="h-4 w-4" />
-                  <span className="hidden md:inline">
-                    {sortDirection === "newest" ? t("home.newestFirst") : t("home.oldestFirst")}
-                  </span>
-                  <span className="md:hidden">
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline text-xs">
                     {sortDirection === "newest" ? t("home.newest") : t("home.oldest")}
                   </span>
                 </button>
@@ -838,10 +870,11 @@ function TripPageContent({ tripId }: { tripId: string }) {
                     onClick={() => {
                       setFilterCategory("")
                       setFilterCurrency("")
+                      setFilterText("")
                     }}
-                    className="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-medium text-slate-600 transition-colors whitespace-nowrap"
+                    className="px-2.5 h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-medium text-slate-600 transition-colors whitespace-nowrap"
                   >
-                    {t("filters.clear")}
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>

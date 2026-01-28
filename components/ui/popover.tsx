@@ -57,9 +57,10 @@ interface PopoverContentProps {
   className?: string
   align?: "start" | "center" | "end"
   side?: "top" | "bottom" | "left" | "right"
+  sideOffset?: number
 }
 
-const PopoverContent = ({ children, className, align = "start", side = "bottom" }: PopoverContentProps) => {
+const PopoverContent = ({ children, className, align = "start", side = "bottom", sideOffset = 0 }: PopoverContentProps) => {
   return (
     <div
       className={cn(
@@ -71,6 +72,10 @@ const PopoverContent = ({ children, className, align = "start", side = "bottom" 
         align === "end" && "right-0",
         className
       )}
+      style={{
+        marginTop: side === "bottom" ? `${8 + sideOffset}px` : undefined,
+        marginBottom: side === "top" ? `${8 + sideOffset}px` : undefined,
+      }}
     >
       {children}
     </div>

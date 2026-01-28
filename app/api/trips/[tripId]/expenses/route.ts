@@ -6,8 +6,7 @@ import { unlockNewAchievements } from '@/lib/achievements/achievements'
 
 const expensesRepository = new PrismaExpensesRepository()
 
-// Disable caching for this route - expense list changes frequently via mutations
-export const dynamic = 'force-dynamic'
+export const revalidate = 30
 
 export async function GET(
   request: Request,
@@ -24,7 +23,12 @@ export async function GET(
       return NextResponse.json({ error: 'Missing id' }, { status: 400 })
     }
     const expenses = await expensesRepository.listExpenses(id)
-    return NextResponse.json(expenses)
+    
+    return NextResponse.json(expenses, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
+      }
+    })
   } catch (error) {
     logError('API /trips/[id]/expenses GET', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })

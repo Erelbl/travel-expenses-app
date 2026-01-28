@@ -23,15 +23,9 @@ type ExpenseRow = Prisma.ExpenseGetPayload<{
     currency: true
     amount: true
     convertedAmount: true
-    fxRate: true
-    fxDate: true
-    manualRateToBase: true
     expenseDate: true
-    usageDate: true
-    nights: true
     note: true
     createdAt: true
-    updatedAt: true
   }
 }>
 
@@ -57,15 +51,9 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         currency: true,
         amount: true,
         convertedAmount: true,
-        fxRate: true,
-        fxDate: true,
-        manualRateToBase: true,
         expenseDate: true,
-        usageDate: true,
-        nights: true,
         note: true,
         createdAt: true,
-        updatedAt: true,
       },
       orderBy: { createdAt: "desc" },
         })
@@ -76,11 +64,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       amount: e.amount,
       currency: e.currency,
       baseCurrency: "",
-      fxRateUsed: e.fxRate ?? undefined,
-      fxRateDate: e.fxDate?.toISOString().split('T')[0],
       convertedAmount: e.convertedAmount ?? undefined,
-      fxRateSource: e.manualRateToBase ? "manual" as const : (e.fxRate ? "auto" as const : undefined),
-      manualRateToBase: e.manualRateToBase ?? undefined,
       amountInBase: e.convertedAmount ?? undefined,
       category: e.category as any,
       country: e.countryCode,
@@ -94,14 +78,10 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       },
       date: e.expenseDate.toISOString().split('T')[0],
       createdAt: e.createdAt.getTime(),
-      numberOfNights: e.nights ?? undefined,
-      isFutureExpense: !!e.usageDate,
-      usageDate: e.usageDate?.toISOString().split('T')[0],
-      pricePerNight: e.nights && e.convertedAmount ? e.convertedAmount / e.nights : undefined,
         }))
       },
       [`expenses-${tripId}`],
-      { revalidate: 15, tags: [`expenses-${tripId}`] }
+      { revalidate: 30, tags: [`expenses-${tripId}`] }
     )()
   }
 
