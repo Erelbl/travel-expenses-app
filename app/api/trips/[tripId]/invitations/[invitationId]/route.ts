@@ -13,7 +13,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id: tripId, invitationId } = await context.params
+    const { tripId, invitationId } = await context.params
 
     // Verify user is owner or editor of this trip
     const trip = await prisma.trip.findFirst({
