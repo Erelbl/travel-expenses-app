@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { loginAction } from "../actions"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
@@ -8,13 +9,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 export function LoginForm() {
+  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [callbackUrl, setCallbackUrl] = useState("/trips")
+
+  useEffect(() => {
+    const urlCallback = searchParams.get("callbackUrl")
+    if (urlCallback) {
+      setCallbackUrl(urlCallback)
+      console.log(`[AUTH_FORM] callbackUrl_detected=${urlCallback}`)
+    }
+  }, [searchParams])
 
   async function handleSubmit(formData: FormData) {
     setError(null)
     setLoading(true)
+    
+    // Add callbackUrl to form data
+    formData.append("callbackUrl", callbackUrl)
 
     const result = await loginAction(formData)
 
@@ -26,7 +40,8 @@ export function LoginForm() {
 
   async function handleGoogleSignIn() {
     setGoogleLoading(true)
-    await signIn("google", { callbackUrl: "/trips" })
+    console.log(`[AUTH_FORM] google_signin callbackUrl=${callbackUrl}`)
+    await signIn("google", { callbackUrl })
   }
 
   return (

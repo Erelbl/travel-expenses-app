@@ -20,6 +20,7 @@ export async function signUpAction(formData: FormData) {
     const name = formData.get("name") as string
     const email = formData.get("email") as string
     const password = formData.get("password") as string
+    const callbackUrl = (formData.get("callbackUrl") as string) || "/trips"
 
     if (!email || !password) {
       return { error: "Email and password are required" }
@@ -53,7 +54,8 @@ export async function signUpAction(formData: FormData) {
       redirect: false,
     })
 
-    redirect("/trips")
+    console.log(`[AUTH_ACTION] signup_success redirecting_to=${callbackUrl}`)
+    redirect(callbackUrl)
   } catch (error) {
     // Re-throw redirect errors (not actual errors)
     if (error && typeof error === "object" && "digest" in error && 
@@ -73,6 +75,7 @@ export async function signUpAction(formData: FormData) {
 export async function loginAction(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
+  const callbackUrl = (formData.get("callbackUrl") as string) || "/trips"
 
   if (!email || !password) {
     return { error: "Email and password are required" }
@@ -93,8 +96,9 @@ export async function loginAction(formData: FormData) {
     return { error: "Invalid email or password" }
   }
   
-  // Redirect outside try-catch
-  redirect("/trips")
+  // Redirect to callbackUrl or default to /trips
+  console.log(`[AUTH_ACTION] login_success redirecting_to=${callbackUrl}`)
+  redirect(callbackUrl)
 }
 
 export async function sendVerificationEmail(userId: string) {

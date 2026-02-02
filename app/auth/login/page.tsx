@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { LoginForm } from "./LoginForm"
@@ -19,7 +20,9 @@ export default async function LoginPage() {
             <p className="text-slate-600">Sign in to your account to continue</p>
           </div>
 
-          <LoginForm />
+          <Suspense fallback={<div className="animate-pulse">Loading...</div>}>
+            <LoginForm />
+          </Suspense>
 
           <div className="text-center">
             <p className="text-sm text-slate-600">
