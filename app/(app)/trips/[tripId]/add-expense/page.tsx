@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Camera } from "lucide-react"
+import { ArrowLeft, Camera, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
 import { OfflineBanner } from "@/components/OfflineBanner"
@@ -570,7 +570,11 @@ export default function AddExpensePage() {
                 className="flex items-center gap-2 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 title={receiptScanStatus?.plan === "free" ? "Upgrade to Plus or Pro to scan receipts" : undefined}
               >
-                <Camera className="h-4 w-4" />
+                {scanningReceipt ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4" />
+                )}
                 {scanningReceipt ? t('addExpense.scanningReceipt') : t('addExpense.scanReceipt')}
               </Button>
             </div>

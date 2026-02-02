@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Camera } from "lucide-react"
+import { Camera, Loader2 } from "lucide-react"
 import { Modal, ModalHeader, ModalTitle, ModalContent, ModalClose } from "@/components/ui/modal"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -258,6 +258,9 @@ export function QuickAddExpense({
       // Update parent state immediately with created expense
       onExpenseAdded(created)
       
+      // Reset form immediately after successful save
+      resetForm()
+      
       onOpenChange(false)
       
       // Redirect to edit if requested
@@ -303,7 +306,11 @@ export function QuickAddExpense({
                 disabled={scanningReceipt}
                 className="flex items-center gap-2 text-xs text-slate-600 hover:bg-slate-100"
               >
-                <Camera className="h-3.5 w-3.5" />
+                {scanningReceipt ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Camera className="h-3.5 w-3.5" />
+                )}
                 {scanningReceipt ? t('addExpense.scanningReceipt') : t('addExpense.scanReceipt')}
               </Button>
             </div>

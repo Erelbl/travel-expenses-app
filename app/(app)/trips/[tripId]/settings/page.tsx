@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, XCircle, Save, RotateCcw, RefreshCcw, Trash2 } from "lucide-react"
+import { ArrowLeft, XCircle, Save, RotateCcw, RefreshCcw, Trash2, Share2, Users } from "lucide-react"
 import { toast } from "sonner"
 import { BottomNav } from "@/components/bottom-nav"
+import { ShareTripModal } from "@/components/share-trip-modal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DatePickerInput } from "@/components/ui/date-picker-input"
@@ -34,6 +35,7 @@ export default function TripSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   // Form state for Trip Basics
   const [formData, setFormData] = useState({
@@ -658,6 +660,54 @@ export default function TripSettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Trip Sharing Section */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+              <Users className="h-5 w-5 text-sky-500" />
+              {t('settings.sharing') || 'Trip Sharing'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm">
+              <span className="font-medium text-slate-700">{t('settings.members') || 'Members'}:</span>
+              <span className="ml-2 text-slate-900">{trip.members.length}</span>
+            </div>
+            
+            {/* Member list preview */}
+            {trip.members.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {trip.members.slice(0, 3).map(member => (
+                    <Badge key={member.id} variant="outline" className="text-sm">
+                      {member.name}
+                      {member.role === 'owner' && ' 👑'}
+                    </Badge>
+                  ))}
+                  {trip.members.length > 3 && (
+                    <Badge variant="outline" className="text-sm text-slate-500">
+                      +{trip.members.length - 3} more
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <Button
+              onClick={() => setShowShareModal(true)}
+              variant="outline"
+              className="w-full"
+            >
+              <Share2 className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+              {t('settings.manageSharing') || 'Manage Trip Sharing'}
+            </Button>
+
+            <p className="text-xs text-slate-500">
+              {t('settings.sharingHelper') || 'Invite others to view or edit this trip'}
+            </p>
+          </CardContent>
+        </Card>
+
         {/* Unified Save Button */}
         {canEdit && (
           <div className="sticky bottom-20 z-10">
@@ -735,6 +785,15 @@ export default function TripSettingsPage() {
           </Card>
         )}
       </div>
+
+      {/* Share Trip Modal */}
+      {trip && (
+        <ShareTripModal
+          open={showShareModal}
+          onOpenChange={setShowShareModal}
+          trip={trip}
+        />
+      )}
 
       <BottomNav tripId={tripId} />
     </div>

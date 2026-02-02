@@ -175,6 +175,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
   const [filterCurrency, setFilterCurrency] = useState<string>("")
   const [filterText, setFilterText] = useState<string>("")
   const [sortDirection, setSortDirection] = useState<"newest" | "oldest">("newest")
+  const [showAllExpenses, setShowAllExpenses] = useState(false)
 
   useEffect(() => {
     // Load dismissed insights from localStorage
@@ -311,7 +312,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
         ? b.createdAt - a.createdAt 
         : a.createdAt - b.createdAt
     })
-    .slice(0, MAX_RECENT_EXPENSES)
+    .slice(0, showAllExpenses ? undefined : MAX_RECENT_EXPENSES)
   
   // Check if filters are active
   const hasActiveFilters = filterCategory !== "" || filterCurrency !== "" || filterText !== ""
@@ -800,9 +801,9 @@ function TripPageContent({ tripId }: { tripId: string }) {
             
             {/* Compact Inline Filters */}
             {expenses.length > 0 && (
-              <div className="flex flex-wrap gap-2 items-center">
+              <div className="flex gap-2 items-center overflow-x-auto pb-2 -mb-2 md:flex-wrap md:overflow-x-visible md:pb-0 md:mb-0">
                 {/* Text Search */}
-                <div className="relative flex-1 min-w-[160px]">
+                <div className="relative flex-shrink-0 min-w-[160px] md:flex-1">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                   <input
                     type="text"
@@ -828,7 +829,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
                 <Select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value as ExpenseCategory | "")}
-                  className="h-9 text-sm min-w-[120px]"
+                  className="h-9 text-sm min-w-[120px] flex-shrink-0"
                 >
                   <option value="">{t("filters.allCategories")}</option>
                   {CATEGORIES.map((cat) => (
@@ -842,7 +843,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
                 <Select
                   value={filterCurrency}
                   onChange={(e) => setFilterCurrency(e.target.value)}
-                  className="h-9 text-sm min-w-[100px]"
+                  className="h-9 text-sm min-w-[100px] flex-shrink-0"
                 >
                   <option value="">{t("filters.allCurrencies")}</option>
                   {availableCurrencies.map((curr) => (
@@ -855,7 +856,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
                 {/* Sort Direction */}
                 <button
                   onClick={() => setSortDirection(sortDirection === "newest" ? "oldest" : "newest")}
-                  className="flex items-center gap-1.5 px-2.5 h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-medium text-slate-700 transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-2.5 h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-sm font-medium text-slate-700 transition-colors whitespace-nowrap flex-shrink-0"
                   title={sortDirection === "newest" ? t("home.newestFirst") : t("home.oldestFirst")}
                 >
                   <ArrowUpDown className="h-3.5 w-3.5" />
@@ -872,7 +873,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
                       setFilterCurrency("")
                       setFilterText("")
                     }}
-                    className="px-2.5 h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-medium text-slate-600 transition-colors whitespace-nowrap"
+                    className="px-2.5 h-9 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-medium text-slate-600 transition-colors whitespace-nowrap flex-shrink-0"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -909,13 +910,21 @@ function TripPageContent({ tripId }: { tripId: string }) {
                     onEdit={canEditExpense(trip, expense) ? () => router.push(`/trips/${tripId}/edit-expense/${expense.id}`) : undefined}
                   />
                 ))}
-                {filteredExpenses.length > MAX_RECENT_EXPENSES && (
-                  <Link
-                    href={`/trips/${tripId}/reports`}
-                    className="block py-3 px-5 text-center text-sm font-medium text-sky-600 hover:text-sky-700 hover:bg-sky-50 border-t border-slate-100 transition-colors"
+                {filteredExpenses.length > MAX_RECENT_EXPENSES && !showAllExpenses && (
+                  <button
+                    onClick={() => setShowAllExpenses(true)}
+                    className="block w-full py-3 px-5 text-center text-sm font-medium text-sky-600 hover:text-sky-700 hover:bg-sky-50 border-t border-slate-100 transition-colors"
                   >
                     {t("home.viewAllExpenses")} ({filteredExpenses.length})
-                  </Link>
+                  </button>
+                )}
+                {showAllExpenses && filteredExpenses.length > MAX_RECENT_EXPENSES && (
+                  <button
+                    onClick={() => setShowAllExpenses(false)}
+                    className="block w-full py-3 px-5 text-center text-sm font-medium text-slate-600 hover:text-slate-700 hover:bg-slate-50 border-t border-slate-100 transition-colors"
+                  >
+                    {t("home.showLess") || "Show less"}
+                  </button>
                 )}
               </div>
             )}
