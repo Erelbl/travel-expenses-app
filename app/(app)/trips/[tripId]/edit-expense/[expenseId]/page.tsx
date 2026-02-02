@@ -130,15 +130,20 @@ export default function EditExpensePage() {
 
   async function loadData() {
     try {
-      const [tripData, expenseData] = await Promise.all([
-        tripsRepository.getTrip(tripId),
-        expensesRepository.getExpense(expenseId)
-      ])
-      
-      if (!tripData || !expenseData) {
+      // Fetch trip data
+      const tripData = await tripsRepository.getTrip(tripId)
+      if (!tripData) {
         router.push(`/trips/${tripId}`)
         return
       }
+      
+      // Fetch expense data using trip-scoped endpoint
+      const expenseRes = await fetch(`/api/trips/${tripId}/expenses/${expenseId}`, { cache: 'no-store' })
+      if (!expenseRes.ok) {
+        router.push(`/trips/${tripId}`)
+        return
+      }
+      const expenseData = await expenseRes.json()
       
       setTrip(tripData)
       setOriginalExpense(expenseData)
@@ -437,7 +442,7 @@ export default function EditExpensePage() {
         }
       }
 
-      const updated = await expensesRepository.updateExpense(expenseId, updates)
+      const updated = await expensesRepository.updateExpense(expenseId, { ...updates, tripId })
       
       // Store manual FX rate for future use
       if (fxRateStatus === "manual" && fxRate) {
@@ -467,7 +472,7 @@ export default function EditExpensePage() {
     setDeleting(true)
 
     try {
-      const response = await fetch(`/api/expenses/${expenseId}`, {
+      const response = await fetch(`/api/trips/${tripId}/expenses/${expenseId}`, {
         method: 'DELETE',
       })
 

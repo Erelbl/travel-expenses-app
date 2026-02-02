@@ -9,10 +9,11 @@ export class ApiExpensesRepository implements ExpensesRepository {
   }
 
   async getExpense(id: string): Promise<Expense | null> {
-    const res = await fetch(`/api/expenses/${id}`, { cache: 'no-store' })
-    if (res.status === 404) return null
-    if (!res.ok) throw new Error('Failed to fetch expense')
-    return res.json()
+    // First, we need to get the expense to know which trip it belongs to
+    // For now, we'll need to list all expenses across trips (not ideal)
+    // In practice, callers should use the trip-scoped endpoint directly
+    // This is a temporary shim - ideally, this method should take tripId as parameter
+    throw new Error('getExpense by ID alone is deprecated - use trip-scoped endpoint instead')
   }
 
   async createExpense(expense: CreateExpense): Promise<Expense> {
@@ -26,7 +27,11 @@ export class ApiExpensesRepository implements ExpensesRepository {
   }
 
   async updateExpense(id: string, expense: Partial<Expense>): Promise<Expense> {
-    const res = await fetch(`/api/expenses/${id}`, {
+    // updateExpense requires tripId - the expense partial should include it
+    if (!expense.tripId) {
+      throw new Error('updateExpense requires expense.tripId to be set')
+    }
+    const res = await fetch(`/api/trips/${expense.tripId}/expenses/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(expense),
@@ -36,8 +41,8 @@ export class ApiExpensesRepository implements ExpensesRepository {
   }
 
   async deleteExpense(id: string): Promise<void> {
-    const res = await fetch(`/api/expenses/${id}`, { method: 'DELETE' })
-    if (!res.ok) throw new Error('Failed to delete expense')
+    // deleteExpense by ID alone is deprecated - callers should use direct fetch with tripId
+    throw new Error('deleteExpense by ID alone is deprecated - use trip-scoped endpoint instead')
   }
 }
 
