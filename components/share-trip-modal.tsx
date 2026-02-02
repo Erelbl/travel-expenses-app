@@ -102,10 +102,22 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
   }
 
   async function handleCopyLink() {
-    if (!currentInvite) return
+    // Auto-create invite if none exists
+    if (!currentInvite) {
+      await handleCreateInvite()
+      await loadCurrentInvite()
+      // Wait a bit for state to update
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+    
+    const invite = currentInvite || await getCurrentInviteFromAPI()
+    if (!invite) {
+      toast.error(t("share.error"))
+      return
+    }
     
     try {
-      const url = `${window.location.origin}/invites/${currentInvite.token}`
+      const url = `${window.location.origin}/invites/${invite.token}`
       await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -116,9 +128,20 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
   }
 
   async function handleWhatsAppShare() {
-    if (!currentInvite) return
+    // Auto-create invite if none exists
+    if (!currentInvite) {
+      await handleCreateInvite()
+      await loadCurrentInvite()
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
     
-    const url = `${window.location.origin}/invites/${currentInvite.token}`
+    const invite = currentInvite || await getCurrentInviteFromAPI()
+    if (!invite) {
+      toast.error(t("share.error"))
+      return
+    }
+    
+    const url = `${window.location.origin}/invites/${invite.token}`
     const text = `${t("share.whatsappMessage")} ${url}`
     
     // Use Web Share API if available (mobile)
@@ -139,6 +162,17 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
     
     // Fallback to WhatsApp Web for desktop
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+  }
+
+  async function getCurrentInviteFromAPI(): Promise<TripInvitation | null> {
+    try {
+      const res = await fetch(`/api/trips/${trip.id}/invitations`)
+      if (!res.ok) return null
+      const data = await res.json()
+      return data && data.length > 0 ? data[0] : null
+    } catch {
+      return null
+    }
   }
 
   async function handleRevokeInvite() {
@@ -197,42 +231,46 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
             <p className="font-semibold text-lg text-slate-900">{trip.name}</p>
           </div>
 
-          {/* Current Share Link - Always visible */}
+          {/* Share Link Actions */}
           <div className="space-y-3 p-4 bg-sky-50 rounded-xl border border-sky-200">
             <Label className="text-sm font-semibold text-slate-700">
               {t("share.shareLink")}
             </Label>
             
-            {currentInvite ? (
-              <div className="space-y-3">
+            <div className="space-y-3">
+              {currentInvite && (
                 <Input
                   value={inviteUrl}
                   readOnly
                   className="text-sm"
                 />
+              )}
+              
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={handleCopyLink}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={creating}
+                >
+                  {copied ? (
+                    <Check className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                  ) : (
+                    <Copy className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                  )}
+                  {t("share.copy")}
+                </Button>
                 
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    onClick={handleCopyLink}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    {copied ? (
-                      <Check className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-                    ) : (
-                      <Copy className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-                    )}
-                    {t("share.copy")}
-                  </Button>
-                  
-                  <Button
-                    onClick={handleWhatsAppShare}
-                    variant="outline"
-                    className="flex-1 bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
-                  >
-                    {t("share.whatsapp")}
-                  </Button>
-                  
+                <Button
+                  onClick={handleWhatsAppShare}
+                  variant="outline"
+                  className="flex-1 bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+                  disabled={creating}
+                >
+                  {t("share.whatsapp")}
+                </Button>
+                
+                {currentInvite && (
                   <Button
                     onClick={handleRevokeInvite}
                     disabled={revoking}
@@ -242,23 +280,21 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
                     <X className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
                     {t("share.revoke")}
                   </Button>
-                </div>
-                
+                )}
+              </div>
+              
+              {currentInvite && (
                 <p className="text-xs text-slate-500">
                   {t("share.linkExpiresInfo")}
                 </p>
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500 py-3">
-                {t("share.createLink")}
-              </p>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Email Invite Section - Always visible */}
+          {/* Optional: Customize invite settings */}
           <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
             <Label className="text-sm font-semibold text-slate-700">
-              {currentInvite ? t("share.sendAnotherInvite") : t("share.createLink")}
+              {currentInvite ? t("share.sendAnotherInvite") : "Invite Settings"}
             </Label>
             
             <div className="space-y-3">
