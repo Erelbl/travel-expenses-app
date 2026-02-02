@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
 import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repository'
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
@@ -64,6 +65,10 @@ export async function PATCH(
     const body = await request.json()
     const expense = await expensesRepository.updateExpense(expenseId, body)
     
+    // Revalidate all affected pages (invalidates both route cache and data cache including unstable_cache)
+    revalidatePath(`/trips/${tripId}`, 'page')
+    revalidatePath(`/trips/${tripId}/reports`, 'page')
+    
     return NextResponse.json(expense)
   } catch (error) {
     logError('API /trips/[tripId]/expenses/[expenseId] PATCH', error)
@@ -96,6 +101,11 @@ export async function DELETE(
     }
 
     await expensesRepository.deleteExpense(expenseId)
+    
+    // Revalidate all affected pages (invalidates both route cache and data cache including unstable_cache)
+    revalidatePath(`/trips/${tripId}`, 'page')
+    revalidatePath(`/trips/${tripId}/reports`, 'page')
+    
     return NextResponse.json({ success: true })
   } catch (error) {
     logError('API /trips/[tripId]/expenses/[expenseId] DELETE', error)

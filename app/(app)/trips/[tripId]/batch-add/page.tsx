@@ -234,9 +234,6 @@ export default function BatchAddPage() {
       )
 
       if (result.success) {
-        // Mark that trip page needs refresh when it loads
-        sessionStorage.setItem(`trip_${tripId}_needs_refresh`, 'true')
-        
         toast.success(t("batchAdd.success", { count: result.created }))
         router.push(`/trips/${tripId}`)
       } else {

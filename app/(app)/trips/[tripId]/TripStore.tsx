@@ -67,14 +67,6 @@ export function TripStoreProvider({
     }
   }, [tripId])
 
-  useEffect(() => {
-    const needsRefresh = sessionStorage.getItem(`trip_${tripId}_needs_refresh`)
-    if (needsRefresh === 'true') {
-      refreshTrip()
-      sessionStorage.removeItem(`trip_${tripId}_needs_refresh`)
-    }
-  }, [tripId, refreshTrip])
-
   // Local state mutation methods
   const addExpense = useCallback((expense: Expense) => {
     setExpenses(prev => [expense, ...prev])

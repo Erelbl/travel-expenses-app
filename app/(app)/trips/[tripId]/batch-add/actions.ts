@@ -138,7 +138,9 @@ export async function batchAddExpenses(
       expenseDataArray.map((data) => prisma.expense.create({ data }))
     )
 
-    revalidatePath(`/trips/${tripId}`)
+    // Revalidate all affected pages (invalidates both route cache and data cache including unstable_cache)
+    revalidatePath(`/trips/${tripId}`, 'page')
+    revalidatePath(`/trips/${tripId}/reports`, 'page')
 
     return { success: true, created: expenseDataArray.length }
   } catch (error) {

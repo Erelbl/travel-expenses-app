@@ -453,9 +453,6 @@ export default function EditExpensePage() {
         })
       }
       
-      // Mark that trip page needs refresh when it loads
-      sessionStorage.setItem(`trip_${tripId}_needs_refresh`, 'true')
-      
       toast.success(t('editExpense.success'))
       router.push(`/trips/${tripId}`)
     } catch (error) {
@@ -479,9 +476,6 @@ export default function EditExpensePage() {
       if (!response.ok) {
         throw new Error('Failed to delete expense')
       }
-
-      // Mark that trip page needs refresh when it loads
-      sessionStorage.setItem(`trip_${tripId}_needs_refresh`, 'true')
 
       toast.success(t('editExpense.deleteSuccess'))
       setShowDeleteModal(false)

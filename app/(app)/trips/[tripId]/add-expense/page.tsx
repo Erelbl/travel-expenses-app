@@ -468,9 +468,6 @@ export default function AddExpensePage() {
         })
       }
       
-      // Mark that trip page needs refresh when it loads
-      sessionStorage.setItem(`trip_${tripId}_needs_refresh`, 'true')
-      
       toast.success(t('addExpense.success'))
       router.push(`/trips/${tripId}`)
     } catch (error) {

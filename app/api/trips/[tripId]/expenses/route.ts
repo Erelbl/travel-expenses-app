@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
 import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repository'
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
@@ -70,6 +71,10 @@ export async function POST(
     
     // Check for newly unlocked achievements
     const { newlyUnlocked } = await unlockNewAchievements(session.user.id)
+    
+    // Revalidate all affected pages (invalidates both route cache and data cache including unstable_cache)
+    revalidatePath(`/trips/${tripId}`, 'page')
+    revalidatePath(`/trips/${tripId}/reports`, 'page')
     
     return NextResponse.json({ ...expense, newlyUnlocked })
   } catch (error) {
