@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation"
-import { isRedirectError } from "next/dist/client/components/redirect"
 import { Users, AlertCircle, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -140,6 +139,9 @@ export default async function AcceptInvitePage({ params }: PageProps) {
   // Auto-accept: user is authenticated
   console.log(`[INVITE] starting_acceptance token=${token} userId=${session.user.id} email=${session.user.email} tripId=${invitation.tripId}`)
 
+  // Track success to redirect after try/catch
+  let acceptSuccess = false
+  
   try {
     console.log(`[INVITE] creating_tripmember tripId=${invitation.tripId} userId=${session.user.id} role=${invitation.role}`)
     
@@ -174,15 +176,9 @@ export default async function AcceptInvitePage({ params }: PageProps) {
     })
 
     console.log(`[INVITE_ACCEPT] success token=${token} tripId=${invitation.tripId} userId=${session.user.id}`)
-
-    // Redirect to trip - cache will be fresh on navigation
-    redirect(`/trips/${invitation.tripId}`)
-  } catch (error) {
-    // Next.js redirect() throws a special error - rethrow it to allow redirect to happen
-    if (isRedirectError(error)) {
-      throw error
-    }
     
+    acceptSuccess = true
+  } catch (error) {
     console.error("[INVITE_ACCEPT] error:", error)
     
     return (
@@ -203,5 +199,10 @@ export default async function AcceptInvitePage({ params }: PageProps) {
         </Card>
       </div>
     )
+  }
+  
+  // Redirect outside try/catch to avoid catching the redirect error
+  if (acceptSuccess) {
+    redirect(`/trips/${invitation.tripId}`)
   }
 }
