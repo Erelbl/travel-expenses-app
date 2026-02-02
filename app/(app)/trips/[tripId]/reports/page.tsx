@@ -252,8 +252,13 @@ export default function ReportsPage() {
   // Apply filters
   const filteredExpenses = filterExpenses(expenses, filters)
   
-  // Calculate metrics
-  const summary = calculateSummary(filteredExpenses, trip)
+  // Apply exclude-flights toggle to both total and daily avg
+  const expensesForMetrics = excludeFlightsFromDailyAvg
+    ? filteredExpenses.filter(e => e.category !== 'Flights')
+    : filteredExpenses
+  
+  // Calculate metrics with toggle applied
+  const summary = calculateSummary(expensesForMetrics, trip)
   const categoryBreakdown = calculateCategoryBreakdown(filteredExpenses)
   
   // Country breakdown - exclude flights by default unless toggle is on
@@ -261,12 +266,6 @@ export default function ReportsPage() {
     ? filteredExpenses 
     : filteredExpenses.filter(e => e.category !== 'Flights')
   const countryBreakdown = calculateCountryBreakdown(expensesForCountryBreakdown)
-  
-  // Daily average - with and without flights
-  const expensesForDailyAvg = excludeFlightsFromDailyAvg
-    ? filteredExpenses.filter(e => e.category !== 'Flights')
-    : filteredExpenses
-  const summaryForDailyAvg = calculateSummary(expensesForDailyAvg, trip)
   
   const topCategories = getTopCategories(categoryBreakdown, 5)
   const dailySpend = calculateDailySpend(filteredExpenses)
@@ -483,28 +482,10 @@ export default function ReportsPage() {
             {/* Total Spent */}
             <Card className="border-slate-200 shadow-sm h-full">
               <CardContent className="p-4 flex flex-col h-full">
-                <div className="flex items-center gap-2 text-slate-500 mb-2">
-                  <DollarSign className="h-4 w-4 shrink-0" />
-                  <span className="text-xs font-medium uppercase tracking-wide">{t("reports.totalSpent")}</span>
-                </div>
-                <div className="flex-1 flex flex-col justify-center">
-                  <p className="text-2xl font-bold text-slate-900 leading-tight mb-1">
-                    {formatCurrency(summary.totalRealized, trip.baseCurrency)}
-                  </p>
-                </div>
-                <p className="text-xs text-slate-500 mt-auto">
-                  {summary.expenseCount} {t("reports.expenses")}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Average Per Day */}
-            <Card className="border-slate-200 shadow-sm h-full">
-              <CardContent className="p-4 flex flex-col h-full">
                 <div className="flex items-center justify-between text-slate-500 mb-2">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 shrink-0" />
-                    <span className="text-xs font-medium uppercase tracking-wide">{t("reports.perDay")}</span>
+                    <DollarSign className="h-4 w-4 shrink-0" />
+                    <span className="text-xs font-medium uppercase tracking-wide">{t("reports.totalSpent")}</span>
                   </div>
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <input
@@ -520,16 +501,34 @@ export default function ReportsPage() {
                 </div>
                 <div className="flex-1 flex flex-col justify-center">
                   <p className="text-2xl font-bold text-slate-900 leading-tight mb-1">
-                    {formatCurrency(summaryForDailyAvg.averagePerDay, trip.baseCurrency)}
+                    {formatCurrency(summary.totalRealized, trip.baseCurrency)}
                   </p>
                 </div>
                 <p className="text-xs text-slate-500 mt-auto">
-                  {summaryForDailyAvg.tripDays} {t("reports.days")}
+                  {summary.expenseCount} {t("reports.expenses")}
                   {excludeFlightsFromDailyAvg && (
                     <span className="block text-[10px] text-slate-400 mt-0.5">
-                      {locale === "he" ? "משקף עלות יומית בתוך היעד" : "In-destination daily cost"}
+                      {locale === "he" ? "משקף עלות בתוך היעד" : "In-destination cost"}
                     </span>
                   )}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Average Per Day */}
+            <Card className="border-slate-200 shadow-sm h-full">
+              <CardContent className="p-4 flex flex-col h-full">
+                <div className="flex items-center gap-2 text-slate-500 mb-2">
+                  <Calendar className="h-4 w-4 shrink-0" />
+                  <span className="text-xs font-medium uppercase tracking-wide">{t("reports.perDay")}</span>
+                </div>
+                <div className="flex-1 flex flex-col justify-center">
+                  <p className="text-2xl font-bold text-slate-900 leading-tight mb-1">
+                    {formatCurrency(summary.averagePerDay, trip.baseCurrency)}
+                  </p>
+                </div>
+                <p className="text-xs text-slate-500 mt-auto">
+                  {summary.tripDays} {t("reports.days")}
                 </p>
               </CardContent>
             </Card>

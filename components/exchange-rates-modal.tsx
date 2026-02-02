@@ -68,14 +68,17 @@ export function ExchangeRatesModal({ open, onOpenChange, trip }: ExchangeRatesMo
     if (isNaN(numAmount) || numAmount <= 0) return null
 
     // Get rates relative to base currency
+    // exchangerate-api returns: rates[X] = how many X per 1 base
+    // e.g., if base=USD, rates["EUR"]=0.92 means 1 USD = 0.92 EUR
     const fromRate = fromCurrency === trip.baseCurrency ? 1 : rates.rates[fromCurrency]
     const toRate = toCurrency === trip.baseCurrency ? 1 : rates.rates[toCurrency]
 
     if (!fromRate || !toRate) return null
 
-    // Convert: amount in fromCurrency -> baseCurrency -> toCurrency
-    const inBase = numAmount / fromRate
-    const result = inBase * toRate
+    // Fixed conversion: amount * (toRate / fromRate)
+    // Example: 100 EUR to GBP where base=USD, EUR rate=0.92, GBP rate=0.79
+    // 100 * (0.79 / 0.92) = 100 * 0.859 = 85.9 GBP ✓
+    const result = numAmount * (toRate / fromRate)
 
     return result
   }, [rates, amount, fromCurrency, toCurrency, trip.baseCurrency])
