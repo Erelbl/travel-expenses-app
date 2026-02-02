@@ -39,28 +39,37 @@ export async function POST(
       return NextResponse.json({ error: "Invitation already used" }, { status: 410 })
     }
 
-    // Verify email matches (only if invitedEmail was specified)
-    if (invitation.invitedEmail) {
-      const invitedEmail = invitation.invitedEmail.toLowerCase()
-      const currentEmail = session.user.email?.toLowerCase()
-      
-      if (!currentEmail) {
-        return NextResponse.json(
-          { error: "User email not available" },
-          { status: 401 }
-        )
-      }
-
-      if (invitedEmail !== currentEmail) {
-        return NextResponse.json(
-          {
-            error: "Email mismatch",
-            message: `This invitation is for ${invitedEmail}, but you are signed in as ${currentEmail}`,
-          },
-          { status: 403 }
-        )
-      }
+    // Email validation logic
+    const invitedEmail = invitation.invitedEmail?.toLowerCase() || null
+    const currentEmail = session.user.email?.toLowerCase()
+    
+    if (!currentEmail) {
+      return NextResponse.json(
+        { error: "User email not available" },
+        { status: 401 }
+      )
     }
+    
+    // Log validation details
+    console.log(`[INVITE_EMAIL_API] token=${token} invitedEmail=${invitedEmail} currentEmail=${currentEmail}`)
+
+    // Verify email matches ONLY if this is an email-specific invite
+    if (invitedEmail && invitedEmail !== currentEmail) {
+      // This invite was sent to a specific email address and current user doesn't match
+      console.log(`[INVITE_EMAIL_API] token=${token} allow=false reason=email_mismatch`)
+      
+      return NextResponse.json(
+        {
+          error: "Email mismatch",
+          message: `This invitation was sent specifically to ${invitedEmail}. Please sign in with that email to accept.`,
+        },
+        { status: 403 }
+      )
+    }
+    
+    // If no invitedEmail (link-based invite) OR email matches, allow acceptance
+    const allowReason = invitedEmail ? "email_match" : "link_based_no_restriction"
+    console.log(`[INVITE_EMAIL_API] token=${token} invitedEmail=${invitedEmail} currentEmail=${currentEmail} allow=true reason=${allowReason}`)
 
     console.log(`[INVITE_ACCEPT_API] Creating TripMember: tripId=${invitation.tripId} userId=${session.user.id} role=${invitation.role}`)
     
