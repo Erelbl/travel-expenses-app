@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db"
 import Link from "next/link"
 import { t as translateFn, type Locale } from "@/lib/i18n"
 import { headers } from "next/headers"
+import { revalidatePath } from "next/cache"
 
 interface PageProps {
   params: Promise<{ token: string }>
@@ -175,9 +176,11 @@ export default async function AcceptInvitePage({ params }: PageProps) {
   }
 
   // Auto-accept: user is authenticated and email matches (or no email required)
-  console.log(`[INVITE_ACCEPT] start token=${token} userId=${session.user.id} email=${session.user.email}`)
+  console.log(`[INVITE_ACCEPT_PAGE] Starting acceptance: token=${token} userId=${session.user.id} email=${session.user.email} tripId=${invitation.tripId}`)
 
   try {
+    console.log(`[INVITE_ACCEPT_PAGE] Creating TripMember: tripId=${invitation.tripId} userId=${session.user.id} role=${invitation.role}`)
+    
     // Upsert membership (single source of truth for shared access)
     const membership = await prisma.tripMember.upsert({
       where: {
@@ -196,6 +199,9 @@ export default async function AcceptInvitePage({ params }: PageProps) {
       },
     })
 
+    const wasExisting = membership.createdAt < new Date(Date.now() - 1000)
+    console.log(`[INVITE_ACCEPT_PAGE] TripMember created/updated: id=${membership.id} wasExisting=${wasExisting}`)
+
     // Mark invitation as accepted
     await prisma.tripInvitation.update({
       where: { token },
@@ -206,7 +212,13 @@ export default async function AcceptInvitePage({ params }: PageProps) {
       },
     })
 
-    console.log(`[INVITE_ACCEPT] success tripId=${invitation.tripId} membershipUpserted=true userId=${session.user.id}`)
+    // Invalidate caches so user sees the new trip immediately
+    // revalidatePath invalidates both the route cache and data cache (including unstable_cache)
+    revalidatePath('/trips', 'page')
+    revalidatePath(`/trips/${invitation.tripId}`, 'page')
+    revalidatePath('/app', 'layout') // Invalidate layout cache to refresh trip list
+    
+    console.log(`[INVITE_ACCEPT_PAGE] Success: tripId=${invitation.tripId} userId=${session.user.id} membershipId=${membership.id} - Cache invalidated, redirecting to trip`)
 
     // Redirect to trip
     redirect(`/trips/${invitation.tripId}`)

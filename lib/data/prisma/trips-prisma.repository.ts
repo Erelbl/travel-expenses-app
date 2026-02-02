@@ -36,7 +36,8 @@ export class PrismaTripsRepository implements TripsRepository {
         
         const ownedCount = trips.filter(t => t.owner.id === userId).length
         const sharedCount = trips.length - ownedCount
-        console.log(`[MY_TRIPS] userId=${userId} total=${trips.length} owned=${ownedCount} shared=${sharedCount}`)
+        const sharedTripIds = trips.filter(t => t.owner.id !== userId).map(t => t.id).join(',')
+        console.log(`[LIST_TRIPS] userId=${userId} total=${trips.length} owned=${ownedCount} shared=${sharedCount} sharedTripIds=[${sharedTripIds}]`)
         
         return trips.map(t => ({
       id: t.id,
@@ -174,7 +175,15 @@ export class PrismaTripsRepository implements TripsRepository {
       }
         })
         
-        if (!trip) return null
+        if (!trip) {
+          console.log(`[GET_TRIP_FOR_USER] Trip not found or access denied: tripId=${tripId} userId=${userId}`)
+          return null
+        }
+        
+        const isOwner = trip.owner.id === userId
+        const memberRecord = trip.members.find(m => m.user.id === userId)
+        const accessReason = isOwner ? 'owner' : (memberRecord ? `member(${memberRecord.role})` : 'unknown')
+        console.log(`[GET_TRIP_FOR_USER] Access granted: tripId=${tripId} userId=${userId} reason=${accessReason} memberCount=${trip.members.length}`)
         
         return {
           id: trip.id,
