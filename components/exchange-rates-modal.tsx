@@ -67,19 +67,29 @@ export function ExchangeRatesModal({ open, onOpenChange, trip }: ExchangeRatesMo
     const numAmount = parseFloat(amount)
     if (isNaN(numAmount) || numAmount <= 0) return null
 
-    // Get rates relative to base currency
-    // exchangerate-api returns: rates[X] = how many X per 1 base
-    // e.g., if base=USD, rates["EUR"]=0.92 means 1 USD = 0.92 EUR
-    const fromRate = fromCurrency === trip.baseCurrency ? 1 : rates.rates[fromCurrency]
-    const toRate = toCurrency === trip.baseCurrency ? 1 : rates.rates[toCurrency]
+    // exchangerate-api with base=ILS returns: rates["NZD"] = "NZD per 1 ILS" (e.g., 0.5)
+    // We need to invert to get "base per foreign" for multiplication
+    // rates["NZD"] = 0.5 means "1 ILS = 0.5 NZD", so "1 NZD = 2 ILS" (inverted = 1/0.5 = 2)
+    const fromRateApiFormat = fromCurrency === trip.baseCurrency ? 1 : rates.rates[fromCurrency]
+    const toRateApiFormat = toCurrency === trip.baseCurrency ? 1 : rates.rates[toCurrency]
 
-    if (!fromRate || !toRate) return null
+    if (!fromRateApiFormat || !toRateApiFormat) return null
 
-    // Fixed conversion: amount * (toRate / fromRate)
-    // Example: 100 EUR to GBP where base=USD, EUR rate=0.92, GBP rate=0.79
-    // 100 * (0.79 / 0.92) = 100 * 0.859 = 85.9 GBP ✓
-    const result = numAmount * (toRate / fromRate)
+    // Invert rates to get "base per 1 unit of foreign"
+    const fromRateToBase = 1 / fromRateApiFormat  // base per fromCurrency
+    const toRateFromBase = toRateApiFormat  // toCurrency per base
 
+    // Convert: fromCurrency -> base -> toCurrency
+    // Step 1: Convert to base (multiply by "base per fromCurrency")
+    const amountInBase = numAmount * fromRateToBase
+    // Step 2: Convert base to target (multiply by "target per base")
+    const result = amountInBase * toRateFromBase
+
+    // Sanity check: 50 NZD -> ILS where base=ILS, rates["NZD"]=0.5
+    // - fromRateToBase = 1/0.5 = 2 (ILS per NZD) ✓
+    // - toRateFromBase = 1 (ILS per ILS) ✓
+    // - amountInBase = 50 * 2 = 100 ILS ✓
+    // - result = 100 * 1 = 100 ILS ✓ (Expected: ~100 ILS) ✓
     return result
   }, [rates, amount, fromCurrency, toCurrency, trip.baseCurrency])
 
