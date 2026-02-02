@@ -197,13 +197,13 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
             <p className="font-semibold text-lg text-slate-900">{trip.name}</p>
           </div>
 
-          {/* Current Share Link */}
-          {currentInvite && (
-            <div className="space-y-3 p-4 bg-sky-50 rounded-xl border border-sky-200">
-              <Label className="text-sm font-semibold text-slate-700">
-                {t("share.shareLink")}
-              </Label>
-              
+          {/* Current Share Link - Always visible */}
+          <div className="space-y-3 p-4 bg-sky-50 rounded-xl border border-sky-200">
+            <Label className="text-sm font-semibold text-slate-700">
+              {t("share.shareLink")}
+            </Label>
+            
+            {currentInvite ? (
               <div className="space-y-3">
                 <Input
                   value={inviteUrl}
@@ -248,8 +248,12 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
                   {t("share.linkExpiresInfo")}
                 </p>
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-slate-500 py-3">
+                {t("share.createLink")}
+              </p>
+            )}
+          </div>
 
           {/* Email Invite Section - Always visible */}
           <div className="space-y-3 p-4 bg-slate-50 rounded-xl">
