@@ -67,25 +67,17 @@ export function ExchangeRatesModal({ open, onOpenChange, trip }: ExchangeRatesMo
     const numAmount = parseFloat(amount)
     if (isNaN(numAmount) || numAmount <= 0) return null
 
-    // exchangerate-api returns rates as "foreign currency per 1 base"
-    // e.g., if base=ILS: rates["NZD"]=0.5 means "1 ILS = 0.5 NZD"
-    // e.g., if base=ILS: rates["USD"]=0.27 means "1 ILS = 0.27 USD"
+    // exchangerate-api returns rates as "base per 1 foreign"
+    // e.g., if base=ILS: rates["NZD"]=2.0 means "1 NZD = 2.0 ILS"
     const fromRate = fromCurrency === trip.baseCurrency ? 1 : rates.rates[fromCurrency]
     const toRate = toCurrency === trip.baseCurrency ? 1 : rates.rates[toCurrency]
 
     if (!fromRate || !toRate) return null
 
-    // Standard cross-rate formula: amount * (toRate / fromRate)
-    // This converts via the base currency: FROM -> BASE -> TO
-    // 
-    // Example: 50 NZD -> ILS where base=ILS, rates["NZD"]=0.5
-    // - fromRate = 0.5 (NZD per ILS), toRate = 1 (ILS per ILS)
-    // - result = 50 * (1 / 0.5) = 50 * 2 = 100 ILS ✓
-    // - Expected: ~100 ILS (NZD is roughly half the value of ILS) ✓
-    //
-    // Example: 100 EUR -> GBP where base=USD, rates["EUR"]=0.9, rates["GBP"]=0.8
-    // - result = 100 * (0.8 / 0.9) = 100 * 0.889 = 88.9 GBP ✓
-    const result = numAmount * (toRate / fromRate)
+    // Cross-rate formula: amount * (fromRate / toRate)
+    // Converts via base: FROM -> BASE, then BASE -> TO
+    // Sanity check: NZD->ILS: 50 NZD should be ~100 ILS (order-of-magnitude)
+    const result = numAmount * (fromRate / toRate)
 
     return result
   }, [rates, amount, fromCurrency, toCurrency, trip.baseCurrency])
