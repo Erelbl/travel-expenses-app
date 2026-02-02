@@ -174,13 +174,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session
     },
     async redirect({ url, baseUrl }) {
-      // Handle callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`
-      // Redirect to /app after login unless explicitly specified
-      if (url === baseUrl) return `${baseUrl}/app`
-      // Handle deep links - allow redirect to any path on the same domain
-      if (url.startsWith(baseUrl)) return url
-      // Default to /app
+      // Handle relative callback URLs (e.g., /invites/abc123)
+      if (url.startsWith("/")) {
+        const finalUrl = `${baseUrl}${url}`
+        console.log(`[AUTH_REDIRECT] using_callbackUrl url=${url} finalUrl=${finalUrl}`)
+        return finalUrl
+      }
+      
+      // Handle full URLs on the same domain
+      if (url.startsWith(baseUrl)) {
+        console.log(`[AUTH_REDIRECT] using_callbackUrl url=${url}`)
+        return url
+      }
+      
+      // No callback URL or base URL only - default to /app
+      if (url === baseUrl) {
+        console.log(`[AUTH_REDIRECT] fallback=/app reason=no_callback`)
+        return `${baseUrl}/app`
+      }
+      
+      // External URL or unexpected - fallback to /app for security
+      console.log(`[AUTH_REDIRECT] fallback=/app reason=external_or_invalid url=${url}`)
       return `${baseUrl}/app`
     },
   },
