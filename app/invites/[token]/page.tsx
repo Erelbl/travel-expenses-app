@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import { isRedirectError } from "next/dist/client/components/redirect"
 import { Users, AlertCircle, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -177,6 +178,11 @@ export default async function AcceptInvitePage({ params }: PageProps) {
     // Redirect to trip - cache will be fresh on navigation
     redirect(`/trips/${invitation.tripId}`)
   } catch (error) {
+    // Next.js redirect() throws a special error - rethrow it to allow redirect to happen
+    if (isRedirectError(error)) {
+      throw error
+    }
+    
     console.error("[INVITE_ACCEPT] error:", error)
     
     return (
