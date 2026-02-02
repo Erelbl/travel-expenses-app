@@ -144,7 +144,7 @@ export default async function AcceptInvitePage({ params }: PageProps) {
     console.log(`[INVITE] creating_tripmember tripId=${invitation.tripId} userId=${session.user.id} role=${invitation.role}`)
     
     // Upsert membership (single source of truth for shared access)
-    const membership = await prisma.tripMember.upsert({
+    await prisma.tripMember.upsert({
       where: {
         tripId_userId: {
           tripId: invitation.tripId,
@@ -182,7 +182,7 @@ export default async function AcceptInvitePage({ params }: PageProps) {
     
     console.log(`[INVITE] accepted token=${token} tripId=${invitation.tripId} userId=${session.user.id} membershipId=${membership.id} - redirecting`)
 
-    // Redirect to trip
+    // Redirect to trip (cache will be revalidated by user navigation)
     redirect(`/trips/${invitation.tripId}`)
   } catch (error) {
     console.error("[INVITE_ACCEPT] error:", error)

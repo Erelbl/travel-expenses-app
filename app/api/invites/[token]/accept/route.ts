@@ -71,7 +71,7 @@ export async function POST(
     revalidatePath(`/trips/${invitation.tripId}`, 'page')
     revalidatePath('/app', 'layout') // Invalidate layout cache to refresh trip list
     
-    console.log(`[INVITE_ACCEPT_API] Success: tripId=${invitation.tripId} userId=${session.user.id} membershipId=${membership.id} alreadyMember=${wasExisting} - Cache invalidated`)
+    console.log(`[INVITE_ACCEPT_API] success token=${token} tripId=${invitation.tripId} userId=${session.user.id} membershipId=${membership.id} alreadyMember=${wasExisting} - Cache invalidated`)
 
     return NextResponse.json({
       tripId: invitation.tripId,
