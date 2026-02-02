@@ -101,67 +101,43 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
     }
   }
 
-  async function handleCopyLink() {
-    // Auto-create invite if none exists
-    if (!currentInvite) {
-      await handleCreateInvite()
-      await loadCurrentInvite()
-      // Wait a bit for state to update
-      await new Promise(resolve => setTimeout(resolve, 100))
-    }
+  async function ensureInviteExists(): Promise<TripInvitation | null> {
+    // Check if invite already exists
+    let invite = currentInvite
     
-    const invite = currentInvite || await getCurrentInviteFromAPI()
     if (!invite) {
-      toast.error(t("share.error"))
-      return
-    }
-    
-    try {
-      const url = `${window.location.origin}/invites/${invite.token}`
-      await navigator.clipboard.writeText(url)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-      toast.success(t("share.linkCopied"))
-    } catch (error) {
-      toast.error(t("share.copyError"))
-    }
-  }
-
-  async function handleWhatsAppShare() {
-    // Auto-create invite if none exists
-    if (!currentInvite) {
-      await handleCreateInvite()
-      await loadCurrentInvite()
-      await new Promise(resolve => setTimeout(resolve, 100))
-    }
-    
-    const invite = currentInvite || await getCurrentInviteFromAPI()
-    if (!invite) {
-      toast.error(t("share.error"))
-      return
-    }
-    
-    const url = `${window.location.origin}/invites/${invite.token}`
-    const text = `${t("share.whatsappMessage")} ${url}`
-    
-    // Use Web Share API if available (mobile)
-    if (typeof navigator !== 'undefined' && navigator.share) {
+      // Try loading from API
+      invite = await getCurrentInviteFromAPI()
+      if (invite) {
+        setCurrentInvite(invite)
+        return invite
+      }
+      
+      // Create new token-only invite
       try {
-        await navigator.share({
-          title: t("share.title"),
-          text: text,
+        const res = await fetch(`/api/trips/${trip.id}/invitations`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            invitedEmail: null,
+            role: selectedRole,
+          }),
         })
-        return
-      } catch (err) {
-        // User cancelled or error - fallback to WhatsApp Web
-        if ((err as Error).name === 'AbortError') {
-          return
+
+        if (!res.ok) {
+          throw new Error("Failed to create invitation")
         }
+
+        const result = await res.json()
+        setCurrentInvite(result)
+        return result
+      } catch (error) {
+        console.error("Failed to create invite:", error)
+        return null
       }
     }
     
-    // Fallback to WhatsApp Web for desktop
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+    return invite
   }
 
   async function getCurrentInviteFromAPI(): Promise<TripInvitation | null> {
@@ -172,6 +148,60 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
       return data && data.length > 0 ? data[0] : null
     } catch {
       return null
+    }
+  }
+
+  async function handleCopyLink() {
+    const invite = await ensureInviteExists()
+    if (!invite) {
+      toast.error(t("share.error"))
+      return
+    }
+    
+    const url = `${window.location.origin}/invites/${invite.token}`
+    
+    try {
+      // Try modern clipboard API first
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+      toast.success(t("share.linkCopied"))
+    } catch (error) {
+      // Fallback to textarea method
+      try {
+        const textarea = document.createElement('textarea')
+        textarea.value = url
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+        toast.success(t("share.linkCopied"))
+      } catch {
+        toast.error(t("share.copyError"))
+      }
+    }
+  }
+
+  async function handleWhatsAppShare() {
+    const invite = await ensureInviteExists()
+    if (!invite) {
+      toast.error(t("share.error"))
+      return
+    }
+    
+    const url = `${window.location.origin}/invites/${invite.token}`
+    
+    // Try WhatsApp deep link first (mobile)
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    if (isMobile) {
+      window.location.href = `whatsapp://send?text=${encodeURIComponent(url)}`
+    } else {
+      // Use WhatsApp Web for desktop
+      window.open(`https://wa.me/?text=${encodeURIComponent(url)}`, '_blank')
     }
   }
 

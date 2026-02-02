@@ -58,12 +58,12 @@ export async function POST(
     console.log("[INVITE] Step: parse_body, userId:", userId)
     const body = await req.json()
     const { invitedEmail: email, role } = body
-    invitedEmail = email
+    invitedEmail = email || ""
 
-    if (!invitedEmail || !role) {
-      console.log("[INVITE] Error: missing_fields")
+    if (!role) {
+      console.log("[INVITE] Error: missing_role")
       return NextResponse.json(
-        { error: "invitedEmail and role are required" },
+        { error: "role is required" },
         { status: 400 }
       )
     }
