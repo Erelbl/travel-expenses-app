@@ -243,7 +243,9 @@
     "deleteTripSuccess": "Trip deleted successfully",
     "deleteTripError": "Failed to delete trip",
     "deleteTripPermissionError": "Only the trip owner can delete this trip",
-    "tripClosedDesc": "This trip has been closed and is read-only for expenses"
+    "tripClosedDesc": "This trip has been closed and is read-only for expenses",
+    "manageSharing": "Manage Trip Sharing",
+    "sharingHelper": "Invite others to view or edit this trip"
   },
   "reports": {
     "title": "Reports",
@@ -333,7 +335,8 @@
     "tripEndedPrompt": "Trip ended — close it after updating expenses?",
     "closeTripAction": "Close Trip",
     "notNowAction": "Not Now",
-    "tripClosedIndicator": "Trip closed"
+    "tripClosedIndicator": "Trip closed",
+    "showLess": "Show less"
   },
   "bannerInsights": {
     "budgetHighPaceHighCost": "Spending {actual} {currency}/day in a relatively expensive destination — consider if this aligns with your {target} {currency}/day target",

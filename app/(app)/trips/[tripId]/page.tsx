@@ -11,6 +11,7 @@ import { QuickAddExpense } from "@/components/quick-add-expense"
 import { ExchangeRatesModal } from "@/components/exchange-rates-modal"
 import { ShareTripModal } from "@/components/share-trip-modal"
 import { OfflineBanner } from "@/components/OfflineBanner"
+import { ScrollToTopButton } from "@/components/scroll-to-top-button"
 import { canAddExpense, canEditExpense, getCurrentUserMember } from "@/lib/utils/permissions"
 import { ExpenseRow } from "@/components/expense-row"
 import { Button } from "@/components/ui/button"
@@ -967,6 +968,7 @@ function TripPageContent({ tripId }: { tripId: string }) {
       )}
 
       <BottomNav tripId={tripId} />
+      <ScrollToTopButton />
     </div>
   )
 }

@@ -243,7 +243,9 @@
     "deleteTripSuccess": "הטיול נמחק בהצלחה",
     "deleteTripError": "שגיאה במחיקת הטיול",
     "deleteTripPermissionError": "רק בעל הטיול יכול למחוק טיול זה",
-    "tripClosedDesc": "טיול זה נסגר והוא לקריאה בלבד עבור הוצאות"
+    "tripClosedDesc": "טיול זה נסגר והוא לקריאה בלבד עבור הוצאות",
+    "manageSharing": "ניהול שיתוף טיול",
+    "sharingHelper": "הזמן אחרים לצפות או לערוך טיול זה"
   },
   "reports": {
     "title": "דוחות",
@@ -333,7 +335,8 @@
     "tripEndedPrompt": "הטיול הסתיים — תרצה לסגור אותו אחרי שסיימת לעדכן הוצאות?",
     "closeTripAction": "סגור טיול",
     "notNowAction": "לא עכשיו",
-    "tripClosedIndicator": "הטיול סגור"
+    "tripClosedIndicator": "הטיול סגור",
+    "showLess": "הצג פחות"
   },
   "bannerInsights": {
     "budgetHighPaceHighCost": "מוציאים {actual} {currency} ליום ביעד יקר יחסית — שקלו אם זה מתאים ליעד של {target} {currency} ליום",
