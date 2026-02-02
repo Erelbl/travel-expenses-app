@@ -97,9 +97,9 @@ export class LocalInvitesRepository {
   /**
    * Generate a shareable URL for an invite
    */
-  getInviteUrl(inviteId: string): string {
+  getInviteUrl(token: string): string {
     if (typeof window === "undefined") return ""
-    return `${window.location.origin}/join/${inviteId}`
+    return `${window.location.origin}/invites/${token}`
   }
 }
 

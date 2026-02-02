@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { invitationsRepository } from "@/lib/data/prisma/invitations-prisma.repository"
+import { revalidatePath } from "next/cache"
 
 export async function POST(
   req: NextRequest,
@@ -61,6 +62,8 @@ export async function POST(
       }
     }
 
+    console.log(`[INVITE_ACCEPT_API] Creating TripMember: tripId=${invitation.tripId} userId=${session.user.id} role=${invitation.role}`)
+    
     // Upsert membership (single source of truth for shared access)
     const membership = await prisma.tripMember.upsert({
       where: {
@@ -80,11 +83,18 @@ export async function POST(
     })
 
     const wasExisting = membership.createdAt < new Date(Date.now() - 1000) // Created more than 1 sec ago
+    console.log(`[INVITE_ACCEPT_API] TripMember created/updated: id=${membership.id} wasExisting=${wasExisting}`)
 
     // Mark invitation as accepted
     await invitationsRepository.acceptInvitation(token, session.user.id)
 
-    console.log(`[INVITE_ACCEPT] Accepted invite ${token}, tripId: ${invitation.tripId}, userId: ${session.user.id}, membershipUpserted: true, alreadyMember: ${wasExisting}`)
+    // Invalidate caches so user sees the new trip immediately
+    // revalidatePath invalidates both the route cache and data cache (including unstable_cache)
+    revalidatePath('/trips', 'page')
+    revalidatePath(`/trips/${invitation.tripId}`, 'page')
+    revalidatePath('/app', 'layout') // Invalidate layout cache to refresh trip list
+    
+    console.log(`[INVITE_ACCEPT_API] Success: tripId=${invitation.tripId} userId=${session.user.id} membershipId=${membership.id} alreadyMember=${wasExisting} - Cache invalidated`)
 
     return NextResponse.json({
       tripId: invitation.tripId,

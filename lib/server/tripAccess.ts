@@ -72,8 +72,8 @@ export async function verifyTripAccess(tripId: string): Promise<TripAccessResult
   })
 
   if (invitation) {
-    // Redirect to join page
-    redirect(`/join/${invitation.id}`)
+    // Redirect to invites page (token-based)
+    redirect(`/invites/${invitation.token}`)
   }
 
   // No access at all
