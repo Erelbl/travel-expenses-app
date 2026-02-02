@@ -137,62 +137,7 @@ export default async function AcceptInvitePage({ params }: PageProps) {
   
   console.log(`[INVITE] authenticated_return token=${token} userId=${session.user.id} email=${session.user.email}`)
 
-  // Email validation logic
-  const invitedEmail = invitation.invitedEmail?.toLowerCase() || null
-  const currentEmail = session.user.email.toLowerCase()
-  
-  // Log validation details
-  console.log(`[INVITE_EMAIL] token=${token} invitedEmail=${invitedEmail} currentEmail=${currentEmail} tripOwner=${invitation.trip.owner.name}`)
-
-  // Check email match ONLY if this is an email-specific invite
-  if (invitedEmail && invitedEmail !== currentEmail) {
-    // This invite was sent to a specific email address and current user doesn't match
-    console.log(`[INVITE_EMAIL] token=${token} allow=false reason=email_mismatch`)
-    
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-slate-900 mb-2">
-              Email Mismatch
-            </h2>
-            <div className="space-y-4 text-center">
-              <p className="text-slate-600">
-                This invitation was sent specifically to:
-              </p>
-              <p className="text-lg font-semibold text-slate-900">{invitedEmail}</p>
-              <p className="text-slate-600">
-                But you are signed in as:
-              </p>
-              <p className="text-lg font-semibold text-slate-900">{currentEmail}</p>
-              <p className="text-sm text-slate-500 mt-4">
-                Please sign out and sign in with {invitedEmail} to accept this invitation.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 mt-6">
-              <Link href="/auth/signout">
-                <Button variant="outline" className="w-full">
-                  Sign Out & Try Again
-                </Button>
-              </Link>
-              <Link href="/trips">
-                <Button variant="ghost" className="text-slate-500">
-                  Go to Dashboard
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-  
-  // If no invitedEmail (link-based invite) OR email matches, allow acceptance
-  const allowReason = invitedEmail ? "email_match" : "link_based_no_restriction"
-  console.log(`[INVITE_EMAIL] token=${token} invitedEmail=${invitedEmail} currentEmail=${currentEmail} allow=true reason=${allowReason}`)
-
-  // Auto-accept: user is authenticated and email matches (or no email required)
+  // Auto-accept: user is authenticated
   console.log(`[INVITE] starting_acceptance token=${token} userId=${session.user.id} email=${session.user.email} tripId=${invitation.tripId}`)
 
   try {
