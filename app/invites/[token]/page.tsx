@@ -7,7 +7,6 @@ import { prisma } from "@/lib/db"
 import Link from "next/link"
 import { t as translateFn, type Locale } from "@/lib/i18n"
 import { headers } from "next/headers"
-import { revalidatePath } from "next/cache"
 
 interface PageProps {
   params: Promise<{ token: string }>
@@ -144,7 +143,7 @@ export default async function AcceptInvitePage({ params }: PageProps) {
     console.log(`[INVITE] creating_tripmember tripId=${invitation.tripId} userId=${session.user.id} role=${invitation.role}`)
     
     // Upsert membership (single source of truth for shared access)
-    await prisma.tripMember.upsert({
+    const membership = await prisma.tripMember.upsert({
       where: {
         tripId_userId: {
           tripId: invitation.tripId,
@@ -161,8 +160,7 @@ export default async function AcceptInvitePage({ params }: PageProps) {
       },
     })
 
-    const wasExisting = membership.createdAt < new Date(Date.now() - 1000)
-    console.log(`[INVITE] tripmember_created id=${membership.id} wasExisting=${wasExisting}`)
+    console.log(`[INVITE] tripmember_created id=${membership.id}`)
 
     // Mark invitation as accepted
     await prisma.tripInvitation.update({
@@ -174,15 +172,9 @@ export default async function AcceptInvitePage({ params }: PageProps) {
       },
     })
 
-    // Invalidate caches so user sees the new trip immediately
-    // revalidatePath invalidates both the route cache and data cache (including unstable_cache)
-    revalidatePath('/trips', 'page')
-    revalidatePath(`/trips/${invitation.tripId}`, 'page')
-    revalidatePath('/app', 'layout') // Invalidate layout cache to refresh trip list
-    
-    console.log(`[INVITE] accepted token=${token} tripId=${invitation.tripId} userId=${session.user.id} membershipId=${membership.id} - redirecting`)
+    console.log(`[INVITE_ACCEPT] success token=${token} tripId=${invitation.tripId} userId=${session.user.id}`)
 
-    // Redirect to trip (cache will be revalidated by user navigation)
+    // Redirect to trip - cache will be fresh on navigation
     redirect(`/trips/${invitation.tripId}`)
   } catch (error) {
     console.error("[INVITE_ACCEPT] error:", error)
