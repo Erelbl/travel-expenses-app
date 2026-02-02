@@ -15,6 +15,7 @@ import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { PassportCard, StampBadge } from "@/components/ui/passport-card"
 import { CountrySelect } from "@/components/CountrySelect"
+import { AchievementUnlockOverlay } from "@/components/achievements/achievement-unlock-overlay"
 import { tripsRepository, expensesRepository, ratesRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
 import { CreateExpense, ExpenseCategory } from "@/lib/schemas/expense.schema"
@@ -31,6 +32,7 @@ import {
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { getCurrentUserMember, canAddExpense } from "@/lib/utils/permissions"
 import { normalizeReceiptImageToJpeg } from "@/lib/utils/normalizeReceiptImage"
+import type { AchievementKey } from "@prisma/client"
 const CATEGORIES: ExpenseCategory[] = [
   "Food",
   "Transport",
@@ -86,6 +88,8 @@ export default function AddExpensePage() {
     remaining: number
     used: number
   } | null>(null)
+  const [unlockedAchievements, setUnlockedAchievements] = useState<Array<{ key: AchievementKey; level: number }>>([])
+  const [showAchievementOverlay, setShowAchievementOverlay] = useState(false)
   
   // FX Rate state
   const [fxRateStatus, setFxRateStatus] = useState<"checking" | "available" | "unavailable" | "manual">("checking")
@@ -453,7 +457,17 @@ export default function AddExpensePage() {
         manualRateToBase: fxRateStatus === "manual" && fxRate ? fxRate : undefined,
       }
 
-      const created = await expensesRepository.createExpense(expenseData)
+      const response = await fetch(`/api/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(expenseData),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to create expense")
+      }
+
+      const result = await response.json()
       
       // Save preferences for next time (per-trip and global)
       setLastUsedCurrency(tripId, formState.currency) // Per-trip
@@ -468,8 +482,14 @@ export default function AddExpensePage() {
         })
       }
       
-      toast.success(t('addExpense.success'))
-      router.push(`/trips/${tripId}`)
+      // Check for newly unlocked achievements
+      if (result.newlyUnlocked && result.newlyUnlocked.length > 0) {
+        setUnlockedAchievements(result.newlyUnlocked)
+        setShowAchievementOverlay(true)
+      } else {
+        toast.success(t('addExpense.success'))
+        router.push(`/trips/${tripId}`)
+      }
     } catch (error) {
       console.error("Failed to create expense:", error)
       setSaveError(true)
@@ -939,6 +959,17 @@ export default function AddExpensePage() {
       </div>
 
       <BottomNav tripId={tripId} />
+      
+      {showAchievementOverlay && (
+        <AchievementUnlockOverlay
+          achievements={unlockedAchievements}
+          onClose={() => {
+            setShowAchievementOverlay(false)
+            toast.success(t('addExpense.success'))
+            router.push(`/trips/${tripId}`)
+          }}
+        />
+      )}
     </div>
   )
 }

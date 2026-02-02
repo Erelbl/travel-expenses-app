@@ -5,8 +5,13 @@ import { AchievementKey } from "@prisma/client"
 import { getAchievementMetadata } from "@/lib/achievements/metadata"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 
+interface AchievementLevel {
+  key: AchievementKey
+  level: number
+}
+
 interface AchievementUnlockOverlayProps {
-  achievements: AchievementKey[]
+  achievements: AchievementLevel[]
   onClose: () => void
 }
 
@@ -23,11 +28,22 @@ export function AchievementUnlockOverlay({
     setIsVisible(true)
   }, [])
 
+  useEffect(() => {
+    // Auto-dismiss after 4 seconds
+    if (achievements.length > 0) {
+      const timer = setTimeout(() => {
+        handleContinue()
+      }, 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [currentIndex, achievements.length])
+
   if (achievements.length === 0) {
     return null
   }
 
-  const currentAchievement = getAchievementMetadata(achievements[currentIndex])
+  const current = achievements[currentIndex]
+  const currentAchievement = getAchievementMetadata(current.key)
 
   const handleContinue = () => {
     if (currentIndex < achievements.length - 1) {
@@ -77,10 +93,17 @@ export function AchievementUnlockOverlay({
               {t("achievements.unlocked")}
             </h2>
 
-            {/* Achievement name */}
+            {/* Achievement name with level */}
             <h3 className="mb-2 text-xl font-semibold text-slate-800">
               {t(currentAchievement.titleKey)}
             </h3>
+            <div className="mb-4">
+              <span
+                className={`inline-block text-lg font-bold px-3 py-1 rounded-full bg-gradient-to-r ${currentAchievement.color} text-white`}
+              >
+                {t("achievements.levelLabel")} {current.level}
+              </span>
+            </div>
 
             {/* Description */}
             <p className="mb-6 text-slate-600">{t(currentAchievement.unlockMessageKey)}</p>

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
-import { getUnlockedAchievements } from "@/lib/achievements/achievements"
+import { getUserAchievementProgress } from "@/lib/achievements/achievements"
 import { AchievementsClient } from "./AchievementsClient"
 
 export default async function AchievementsPage() {
@@ -10,8 +10,8 @@ export default async function AchievementsPage() {
     redirect("/auth/login")
   }
   
-  const unlockedKeys = await getUnlockedAchievements(session.user.id)
+  const progress = await getUserAchievementProgress(session.user.id)
   
-  return <AchievementsClient unlockedKeys={unlockedKeys} />
+  return <AchievementsClient progress={progress} />
 }
 

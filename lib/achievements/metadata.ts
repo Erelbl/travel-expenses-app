@@ -1,4 +1,5 @@
 import { AchievementKey } from "@prisma/client"
+import { getThresholdsForAchievement } from "./achievements"
 
 export interface AchievementMetadata {
   key: AchievementKey
@@ -66,5 +67,9 @@ export function getAchievementMetadata(key: AchievementKey): AchievementMetadata
 
 export function getAllAchievements(): AchievementMetadata[] {
   return Object.values(ACHIEVEMENT_METADATA)
+}
+
+export function getMaxLevel(key: AchievementKey): number {
+  return getThresholdsForAchievement(key).length
 }
 

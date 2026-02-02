@@ -618,39 +618,45 @@
   "achievements": {
     "title": "Achievements",
     "subtitle": "{unlocked} of {total} unlocked",
+    "achievementsUnlocked": "achievements",
+    "levelsUnlocked": "levels",
     "unlocked": "Achievement Unlocked!",
     "continue": "Continue",
     "viewAchievements": "View Your Achievements",
     "trackProgress": "Track your progress and unlock achievements as you use TravelWise.",
+    "levelLabel": "Level",
+    "progressToNext": "Progress to next level",
+    "maxLevelReached": "Max level reached!",
+    "locked": "Not unlocked yet",
     "firstExpense": {
       "title": "First Steps",
       "description": "Logged your first expense",
-      "unlockMessage": "You've started tracking your travels"
+      "unlockMessage": "Nice! You're building a solid travel log ✨"
     },
     "threeDay": {
       "title": "Tracking Habit",
       "description": "Logged expenses on 3 different days",
-      "unlockMessage": "Building good tracking habits"
+      "unlockMessage": "Great consistency! Keep it up 📅"
     },
     "tenExpenses": {
       "title": "Detailed Tracker",
       "description": "Logged 10 expenses",
-      "unlockMessage": "You're keeping detailed records"
+      "unlockMessage": "You're keeping detailed records 📊"
     },
     "firstTripCompleted": {
       "title": "Journey Complete",
       "description": "Completed your first trip",
-      "unlockMessage": "Your first journey is complete"
+      "unlockMessage": "Your first journey is complete ✈️"
     },
     "threeTrips": {
       "title": "Frequent Traveler",
       "description": "Created 3 trips",
-      "unlockMessage": "You're becoming a frequent traveler"
+      "unlockMessage": "You're becoming a frequent traveler 🌍"
     },
     "twoCountries": {
       "title": "Globe Trotter",
       "description": "Logged expenses in 2 different countries",
-      "unlockMessage": "You're exploring the world"
+      "unlockMessage": "You're exploring the world 🗺️"
     }
   }
 }
