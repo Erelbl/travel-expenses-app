@@ -5,3 +5,5 @@ ADD COLUMN "currentCurrency" TEXT;
 
 
 
+
+
