@@ -9,7 +9,8 @@ import { evaluateAchievements } from '@/lib/achievements/evaluate'
 const expensesRepository = new PrismaExpensesRepository()
 const tripsRepository = new PrismaTripsRepository()
 
-export const revalidate = 30
+// CRITICAL: No route-level caching - we rely on unstable_cache + revalidateTag for granular control
+export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: Request,
@@ -34,9 +35,10 @@ export async function GET(
     
     const expenses = await expensesRepository.listExpenses(tripId)
     
+    // CRITICAL: No HTTP cache - rely on unstable_cache inside repository for caching
     return NextResponse.json(expenses, {
       headers: {
-        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
+        'Cache-Control': 'no-store, must-revalidate'
       }
     })
   } catch (error) {
