@@ -1,5 +1,4 @@
 import { AchievementKey } from "@prisma/client"
-import { getThresholdsForAchievement } from "./achievements"
 
 export interface AchievementMetadata {
   key: AchievementKey
@@ -8,6 +7,16 @@ export interface AchievementMetadata {
   unlockMessageKey: string
   icon: string
   color: string
+}
+
+// Level thresholds (duplicated from achievements.ts to avoid server-side imports in client)
+const LEVEL_COUNTS: Record<AchievementKey, number> = {
+  [AchievementKey.FIRST_EXPENSE_LOGGED]: 5,
+  [AchievementKey.TEN_EXPENSES_LOGGED]: 5,
+  [AchievementKey.EXPENSES_ON_3_DAYS]: 5,
+  [AchievementKey.EXPENSES_IN_2_COUNTRIES]: 5,
+  [AchievementKey.THREE_TRIPS_LOGGED]: 5,
+  [AchievementKey.FIRST_TRIP_COMPLETED]: 5,
 }
 
 export const ACHIEVEMENT_METADATA: Record<AchievementKey, AchievementMetadata> = {
@@ -70,6 +79,6 @@ export function getAllAchievements(): AchievementMetadata[] {
 }
 
 export function getMaxLevel(key: AchievementKey): number {
-  return getThresholdsForAchievement(key).length
+  return LEVEL_COUNTS[key]
 }
 
