@@ -302,13 +302,8 @@ export default function ReportsPage() {
   const budgetUsed = hasBudget ? (summary.totalRealized / trip.targetBudget!) * 100 : 0
   const budgetRemaining = hasBudget ? trip.targetBudget! - summary.totalRealized : 0
   
-  // Check if this is a multi-country trip
-  const tripCountriesSet = new Set([
-    ...(trip.plannedCountries || []),
-    ...(trip.countries || []),
-    ...countryBreakdown.map(c => c.country)
-  ])
-  const isMultiCountry = tripCountriesSet.size > 1
+  // Check if this is a multi-country trip (based on actual expenses only)
+  const isMultiCountry = countryBreakdown.length > 1
   
   // Calculate daily average per country (for multi-country trips)
   const countryDailyAverages = isMultiCountry ? countryBreakdown.map(country => {
