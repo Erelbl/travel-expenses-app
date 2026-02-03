@@ -17,21 +17,24 @@ export async function getUserAchievementProgress(userId: string): Promise<
     // Get current metric
     const currentCount = await def.computeMetric(userId)
 
-    // Get max unlocked level for this key
-    const unlocked = await prisma.userAchievement.findMany({
-      where: { userId, key: def.key },
-      select: { level: true },
-    })
-    const currentLevel = unlocked.length > 0 ? Math.max(...unlocked.map((a) => a.level)) : 0
+    // Calculate qualified level based on current metric
+    let qualifiedLevel = 0
+    for (let i = 0; i < def.thresholds.length; i++) {
+      if (currentCount >= def.thresholds[i]) {
+        qualifiedLevel = i + 1
+      } else {
+        break
+      }
+    }
 
     // Find next threshold
-    const nextThreshold = currentLevel < def.thresholds.length 
-      ? def.thresholds[currentLevel] 
+    const nextThreshold = qualifiedLevel < def.thresholds.length 
+      ? def.thresholds[qualifiedLevel] 
       : null
 
     progress.push({
       key: def.key,
-      currentLevel,
+      currentLevel: qualifiedLevel,
       currentCount,
       nextThreshold,
     })
