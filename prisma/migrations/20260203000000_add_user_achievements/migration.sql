@@ -17,6 +17,17 @@ CREATE TABLE IF NOT EXISTS "UserAchievement" (
     CONSTRAINT "UserAchievement_pkey" PRIMARY KEY ("id")
 );
 
+-- Add level column if missing (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'UserAchievement' AND column_name = 'level'
+  ) THEN
+    ALTER TABLE "UserAchievement" ADD COLUMN "level" INTEGER NOT NULL DEFAULT 1;
+  END IF;
+END $$;
+
 -- CreateIndex (idempotent)
 DO $$
 BEGIN
