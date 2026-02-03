@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Filter, Calendar, DollarSign, BarChart3, Plus, Target, Tag } from "lucide-react"
+import { ArrowLeft, Filter, Calendar, DollarSign, BarChart3, Plus, Target, Tag, Download } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { Button } from "@/components/ui/button"
@@ -126,6 +126,7 @@ export default function ReportsPage() {
   const [error, setError] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<ExpenseCategory | null>(null)
+  const [exporting, setExporting] = useState(false)
   const [includeFlightsInCountry, setIncludeFlightsInCountry] = useState(() => {
     if (typeof window === 'undefined') return false
     const stored = localStorage.getItem(`reports:countryIncludeFlights:${params.tripId}`)
@@ -409,6 +410,43 @@ export default function ReportsPage() {
     })
   }
 
+  async function handleExportToExcel() {
+    try {
+      setExporting(true)
+      const response = await fetch(`/api/trips/${tripId}/reports/export`)
+      
+      if (!response.ok) {
+        throw new Error('Export failed')
+      }
+
+      // Get the filename from the Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = `TravelWise-${trip?.name || 'Trip'}-expenses.xlsx`
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+        if (filenameMatch) {
+          filename = filenameMatch[1]
+        }
+      }
+
+      // Create blob and trigger download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Export failed:', error)
+      alert(t('reports.exportFailed') || 'Export failed. Please try again.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen pb-20 md:pb-6" dir={isRTL ? "rtl" : "ltr"}>
       {/* Offline Banner */}
@@ -431,20 +469,34 @@ export default function ReportsPage() {
                 <p className="text-sm text-slate-500">{trip.name}</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="default"
-              onClick={() => setShowFilters(true)}
-              className="gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              <span className="text-sm font-medium">{t("reports.filters")}</span>
-              {hasActiveFilters && (
-                <Badge variant="default" className="h-5 w-5 rounded-full p-0 text-xs">
-                  !
-                </Badge>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="default"
+                onClick={handleExportToExcel}
+                disabled={exporting || expenses.length === 0}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm font-medium">
+                  {exporting ? t('reports.exporting') || 'Exporting...' : t('reports.exportToExcel') || 'Export to Excel'}
+                </span>
+              </Button>
+              <Button
+                variant="outline"
+                size="default"
+                onClick={() => setShowFilters(true)}
+                className="gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                <span className="text-sm font-medium">{t("reports.filters")}</span>
+                {hasActiveFilters && (
+                  <Badge variant="default" className="h-5 w-5 rounded-full p-0 text-xs">
+                    !
+                  </Badge>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
