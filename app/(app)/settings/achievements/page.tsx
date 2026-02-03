@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
-import { getUserAchievementProgress } from "@/lib/achievements/achievements"
+import { getUserAchievementProgress } from "@/lib/achievements/progress"
 import { AchievementsClient } from "./AchievementsClient"
 
 export default async function AchievementsPage() {

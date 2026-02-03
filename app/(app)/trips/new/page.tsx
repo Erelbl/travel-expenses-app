@@ -108,9 +108,21 @@ export default function NewTripPage() {
         ],
       }
 
-      const trip = await createTripAction(tripData)
-      toast.success(t('createTrip.success'))
-      router.push(`/trips/${trip.id}`)
+      const result = await createTripAction(tripData)
+      
+      // Show achievement popup if any unlocked
+      if (result.newlyUnlocked && result.newlyUnlocked.length > 0) {
+        for (const achievement of result.newlyUnlocked) {
+          toast.success(`${achievement.icon} ${achievement.title} • Level ${achievement.level}`, {
+            description: achievement.message,
+            duration: 5000,
+          })
+        }
+      } else {
+        toast.success(t('createTrip.success'))
+      }
+      
+      router.push(`/trips/${result.id}`)
     } catch (error) {
       console.error("Failed to create trip:", error)
       toast.error(t('createTrip.error'))

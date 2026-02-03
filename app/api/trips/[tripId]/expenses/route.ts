@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth'
 import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repository'
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
 import { logError } from '@/lib/utils/logger'
-import { unlockNewAchievements } from '@/lib/achievements/achievements'
+import { evaluateAchievements } from '@/lib/achievements/evaluate'
 
 const expensesRepository = new PrismaExpensesRepository()
 const tripsRepository = new PrismaTripsRepository()
@@ -70,7 +70,7 @@ export async function POST(
     const expense = await expensesRepository.createExpense({ ...body, createdById: session.user.id })
     
     // Check for newly unlocked achievements
-    const { newlyUnlocked } = await unlockNewAchievements(session.user.id)
+    const { newlyUnlocked } = await evaluateAchievements(session.user.id)
     
     // Revalidate all affected pages (invalidates both route cache and data cache including unstable_cache)
     revalidatePath(`/trips/${tripId}`, 'page')

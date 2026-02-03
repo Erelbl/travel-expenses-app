@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { PrismaTripsRepository } from "@/lib/data/prisma/trips-prisma.repository"
 import { CreateTrip } from "@/lib/schemas/trip.schema"
+import { evaluateAchievements } from "@/lib/achievements/evaluate"
 
 const tripsRepository = new PrismaTripsRepository()
 
@@ -18,7 +19,10 @@ export async function createTripAction(tripData: CreateTrip) {
     ownerId: session.user.id,
   })
 
+  // Check for newly unlocked achievements
+  const { newlyUnlocked } = await evaluateAchievements(session.user.id)
+
   revalidatePath("/trips")
-  return trip
+  return { ...trip, newlyUnlocked }
 }
 

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
 import { logError } from '@/lib/utils/logger'
-import { unlockNewAchievements } from '@/lib/achievements/achievements'
+import { evaluateAchievements } from '@/lib/achievements/evaluate'
 
 const tripsRepository = new PrismaTripsRepository()
 
@@ -66,7 +66,7 @@ export async function PATCH(
     const trip = await tripsRepository.updateTrip(tripId, body)
     
     // Check for newly unlocked achievements (e.g., if trip was closed)
-    const { newlyUnlocked } = await unlockNewAchievements(session.user.id)
+    const { newlyUnlocked } = await evaluateAchievements(session.user.id)
     
     return NextResponse.json({ ...trip, newlyUnlocked })
   } catch (error) {
@@ -90,7 +90,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Missing tripId' }, { status: 400 })
     }
     await tripsRepository.deleteTrip(tripId, session.user.id)
-    return NextResponse.json({ success: true })
+    
+    // Re-evaluate achievements (will reduce trip-based levels)
+    const { newlyUnlocked } = await evaluateAchievements(session.user.id)
+    
+    return NextResponse.json({ success: true, newlyUnlocked })
   } catch (error) {
     logError('API /trips/[tripId] DELETE', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })

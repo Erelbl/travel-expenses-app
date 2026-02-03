@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
 import { logError } from '@/lib/utils/logger'
+import { evaluateAchievements } from '@/lib/achievements/evaluate'
 
 const tripsRepository = new PrismaTripsRepository()
 
@@ -36,7 +37,11 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const trip = await tripsRepository.createTrip({ ...body, ownerId: session.user.id })
-    return NextResponse.json(trip)
+    
+    // Check for newly unlocked achievements
+    const { newlyUnlocked } = await evaluateAchievements(session.user.id)
+    
+    return NextResponse.json({ ...trip, newlyUnlocked })
   } catch (error) {
     logError('API /trips POST', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })
