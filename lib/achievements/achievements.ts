@@ -237,14 +237,15 @@ export async function getUserAchievementProgress(userId: string): Promise<
   }
 
   // Build progress for each achievement
-  const progress = Object.values(AchievementKey).map((key) => {
-    const currentLevel = unlockedMap.get(key) ?? 0
-    const currentCount = countMap[key]
-    const thresholds = ACHIEVEMENT_THRESHOLDS[key]
+  const progress = Object.keys(ACHIEVEMENT_THRESHOLDS).map((key) => {
+    const achievementKey = key as AchievementKey
+    const currentLevel = unlockedMap.get(achievementKey) ?? 0
+    const currentCount = countMap[achievementKey]
+    const thresholds = ACHIEVEMENT_THRESHOLDS[achievementKey]
     const nextThreshold = currentLevel < thresholds.length ? thresholds[currentLevel] : null
 
     return {
-      key,
+      key: achievementKey,
       currentLevel,
       currentCount,
       nextThreshold,
