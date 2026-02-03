@@ -257,13 +257,23 @@ export function calculateCategoryBreakdown(expenses: Expense[]): CategoryBreakdo
 }
 
 /**
- * Calculate country breakdown
+ * Calculate country breakdown - STRICTLY expense-driven
+ * 
+ * Returns ONLY countries where actual expenses exist with valid converted amounts.
+ * Filters out empty/invalid country codes to prevent showing countries where user didn't spend.
+ * 
+ * Regression guard: Every country in output MUST have at least one current expense.
  */
 export function calculateCountryBreakdown(expenses: Expense[]): CountryBreakdown[] {
   const byCountry = new Map<string, { amount: number; count: number }>()
 
   for (const expense of expenses) {
+    // Only include expenses with valid converted amounts
     if (!hasConvertedAmount(expense)) continue
+    
+    // Only include expenses with valid 2-letter country codes (filter out empty/invalid)
+    if (!expense.country || expense.country.length !== 2) continue
+    
     const existing = byCountry.get(expense.country) || { amount: 0, count: 0 }
     byCountry.set(expense.country, {
       amount: existing.amount + (expense.convertedAmount || 0),
