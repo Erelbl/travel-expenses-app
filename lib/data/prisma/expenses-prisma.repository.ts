@@ -3,8 +3,6 @@ import { ExpensesRepository } from "@/lib/data/repositories"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@prisma/client"
 import { convertCurrency } from "@/lib/server/fx"
-import { unstable_cache } from "next/cache"
-import { expenseCacheTag } from "@/lib/server/cache-tags"
 
 // Type for expense rows returned by Prisma
 type ExpenseRow = Prisma.ExpenseGetPayload<{
@@ -32,9 +30,9 @@ type ExpenseRow = Prisma.ExpenseGetPayload<{
 
 export class PrismaExpensesRepository implements ExpensesRepository {
   async listExpenses(tripId: string): Promise<Expense[]> {
-    return unstable_cache(
-      async () => {
-        const expenses: ExpenseRow[] = await prisma.expense.findMany({
+    // CRITICAL: No caching until Reports correctness is guaranteed
+    // Query DB directly to ensure fresh data after create/update/delete
+    const expenses: ExpenseRow[] = await prisma.expense.findMany({
       where: { tripId },
       select: {
         id: true,
@@ -57,9 +55,9 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
-        })
-        
-        return expenses.map((e: ExpenseRow) => ({
+    })
+    
+    return expenses.map((e: ExpenseRow) => ({
       id: e.id,
       tripId: e.tripId,
       amount: e.amount,
@@ -79,11 +77,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
       },
       date: e.expenseDate.toISOString().split('T')[0],
       createdAt: e.createdAt.getTime(),
-        }))
-      },
-      [`expenses-${tripId}`],
-      { revalidate: 30, tags: [expenseCacheTag(tripId)] }
-    )()
+    }))
   }
 
   async getExpense(id: string): Promise<Expense | null> {
