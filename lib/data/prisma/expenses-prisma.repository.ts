@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import { Prisma } from "@prisma/client"
 import { convertCurrency } from "@/lib/server/fx"
 import { unstable_cache } from "next/cache"
+import { expenseCacheTag } from "@/lib/server/cache-tags"
 
 // Type for expense rows returned by Prisma
 type ExpenseRow = Prisma.ExpenseGetPayload<{
@@ -81,7 +82,7 @@ export class PrismaExpensesRepository implements ExpensesRepository {
         }))
       },
       [`expenses-${tripId}`],
-      { revalidate: 30, tags: [`expenses-${tripId}`] }
+      { revalidate: 30, tags: [expenseCacheTag(tripId)] }
     )()
   }
 

@@ -5,6 +5,7 @@ import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repo
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
 import { logError } from '@/lib/utils/logger'
 import { evaluateAchievements } from '@/lib/achievements/evaluate'
+import { expenseCacheTag } from '@/lib/server/cache-tags'
 
 const expensesRepository = new PrismaExpensesRepository()
 const tripsRepository = new PrismaTripsRepository()
@@ -77,7 +78,7 @@ export async function POST(
     // Revalidate all affected pages and data caches
     revalidatePath(`/trips/${tripId}`, 'page')
     revalidatePath(`/trips/${tripId}/reports`, 'page')
-    revalidateTag(`expenses-${tripId}`, 'default') // Invalidate unstable_cache
+    revalidateTag(expenseCacheTag(tripId), 'default') // Invalidate unstable_cache
     
     return NextResponse.json({ ...expense, newlyUnlocked })
   } catch (error) {

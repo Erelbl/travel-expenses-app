@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repository'
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
 import { logError } from '@/lib/utils/logger'
+import { expenseCacheTag } from '@/lib/server/cache-tags'
 
 const expensesRepository = new PrismaExpensesRepository()
 const tripsRepository = new PrismaTripsRepository()
@@ -68,7 +69,7 @@ export async function PATCH(
     // Revalidate all affected pages and data caches
     revalidatePath(`/trips/${tripId}`, 'page')
     revalidatePath(`/trips/${tripId}/reports`, 'page')
-    revalidateTag(`expenses-${tripId}`, 'default') // Invalidate unstable_cache
+    revalidateTag(expenseCacheTag(tripId), 'default') // Invalidate unstable_cache
     
     return NextResponse.json(expense)
   } catch (error) {
@@ -106,7 +107,7 @@ export async function DELETE(
     // Revalidate all affected pages and data caches
     revalidatePath(`/trips/${tripId}`, 'page')
     revalidatePath(`/trips/${tripId}/reports`, 'page')
-    revalidateTag(`expenses-${tripId}`, 'default') // Invalidate unstable_cache
+    revalidateTag(expenseCacheTag(tripId), 'default') // Invalidate unstable_cache
     
     return NextResponse.json({ success: true })
   } catch (error) {
