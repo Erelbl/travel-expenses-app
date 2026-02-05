@@ -36,9 +36,15 @@ export async function evaluateAchievements(
     }
   }
 
-  for (const def of definitions) {
-    const metric = await def.computeMetric(userId)
-    
+  // Parallelize metric computation for all achievement types
+  const metricsPromises = definitions.map(async (def) => ({
+    def,
+    metric: await def.computeMetric(userId)
+  }))
+  
+  const metricsResults = await Promise.all(metricsPromises)
+
+  for (const { def, metric } of metricsResults) {
     // Find target level based on metric (capped at thresholds length)
     let targetLevel = 0
     for (let i = 0; i < def.thresholds.length; i++) {
