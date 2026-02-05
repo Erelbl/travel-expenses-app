@@ -1,7 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
 import { User } from "lucide-react"
-import { LanguageToggle } from "./LanguageToggle"
 import { TopNavTitle } from "./top-nav-title"
 
 export function TopNav() {
@@ -20,7 +19,6 @@ export function TopNav() {
           >
             <User className="h-5 w-5 text-slate-700" />
           </Link>
-          <LanguageToggle />
         </div>
       </div>
     </nav>

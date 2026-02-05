@@ -228,20 +228,6 @@ export function SettingsClient({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
-                <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 via-sky-500 to-blue-600 text-2xl font-bold text-white shadow-lg ring-4 ring-sky-100">
-                  {displayName ? displayName.charAt(0).toUpperCase() : <User className="h-8 w-8" />}
-                </div>
-                <div className="flex-1">
-                  <Label className="text-sm font-semibold text-slate-700">
-                    {t('appSettings.profilePhoto')}
-                  </Label>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {t('appSettings.profilePhotoComingSoon')}
-                  </p>
-                </div>
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="displayName" className="text-sm font-medium text-slate-700">
                   {t('appSettings.profileNickname')}
@@ -527,68 +513,6 @@ export function SettingsClient({
                   {t('appSettings.planUpgrade')}
                 </Button>
               )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Shield className="h-5 w-5 text-sky-600" />
-                {t('appSettings.privacyTitle')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-slate-600">
-                {t('appSettings.privacyDesc')}
-              </p>
-
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100">
-                    <Shield className="h-5 w-5 text-sky-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-slate-900 mb-1">
-                      {t('appSettings.privacyDataLocal')}
-                    </h4>
-                    <p className="text-xs text-slate-600">
-                      {t('appSettings.privacyDataLocalDesc')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 opacity-60">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-200">
-                    <User className="h-5 w-5 text-slate-500" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-slate-700 mb-1">
-                      {t('appSettings.privacySharing')}
-                    </h4>
-                    <p className="text-xs text-slate-600">
-                      {t('appSettings.privacySharingDesc')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 opacity-60">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-200">
-                    <CreditCard className="h-5 w-5 text-slate-500" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-slate-700 mb-1">
-                      {t('appSettings.privacyExport')}
-                    </h4>
-                    <p className="text-xs text-slate-600">
-                      {t('appSettings.privacyExportDesc')}
-                    </p>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
 

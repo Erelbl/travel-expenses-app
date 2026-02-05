@@ -90,6 +90,8 @@ export default function AddExpensePage() {
   } | null>(null)
   const [unlockedAchievements, setUnlockedAchievements] = useState<Array<{ key: AchievementKey; level: number }>>([])
   const [showAchievementOverlay, setShowAchievementOverlay] = useState(false)
+  // Dedupe: track shown achievements in this session
+  const shownAchievementsRef = useRef<Set<string>>(new Set())
   
   // FX Rate state
   const [fxRateStatus, setFxRateStatus] = useState<"checking" | "available" | "unavailable" | "manual">("checking")
@@ -482,10 +484,26 @@ export default function AddExpensePage() {
         })
       }
       
-      // Check for newly unlocked achievements
+      // Check for newly unlocked achievements - only if server returned them
       if (result.newlyUnlocked && result.newlyUnlocked.length > 0) {
-        setUnlockedAchievements(result.newlyUnlocked)
-        setShowAchievementOverlay(true)
+        // Filter out achievements already shown in this session
+        const newAchievements = result.newlyUnlocked.filter((ach: { key: AchievementKey; level: number }) => {
+          const key = `${ach.key}:${ach.level}`
+          return !shownAchievementsRef.current.has(key)
+        })
+        
+        if (newAchievements.length > 0) {
+          // Show at most ONE achievement (highest level)
+          const highest = newAchievements.sort((a: { key: AchievementKey; level: number }, b: { key: AchievementKey; level: number }) => b.level - a.level)[0]
+          const achievementKey = `${highest.key}:${highest.level}`
+          shownAchievementsRef.current.add(achievementKey)
+          
+          setUnlockedAchievements([highest])
+          setShowAchievementOverlay(true)
+        } else {
+          toast.success(t('addExpense.success'))
+          router.push(`/trips/${tripId}`)
+        }
       } else {
         toast.success(t('addExpense.success'))
         router.push(`/trips/${tripId}`)

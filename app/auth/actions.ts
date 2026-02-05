@@ -20,6 +20,7 @@ export async function signUpAction(formData: FormData) {
     const name = formData.get("name") as string
     const email = formData.get("email") as string
     const password = formData.get("password") as string
+    const language = (formData.get("language") as string) || "en"
     const callbackUrl = (formData.get("callbackUrl") as string) || "/trips"
 
     if (!email || !password) {
@@ -38,12 +39,13 @@ export async function signUpAction(formData: FormData) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10)
 
-    // Create user
+    // Create user with language preference
     const user = await prisma.user.create({
       data: {
         email,
         name: name || null,
         passwordHash,
+        language: language === "he" ? "he" : "en",
       },
     })
 

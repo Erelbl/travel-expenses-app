@@ -5,6 +5,7 @@ import { signUpAction } from "../actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 
 export function SignupForm() {
   const [error, setError] = useState<string | null>(null)
@@ -68,6 +69,20 @@ export function SignupForm() {
           className="h-12 text-base"
         />
         <p className="text-xs text-slate-500">At least 8 characters</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="language">Preferred Language</Label>
+        <Select
+          id="language"
+          name="language"
+          defaultValue="en"
+          disabled={loading}
+          className="h-12 text-base"
+        >
+          <option value="en">🇺🇸 English</option>
+          <option value="he">🇮🇱 עברית</option>
+        </Select>
       </div>
 
       <Button type="submit" disabled={loading} className="w-full h-12 text-base">

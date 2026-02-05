@@ -35,3 +35,23 @@ export async function updateUserProfileAction(data: {
   }
 }
 
+export async function updateUserLanguageAction(language: "en" | "he") {
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    return { error: "Not authenticated" }
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { language },
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("Failed to update user language:", error)
+    return { error: "Failed to update language" }
+  }
+}
+

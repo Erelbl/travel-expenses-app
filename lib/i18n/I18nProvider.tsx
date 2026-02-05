@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Locale, detectLocale, getStoredLocale, setStoredLocale, t as translateFn } from './index';
+import { updateUserLanguageAction } from '@/app/(app)/settings/actions';
 
 interface I18nContextType {
   locale: Locale;
@@ -25,10 +26,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     updateDocumentLocale(initialLocale);
   }, []);
 
-  const setLocale = (newLocale: Locale) => {
+  const setLocale = async (newLocale: Locale) => {
     setLocaleState(newLocale);
     setStoredLocale(newLocale);
     updateDocumentLocale(newLocale);
+    
+    // Save to database if user is logged in
+    try {
+      await updateUserLanguageAction(newLocale);
+    } catch (error) {
+      // Silent fail - localStorage is already updated
+      console.error('Failed to save language preference to database:', error);
+    }
   };
 
   const updateDocumentLocale = (loc: Locale) => {
