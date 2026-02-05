@@ -21,10 +21,25 @@ export async function evaluateAchievements(
   const newlyUnlocked: UnlockedAchievement[] = []
   const definitions = getAllDefinitions()
 
+  // Preload all existing achievements for this user ONCE
+  const allExisting = await prisma.userAchievement.findMany({
+    where: { userId },
+    select: { key: true, level: true },
+  })
+  
+  // Build map: key -> max level
+  const existingMaxLevelByKey = new Map<AchievementKey, number>()
+  for (const ach of allExisting) {
+    const current = existingMaxLevelByKey.get(ach.key) || 0
+    if (ach.level > current) {
+      existingMaxLevelByKey.set(ach.key, ach.level)
+    }
+  }
+
   for (const def of definitions) {
     const metric = await def.computeMetric(userId)
     
-    // Find target level based on metric
+    // Find target level based on metric (capped at thresholds length)
     let targetLevel = 0
     for (let i = 0; i < def.thresholds.length; i++) {
       if (metric >= def.thresholds[i]) {
@@ -34,17 +49,15 @@ export async function evaluateAchievements(
       }
     }
 
-    // Get existing unlocked levels for this key
-    const existing = await prisma.userAchievement.findMany({
-      where: { userId, key: def.key },
-      select: { level: true },
-      orderBy: { level: "asc" },
-    })
-    const existingLevels = new Set(existing.map((a) => a.level))
-    const currentMaxLevel = existing.length > 0 ? Math.max(...existing.map((a) => a.level)) : 0
+    const existingMax = existingMaxLevelByKey.get(def.key) || 0
+
+    // If user already has max level >= target, no new unlocks
+    if (targetLevel <= existingMax) {
+      continue
+    }
 
     // For trip-based achievements, remove levels that are no longer valid
-    if (def.isTripBased && currentMaxLevel > targetLevel) {
+    if (def.isTripBased && existingMax > targetLevel) {
       await prisma.userAchievement.deleteMany({
         where: {
           userId,
@@ -52,19 +65,19 @@ export async function evaluateAchievements(
           level: { gt: targetLevel },
         },
       })
+      // Update map after deletion
+      existingMaxLevelByKey.set(def.key, targetLevel)
     }
 
-    // Add missing levels from current to target
-    const levelsToAdd: number[] = []
-    for (let level = 1; level <= targetLevel; level++) {
-      if (!existingLevels.has(level)) {
-        levelsToAdd.push(level)
-      }
+    // Insert missing levels from existingMax+1 to targetLevel
+    const levelsToInsert: number[] = []
+    for (let level = existingMax + 1; level <= targetLevel; level++) {
+      levelsToInsert.push(level)
     }
 
-    if (levelsToAdd.length > 0) {
+    if (levelsToInsert.length > 0) {
       await prisma.userAchievement.createMany({
-        data: levelsToAdd.map((level) => ({
+        data: levelsToInsert.map((level) => ({
           userId,
           key: def.key,
           level,
@@ -72,13 +85,15 @@ export async function evaluateAchievements(
         skipDuplicates: true,
       })
 
-      // Add to newly unlocked (only the highest new level)
-      const highestNewLevel = Math.max(...levelsToAdd)
+      // Update map after insertion
+      existingMaxLevelByKey.set(def.key, targetLevel)
+
+      // Add to newly unlocked (only the highest newly inserted level)
       newlyUnlocked.push({
         key: def.key,
-        level: highestNewLevel,
+        level: targetLevel,
         title: def.title,
-        message: def.message(highestNewLevel),
+        message: def.message(targetLevel),
         icon: def.icon,
       })
     }
