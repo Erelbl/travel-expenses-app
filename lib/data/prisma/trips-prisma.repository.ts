@@ -1,13 +1,10 @@
 import { Trip, CreateTrip } from "@/lib/schemas/trip.schema"
 import { TripsRepository } from "@/lib/data/repositories"
 import { prisma } from "@/lib/db"
-import { unstable_cache } from "next/cache"
 
 export class PrismaTripsRepository implements TripsRepository {
   async listTrips(userId: string): Promise<Trip[]> {
-    return unstable_cache(
-      async () => {
-        const trips = await prisma.trip.findMany({
+    const trips = await prisma.trip.findMany({
       where: {
         OR: [
           { ownerId: userId },
@@ -32,14 +29,14 @@ export class PrismaTripsRepository implements TripsRepository {
         }
       },
       orderBy: { createdAt: "desc" },
-        })
-        
-        const ownedCount = trips.filter(t => t.owner.id === userId).length
-        const sharedCount = trips.length - ownedCount
-        const sharedTripIds = trips.filter(t => t.owner.id !== userId).map(t => t.id).join(',')
-        console.log(`[LIST_TRIPS] userId=${userId} total=${trips.length} owned=${ownedCount} shared=${sharedCount} sharedTripIds=[${sharedTripIds}]`)
-        
-        return trips.map(t => ({
+    })
+    
+    const ownedCount = trips.filter(t => t.owner.id === userId).length
+    const sharedCount = trips.length - ownedCount
+    const sharedTripIds = trips.filter(t => t.owner.id !== userId).map(t => t.id).join(',')
+    console.log(`[LIST_TRIPS] userId=${userId} total=${trips.length} owned=${ownedCount} shared=${sharedCount} sharedTripIds=[${sharedTripIds}]`)
+    
+    return trips.map(t => ({
       id: t.id,
       name: t.name,
       startDate: t.startDate?.toISOString().split('T')[0] ?? null,
@@ -59,81 +56,71 @@ export class PrismaTripsRepository implements TripsRepository {
         }))
       ],
       createdAt: t.createdAt.getTime(),
-        }))
-      },
-      [`trips-list-${userId}`],
-      { revalidate: 30, tags: [`trips-${userId}`] }
-    )()
+    }))
   }
 
   async getTrip(tripId: string): Promise<Trip | null> {
-    return unstable_cache(
-      async () => {
-        const trip = await prisma.trip.findUnique({
-          where: { id: tripId },
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      select: {
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+        baseCurrency: true,
+        countries: true,
+        currentCountry: true,
+        currentCurrency: true,
+        tripType: true,
+        adults: true,
+        children: true,
+        travelStyle: true,
+        ageRange: true,
+        targetBudget: true,
+        isClosed: true,
+        closedAt: true,
+        createdAt: true,
+        owner: { select: { id: true, name: true } },
+        members: {
           select: {
-            id: true,
-            name: true,
-            startDate: true,
-            endDate: true,
-            baseCurrency: true,
-            countries: true,
-            currentCountry: true,
-            currentCurrency: true,
-            tripType: true,
-            adults: true,
-            children: true,
-            travelStyle: true,
-            ageRange: true,
-            targetBudget: true,
-            isClosed: true,
-            closedAt: true,
-            createdAt: true,
-            owner: { select: { id: true, name: true } },
-            members: {
-              select: {
-                role: true,
-                user: { select: { id: true, name: true } }
-              }
-            }
+            role: true,
+            user: { select: { id: true, name: true } }
           }
-        })
-        
-        if (!trip) return null
-        
-        return {
-          id: trip.id,
-          name: trip.name,
-          startDate: trip.startDate?.toISOString().split('T')[0] ?? null,
-          endDate: trip.endDate?.toISOString().split('T')[0] ?? null,
-          baseCurrency: trip.baseCurrency,
-          countries: trip.countries,
-          plannedCountries: trip.countries,
-          currentCountry: trip.currentCountry ?? undefined,
-          currentCurrency: trip.currentCurrency ?? undefined,
-          tripType: trip.tripType?.toLowerCase() as any ?? undefined,
-          adults: trip.adults,
-          children: trip.children,
-          travelStyle: trip.travelStyle?.toLowerCase() as any ?? undefined,
-          ageRange: trip.ageRange ? trip.ageRange.replace('AGE_', '').toLowerCase() as any : undefined,
-          targetBudget: trip.targetBudget ?? undefined,
-          isClosed: trip.isClosed,
-          closedAt: trip.closedAt?.getTime() ?? null,
-          itineraryLegs: [],
-          members: [
-            { id: trip.owner.id, name: trip.owner.name ?? "Owner", role: "owner" as const },
-            ...trip.members.map(m => ({
-              id: m.user.id,
-              name: m.user.name ?? "Member",
-              role: m.role.toLowerCase() as "editor" | "viewer"
-            }))
-          ],
-          createdAt: trip.createdAt.getTime(),
         }
-      },
-      [`trip-${tripId}`],
-      { revalidate: 15, tags: [`trip-${tripId}`] }
-    )()
+      }
+    })
+    
+    if (!trip) return null
+    
+    return {
+      id: trip.id,
+      name: trip.name,
+      startDate: trip.startDate?.toISOString().split('T')[0] ?? null,
+      endDate: trip.endDate?.toISOString().split('T')[0] ?? null,
+      baseCurrency: trip.baseCurrency,
+      countries: trip.countries,
+      plannedCountries: trip.countries,
+      currentCountry: trip.currentCountry ?? undefined,
+      currentCurrency: trip.currentCurrency ?? undefined,
+      tripType: trip.tripType?.toLowerCase() as any ?? undefined,
+      adults: trip.adults,
+      children: trip.children,
+      travelStyle: trip.travelStyle?.toLowerCase() as any ?? undefined,
+      ageRange: trip.ageRange ? trip.ageRange.replace('AGE_', '').toLowerCase() as any : undefined,
+      targetBudget: trip.targetBudget ?? undefined,
+      isClosed: trip.isClosed,
+      closedAt: trip.closedAt?.getTime() ?? null,
+      itineraryLegs: [],
+      members: [
+        { id: trip.owner.id, name: trip.owner.name ?? "Owner", role: "owner" as const },
+        ...trip.members.map(m => ({
+          id: m.user.id,
+          name: m.user.name ?? "Member",
+          role: m.role.toLowerCase() as "editor" | "viewer"
+        }))
+      ],
+      createdAt: trip.createdAt.getTime(),
+    }
   }
 
   async getTripForUser(tripId: string, userId: string): Promise<Trip | null> {
