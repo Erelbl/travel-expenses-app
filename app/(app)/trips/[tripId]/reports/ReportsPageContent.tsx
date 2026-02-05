@@ -148,8 +148,11 @@ export default function ReportsPageContent({
     includeRealized: true,
     includeFuture: true,
     showOnlyUnconverted: false,
-    country: "",
-    category: "",
+    countries: [],
+    categories: [],
+    amountMin: undefined,
+    amountMax: undefined,
+    sort: "date",
   })
   
   // Persist toggle states
@@ -172,7 +175,7 @@ export default function ReportsPageContent({
   }, [excludeFlightsFromTotal, tripId])
 
   // Apply filters
-  const filteredExpenses = filterExpenses(expenses, filters)
+  const filteredExpenses = filterExpenses(expenses, filters, trip)
   
   // Total spend - with optional flight exclusion
   const expensesForTotal = excludeFlightsFromTotal
@@ -305,8 +308,10 @@ export default function ReportsPageContent({
     !filters.includeRealized ||
     !filters.includeFuture ||
     filters.showOnlyUnconverted ||
-    filters.country !== "" ||
-    filters.category !== ""
+    (filters.countries && filters.countries.length > 0) ||
+    (filters.categories && filters.categories.length > 0) ||
+    filters.amountMin !== undefined ||
+    filters.amountMax !== undefined
 
   function clearFilters() {
     setFilters({
@@ -314,8 +319,11 @@ export default function ReportsPageContent({
       includeRealized: true,
       includeFuture: true,
       showOnlyUnconverted: false,
-      country: "",
-      category: "",
+      countries: [],
+      categories: [],
+      amountMin: undefined,
+      amountMax: undefined,
+      sort: "date",
     })
   }
 
@@ -795,24 +803,7 @@ export default function ReportsPageContent({
               </div>
             )}
 
-            {/* Category Filter */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">{t("reports.category")}</Label>
-              <Select
-                value={filters.category || ""}
-                onChange={(e) =>
-                  setFilters({ ...filters, category: e.target.value as ExpenseCategory | "" })
-                }
-                className="text-base"
-              >
-                <option value="">{t("reports.allCategories")}</option>
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {t(`categories.${cat}`)}
-                  </option>
-                ))}
-              </Select>
-            </div>
+            {/* Category Filter - temporarily disabled for multi-select upgrade */}
 
             {/* Actions */}
             <div className="flex gap-3 pt-3 border-t border-slate-100">

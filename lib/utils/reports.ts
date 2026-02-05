@@ -7,14 +7,17 @@ import { Locale } from "@/lib/i18n"
  */
 
 export interface ReportFilters {
-  dateRange: "all" | "week" | "custom"
+  dateRange: "all" | "today" | "7d" | "30d" | "trip" | "custom"
   startDate?: string
   endDate?: string
   includeRealized: boolean
   includeFuture: boolean
   showOnlyUnconverted: boolean
-  country?: string
-  category?: ExpenseCategory | ""
+  countries?: string[]
+  categories?: ExpenseCategory[]
+  amountMin?: number
+  amountMax?: number
+  sort?: "amount" | "date"
 }
 
 export interface ExpenseClassification {
@@ -70,6 +73,33 @@ export interface ReportSummary {
   averagePerDay: number
   tripDays: number
   expenseCount: number
+}
+
+export interface TopDrain {
+  category: ExpenseCategory
+  amount: number
+  percentage: number
+  count: number
+}
+
+export interface BiggestExpense {
+  id: string
+  title: string
+  category: ExpenseCategory
+  amount: number
+  date: string
+}
+
+export interface BurnRateInfo {
+  totalSpent: number
+  averagePerDay: number
+  daysElapsed: number
+  totalDays?: number
+  projectedTotal?: number
+  budget?: number
+  budgetRemaining?: number
+  budgetUsedPercent?: number
+  isOverBudget?: boolean
 }
 
 export interface ReportInsight {
@@ -134,23 +164,48 @@ export function classifyExpenses(expenses: Expense[]): ExpenseClassification {
 /**
  * Filter expenses based on report filters
  */
-export function filterExpenses(expenses: Expense[], filters: ReportFilters): Expense[] {
+export function filterExpenses(expenses: Expense[], filters: ReportFilters, trip?: Trip): Expense[] {
   return expenses.filter((expense) => {
+    const expenseDate = expense.usageDate || expense.date
+    
     // Date range filter
-    if (filters.dateRange === "week") {
+    if (filters.dateRange === "today") {
+      const today = getTodayString()
+      if (expenseDate !== today) return false
+    } else if (filters.dateRange === "7d") {
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
       const weekAgoStr = weekAgo.toISOString().split("T")[0]
-      if (expense.date < weekAgoStr) return false
+      if (expenseDate < weekAgoStr) return false
+    } else if (filters.dateRange === "30d") {
+      const monthAgo = new Date()
+      monthAgo.setDate(monthAgo.getDate() - 30)
+      const monthAgoStr = monthAgo.toISOString().split("T")[0]
+      if (expenseDate < monthAgoStr) return false
+    } else if (filters.dateRange === "trip" && trip) {
+      if (trip.startDate && expenseDate < trip.startDate) return false
+      if (trip.endDate && expenseDate > trip.endDate) return false
     } else if (filters.dateRange === "custom" && filters.startDate && filters.endDate) {
-      if (expense.date < filters.startDate || expense.date > filters.endDate) return false
+      if (expenseDate < filters.startDate || expenseDate > filters.endDate) return false
     }
 
-    // Country filter
-    if (filters.country && expense.country !== filters.country) return false
+    // Countries filter (multi-select)
+    if (filters.countries && filters.countries.length > 0) {
+      if (!expense.country || !filters.countries.includes(expense.country)) return false
+    }
 
-    // Category filter
-    if (filters.category && expense.category !== filters.category) return false
+    // Categories filter (multi-select)
+    if (filters.categories && filters.categories.length > 0) {
+      if (!filters.categories.includes(expense.category)) return false
+    }
+
+    // Amount range filter
+    if (filters.amountMin !== undefined && expense.convertedAmount) {
+      if (expense.convertedAmount < filters.amountMin) return false
+    }
+    if (filters.amountMax !== undefined && expense.convertedAmount) {
+      if (expense.convertedAmount > filters.amountMax) return false
+    }
 
     // Classification filters
     const isFuture = isFutureExpense(expense)
@@ -507,5 +562,99 @@ export function generateInsights(
   }
 
   return insights.slice(0, 5) // Max 5 insights
+}
+
+/**
+ * Get top spending categories (drains)
+ */
+export function getTopDrains(expenses: Expense[], limit: number = 5): TopDrain[] {
+  const categoryBreakdown = calculateCategoryBreakdown(expenses)
+  const total = categoryBreakdown.reduce((sum, item) => sum + item.amount, 0)
+  
+  return categoryBreakdown
+    .slice(0, limit)
+    .map(item => ({
+      category: item.category,
+      amount: item.amount,
+      percentage: total > 0 ? (item.amount / total) * 100 : 0,
+      count: item.count,
+    }))
+}
+
+/**
+ * Get biggest expenses
+ */
+export function getBiggestExpenses(expenses: Expense[], limit: number = 5): BiggestExpense[] {
+  return expenses
+    .filter(e => hasConvertedAmount(e))
+    .sort((a, b) => (b.convertedAmount || 0) - (a.convertedAmount || 0))
+    .slice(0, limit)
+    .map(e => ({
+      id: e.id,
+      title: e.merchant || e.category,
+      category: e.category,
+      amount: e.convertedAmount || 0,
+      date: e.usageDate || e.date,
+    }))
+}
+
+/**
+ * Calculate burn rate / spending pace
+ */
+export function calculateBurnRate(
+  expenses: Expense[],
+  trip: Trip,
+  filters?: ReportFilters
+): BurnRateInfo {
+  const totalSpent = expenses
+    .filter(e => hasConvertedAmount(e) && !isFutureExpense(e))
+    .reduce((sum, e) => sum + (e.convertedAmount || 0), 0)
+
+  const today = getTodayString()
+  
+  // Calculate days elapsed and total days
+  let daysElapsed = 1
+  let totalDays: number | undefined
+  let projectedTotal: number | undefined
+
+  if (trip.startDate) {
+    const startDate = new Date(trip.startDate)
+    const todayDate = new Date(today)
+    const elapsedMs = todayDate.getTime() - startDate.getTime()
+    daysElapsed = Math.max(1, Math.ceil(elapsedMs / (1000 * 60 * 60 * 24)))
+
+    if (trip.endDate) {
+      const endDate = new Date(trip.endDate)
+      const totalMs = endDate.getTime() - startDate.getTime()
+      totalDays = Math.max(1, Math.ceil(totalMs / (1000 * 60 * 60 * 24)) + 1)
+      
+      // Clamp daysElapsed to totalDays (don't go negative on remaining days)
+      daysElapsed = Math.min(daysElapsed, totalDays)
+      
+      // Calculate projected total based on current pace
+      const averagePerDay = totalSpent / daysElapsed
+      projectedTotal = averagePerDay * totalDays
+    }
+  }
+
+  const averagePerDay = totalSpent / daysElapsed
+
+  // Budget calculations
+  const budget = trip.targetBudget && trip.targetBudget > 0 ? trip.targetBudget : undefined
+  const budgetRemaining = budget ? budget - totalSpent : undefined
+  const budgetUsedPercent = budget ? (totalSpent / budget) * 100 : undefined
+  const isOverBudget = budget ? totalSpent > budget : false
+
+  return {
+    totalSpent,
+    averagePerDay,
+    daysElapsed,
+    totalDays,
+    projectedTotal,
+    budget,
+    budgetRemaining,
+    budgetUsedPercent,
+    isOverBudget,
+  }
 }
 
