@@ -128,6 +128,7 @@ export default function ReportsPage() {
   const [error, setError] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<ExpenseCategory | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [filtersExpanded, setFiltersExpanded] = useState(false)
   const [includeFlightsInCountry, setIncludeFlightsInCountry] = useState(() => {
     if (typeof window === 'undefined') return false
     const stored = localStorage.getItem(`reports:countryIncludeFlights:${params.tripId}`)
@@ -576,122 +577,129 @@ export default function ReportsPage() {
             </div>
           </div>
           
-          {/* Inline Filters Section */}
-          <div className="px-4 py-4 border-t border-slate-200 bg-slate-50">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {/* Date Range */}
-              <div>
-                <Label className="text-xs text-slate-600 mb-1">{t("reports.dateRange")}</Label>
-                <Select
-                  value={filters.dateRange}
-                  onChange={(e) =>
-                    setFilters({ ...filters, dateRange: e.target.value as ReportFilters["dateRange"] })
-                  }
-                  className="h-9 text-sm"
+          {/* Compact Inline Filters */}
+          <div className="px-4 py-3 border-t border-slate-200 bg-background">
+            {!filtersExpanded ? (
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => setFiltersExpanded(true)}
+                  className="flex items-center gap-2 text-sm text-slate-700 hover:text-slate-900"
                 >
-                  <option value="all">{t("reports.allTime")}</option>
-                  <option value="today">{t("reports.today")}</option>
-                  <option value="7d">{t("reports.last7Days")}</option>
-                  <option value="30d">{t("reports.last30Days")}</option>
-                  <option value="trip">{t("reports.tripDates")}</option>
-                </Select>
+                  <Calendar className="h-4 w-4" />
+                  <span>{filters.dateRange === "all" ? t("reports.allTime") : filters.dateRange === "trip" ? t("reports.tripDates") : filters.dateRange === "7d" ? t("reports.last7Days") : filters.dateRange === "30d" ? t("reports.last30Days") : t("reports.today")}</span>
+                  {(filters.countries && filters.countries.length > 0) && (
+                    <>
+                      <span className="text-slate-400">•</span>
+                      <span>🌍 {filters.countries.length}</span>
+                    </>
+                  )}
+                  {(filters.categories && filters.categories.length > 0) && (
+                    <>
+                      <span className="text-slate-400">•</span>
+                      <span>🏷 {filters.categories.length}</span>
+                    </>
+                  )}
+                </button>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-xs text-sky-600 hover:text-sky-700 font-medium"
+                  >
+                    {t("reports.clearAll")}
+                  </button>
+                )}
               </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-900">{t("reports.filters")}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFiltersExpanded(false)}
+                    className="h-7 text-xs"
+                  >
+                    {t("common.close")}
+                  </Button>
+                </div>
 
-              {/* Category */}
-              <div>
-                <Label className="text-xs text-slate-600 mb-1">{t("reports.category")}</Label>
-                <Select
-                  value={filters.categories && filters.categories.length === 1 ? filters.categories[0] : "all"}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    setFilters({ ...filters, categories: val === "all" ? [] : [val as ExpenseCategory] })
-                  }}
-                  className="h-9 text-sm"
-                >
-                  <option value="all">{t("reports.allCategories")}</option>
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>{t(`categories.${cat}`)}</option>
-                  ))}
-                </Select>
-              </div>
-
-              {/* Country */}
-              {tripCountries.length > 0 && (
+                {/* Date Range */}
                 <div>
-                  <Label className="text-xs text-slate-600 mb-1">{t("reports.country")}</Label>
+                  <Label className="text-xs text-slate-600 mb-1.5">{t("reports.dateRange")}</Label>
                   <Select
-                    value={filters.countries && filters.countries.length === 1 ? filters.countries[0] : "all"}
-                    onChange={(e) => {
-                      const val = e.target.value
-                      setFilters({ ...filters, countries: val === "all" ? [] : [val] })
-                    }}
+                    value={filters.dateRange}
+                    onChange={(e) =>
+                      setFilters({ ...filters, dateRange: e.target.value as ReportFilters["dateRange"] })
+                    }
                     className="h-9 text-sm"
                   >
-                    <option value="all">{t("reports.allCountries")}</option>
-                    {tripCountries.map((country) => (
-                      <option key={country} value={country}>{getCountryName(country, locale)}</option>
-                    ))}
+                    <option value="all">{t("reports.allTime")}</option>
+                    <option value="today">{t("reports.today")}</option>
+                    <option value="7d">{t("reports.last7Days")}</option>
+                    <option value="30d">{t("reports.last30Days")}</option>
+                    <option value="trip">{t("reports.tripDates")}</option>
                   </Select>
                 </div>
-              )}
 
-              {/* Amount Min */}
-              <div>
-                <Label className="text-xs text-slate-600 mb-1">{t("reports.min")}</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={filters.amountMin ?? ""}
-                  onChange={(e) =>
-                    setFilters({
-                      ...filters,
-                      amountMin: e.target.value ? parseFloat(e.target.value) : undefined,
-                    })
-                  }
-                  placeholder="0"
-                  className="h-9 text-sm"
-                />
+                {/* Categories Multi-Select */}
+                <div>
+                  <Label className="text-xs text-slate-600 mb-1.5">{t("reports.categories")}</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES.map((cat) => {
+                      const isSelected = filters.categories?.includes(cat)
+                      return (
+                        <Badge
+                          key={cat}
+                          variant={isSelected ? "default" : "outline"}
+                          className="cursor-pointer h-7 text-xs"
+                          onClick={() => {
+                            const current = filters.categories || []
+                            setFilters({
+                              ...filters,
+                              categories: isSelected
+                                ? current.filter((c) => c !== cat)
+                                : [...current, cat],
+                            })
+                          }}
+                        >
+                          {t(`categories.${cat}`)}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Countries Multi-Select */}
+                {tripCountries.length > 0 && (
+                  <div>
+                    <Label className="text-xs text-slate-600 mb-1.5">{t("reports.countries")}</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {tripCountries.map((country) => {
+                        const isSelected = filters.countries?.includes(country)
+                        return (
+                          <Badge
+                            key={country}
+                            variant={isSelected ? "default" : "outline"}
+                            className="cursor-pointer h-7 text-xs"
+                            onClick={() => {
+                              const current = filters.countries || []
+                              setFilters({
+                                ...filters,
+                                countries: isSelected
+                                  ? current.filter((c) => c !== country)
+                                  : [...current, country],
+                              })
+                            }}
+                          >
+                            {getCountryName(country, locale)}
+                          </Badge>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* Sort */}
-              <div>
-                <Label className="text-xs text-slate-600 mb-1">{t("reports.sortBy")}</Label>
-                <Select
-                  value={filters.sort || "date"}
-                  onChange={(e) =>
-                    setFilters({ ...filters, sort: e.target.value as "amount" | "date" })
-                  }
-                  className="h-9 text-sm"
-                >
-                  <option value="date">{t("reports.sortByDate")}</option>
-                  <option value="amount">{t("reports.sortByAmount")}</option>
-                </Select>
-            </div>
-          </div>
-          
-            {/* Active Filter Chips */}
-          {activeFilterChips.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2 items-center">
-              {activeFilterChips.map((chip) => (
-                <Badge
-                  key={chip.key}
-                  variant="default"
-                    className="gap-1.5 cursor-pointer h-6 text-xs"
-                  onClick={chip.onRemove}
-                >
-                  <span>{chip.label}</span>
-                  <X className="h-3 w-3" />
-                </Badge>
-              ))}
-              <button
-                onClick={clearFilters}
-                  className="text-xs text-sky-600 hover:text-sky-700 font-medium"
-              >
-                  {t("reports.clearAll")}
-              </button>
-            </div>
-          )}
+            )}
           </div>
         </div>
       </div>
@@ -832,87 +840,6 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* TOP DRAINS MODULE */}
-        {topDrains.length > 0 && (
-          <Card className="border-slate-200 shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                <TrendingDown className="h-5 w-5 text-rose-500" />
-                {t("reports.topDrains") || "Top Drains"}
-              </CardTitle>
-              <p className="text-sm text-slate-500 mt-1">
-                {t("reports.topDrainsDesc") || "Categories where you spent the most"}
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {topDrains.map((drain) => (
-                <div key={drain.category} className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-700">
-                        {t(`categories.${drain.category}`)}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        ({drain.count} {drain.count === 1 ? (t("reports.expense") || "expense") : (t("reports.expenses") || "expenses")})
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-900">
-                        {formatCurrency(drain.amount, trip.baseCurrency)}
-                      </span>
-                      <span className="text-xs font-semibold text-slate-500 w-10 text-end">
-                        {drain.percentage.toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-rose-500 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(drain.percentage, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {/* Biggest Expenses */}
-              {biggestExpenses.length > 0 && (
-                <div className="mt-6 pt-6 border-t border-slate-200">
-                  <h4 className="text-sm font-semibold text-slate-700 mb-3">
-                    {t("reports.biggestExpenses") || "Biggest Expenses"}
-                  </h4>
-                  <div className="space-y-2">
-                    {biggestExpenses.map((expense) => (
-                      <div
-                        key={expense.id}
-                        className="flex items-center justify-between py-2 hover:bg-slate-50 rounded px-2 -mx-2 transition-colors"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">
-                            {expense.title}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {new Date(expense.date).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                            {' • '}
-                            {t(`categories.${expense.category}`)}
-                          </p>
-                        </div>
-                        <span className="text-sm font-bold text-slate-900 ml-3">
-                          {formatCurrency(expense.amount, trip.baseCurrency)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
         {/* BURN RATE / SPENDING PACE MODULE */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-4">
@@ -1003,167 +930,250 @@ export default function ReportsPage() {
                 </div>
               </div>
             )}
+            
+            {/* Note about flights exclusion */}
+            <p className="text-xs text-slate-400 mt-4 border-t border-slate-100 pt-3">
+              {t("reports.spendingPaceNote") || "Excludes flights for daily accuracy"}
+            </p>
           </CardContent>
         </Card>
 
-        {/* VISUAL BREAKDOWNS - Supporting charts */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* Category Breakdown */}
+        {/* TOP DRAINS MODULE */}
+        {topDrains.length > 0 && (
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                <Tag className="h-5 w-5 text-sky-500" />
-                {t("reports.byCategory")}
+                <TrendingDown className="h-5 w-5 text-rose-500" />
+                {t("reports.topDrains") || "Top Drains"}
               </CardTitle>
+              <p className="text-sm text-slate-500 mt-1">
+                {t("reports.topDrainsDesc") || "Categories where you spent the most"}
+              </p>
             </CardHeader>
-            <CardContent>
-              {topCategories.length === 0 ? (
-                <p className="text-base text-slate-500 text-center py-8">
-                  {t("reports.noData")}
-                </p>
-              ) : (
-                <div className="flex flex-col md:flex-row items-center gap-8">
-                  {/* Pie Chart */}
-                  <div className="flex-shrink-0">
-                    <DonutChart
-                      data={categoryBreakdown
-                        .sort((a, b) => b.amount - a.amount)
-                        .map((item) => ({
-                          category: item.category,
-                          percentage: item.percentage,
-                        }))}
-                      size={200}
-                      strokeWidth={40}
-                    />
+            <CardContent className="space-y-3">
+              {topDrains.map((drain) => (
+                <div key={drain.category} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-700">
+                        {t(`categories.${drain.category}`)}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        ({drain.count} {drain.count === 1 ? (t("reports.expense") || "expense") : (t("reports.expenses") || "expenses")})
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-900">
+                        {formatCurrency(drain.amount, trip.baseCurrency)}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-500 w-10 text-end">
+                        {drain.percentage.toFixed(0)}%
+                      </span>
+                    </div>
                   </div>
-                  {/* Legend */}
-                  <div className="flex-1 w-full space-y-3">
-                    {categoryBreakdown
-                      .sort((a, b) => b.amount - a.amount)
-                      .map((item) => (
-                        <div
-                          key={item.category}
-                          className="flex items-center justify-between cursor-pointer transition-opacity hover:opacity-80"
-                          onMouseEnter={() => setHoveredCategory(item.category)}
-                          onMouseLeave={() => setHoveredCategory(null)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="w-4 h-4 rounded-full shrink-0"
-                              style={{
-                                backgroundColor:
-                                  CATEGORY_CHART_COLORS[item.category as ExpenseCategory] ||
-                                  CATEGORY_CHART_COLORS.Other,
-                              }}
-                            />
-                            <span className="font-medium text-sm text-slate-700">
-                              {t(`categories.${item.category}`)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-sm font-bold text-slate-900">
-                              {formatCurrency(item.amount, trip.baseCurrency)}
-                            </span>
-                            <span className="text-xs font-semibold text-slate-500 w-10 text-end">
-                              {item.percentage.toFixed(0)}%
-                            </span>
-                          </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-rose-500 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(drain.percentage, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Biggest Expenses */}
+              {biggestExpenses.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                  <h4 className="text-sm font-semibold text-slate-700 mb-3">
+                    {t("reports.biggestExpenses") || "Biggest Expenses"}
+                  </h4>
+                  <div className="space-y-2">
+                    {biggestExpenses.map((expense) => (
+                      <div
+                        key={expense.id}
+                        className="flex items-center justify-between py-2 hover:bg-slate-50 rounded px-2 -mx-2 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {expense.title}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {new Date(expense.date).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                            {' • '}
+                            {t(`categories.${expense.category}`)}
+                          </p>
                         </div>
-                      ))}
+                        <span className="text-sm font-bold text-slate-900 ml-3">
+                          {formatCurrency(expense.amount, trip.baseCurrency)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
             </CardContent>
           </Card>
+        )}
 
-          {/* Country Breakdown (multi-country only) */}
-          {isMultiCountry && countryBreakdown.length > 0 && (
-            <Card className="border-slate-200 shadow-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-bold text-slate-900">
-                    {t("reports.byCountry")}
-                  </CardTitle>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={includeFlightsInCountry}
-                      onChange={(e) => setIncludeFlightsInCountry(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                    />
-                    <span className="text-xs text-slate-600">
-                      {locale === "he" ? "כלול טיסות" : "Include flights"}
-                    </span>
-                  </label>
+        {/* Category Breakdown */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
+              <Tag className="h-5 w-5 text-sky-500" />
+              {t("reports.byCategory")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {topCategories.length === 0 ? (
+              <p className="text-base text-slate-500 text-center py-8">
+                {t("reports.noData")}
+              </p>
+            ) : (
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                {/* Pie Chart */}
+                <div className="flex-shrink-0">
+                  <DonutChart
+                    data={categoryBreakdown
+                      .sort((a, b) => b.amount - a.amount)
+                      .map((item) => ({
+                        category: item.category,
+                        percentage: item.percentage,
+                      }))}
+                    size={200}
+                    strokeWidth={40}
+                  />
                 </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  {locale === "he" 
-                    ? "הפירוט לפי מדינה מוצג ללא טיסות כדי לשקף הוצאות בתוך היעד. לכן סכומי המדינות עשויים להיות שונים מהסה״כ הכללי."
-                    : "Country breakdown excludes flights by default to reflect in-destination spending. Country totals may differ from overall totals."}
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {countryBreakdown.map((item) => (
-                    <div key={item.country} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">{getCountryFlag(item.country)}</span>
-                          <span className="font-semibold text-base text-slate-700">
-                            {getCountryName(item.country, locale)}
-                          </span>
-                        </div>
-                        <span className="text-base text-slate-900 font-bold">
-                          {formatCurrency(item.amount, trip.baseCurrency)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                {/* Legend */}
+                <div className="flex-1 w-full space-y-3">
+                  {categoryBreakdown
+                    .sort((a, b) => b.amount - a.amount)
+                    .map((item) => (
+                      <div
+                        key={item.category}
+                        className="flex items-center justify-between cursor-pointer transition-opacity hover:opacity-80"
+                        onMouseEnter={() => setHoveredCategory(item.category)}
+                        onMouseLeave={() => setHoveredCategory(null)}
+                      >
+                        <div className="flex items-center gap-3">
                           <div
-                            className="h-full bg-sky-500 rounded-full transition-all duration-500"
+                            className="w-4 h-4 rounded-full shrink-0"
                             style={{
-                              width: `${item.percentage}%`,
+                              backgroundColor:
+                                CATEGORY_CHART_COLORS[item.category as ExpenseCategory] ||
+                                CATEGORY_CHART_COLORS.Other,
                             }}
                           />
-                        </div>
-                        <span className="text-sm font-semibold text-slate-600 w-12 text-end">
-                          {item.percentage.toFixed(0)}%
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Daily average per country */}
-                {countryDailyAverages.length > 0 && (
-                  <div className="mt-6 pt-6 border-t border-slate-200">
-                    <h4 className="text-sm font-semibold text-slate-700 mb-3">
-                      {locale === "he" ? "ממוצע הוצאה ליום לפי מדינה" : "Daily average per country"}
-                    </h4>
-                    <div className="space-y-2">
-                      {countryDailyAverages.map((item: any) => (
-                        <div key={item.country} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <span>{getCountryFlag(item.country)}</span>
-                            <span className="text-slate-600">
-                              {getCountryName(item.country, locale)}
-                            </span>
-                            <span className="text-xs text-slate-400">
-                              ({item.days} {item.days === 1 ? (locale === "he" ? "יום" : "day") : (locale === "he" ? "ימים" : "days")})
-                            </span>
-                          </div>
-                          <span className="font-bold text-slate-900">
-                            {formatCurrency(item.dailyAverage, trip.baseCurrency)}
+                          <span className="font-medium text-sm text-slate-700">
+                            {t(`categories.${item.category}`)}
                           </span>
                         </div>
-                      ))}
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-slate-900">
+                            {formatCurrency(item.amount, trip.baseCurrency)}
+                          </span>
+                          <span className="text-xs font-semibold text-slate-500 w-10 text-end">
+                            {item.percentage.toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Country Breakdown (multi-country only) */}
+        {isMultiCountry && countryBreakdown.length > 0 && (
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-bold text-slate-900">
+                  {t("reports.byCountry")}
+                </CardTitle>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includeFlightsInCountry}
+                    onChange={(e) => setIncludeFlightsInCountry(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                  />
+                  <span className="text-xs text-slate-600">
+                    {locale === "he" ? "כלול טיסות" : "Include flights"}
+                  </span>
+                </label>
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                {locale === "he" 
+                  ? "הפירוט לפי מדינה מוצג ללא טיסות כדי לשקף הוצאות בתוך היעד. לכן סכומי המדינות עשויים להיות שונים מהסה״כ הכללי."
+                  : "Country breakdown excludes flights by default to reflect in-destination spending. Country totals may differ from overall totals."}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {countryBreakdown.map((item) => (
+                  <div key={item.country} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{getCountryFlag(item.country)}</span>
+                        <span className="font-semibold text-base text-slate-700">
+                          {getCountryName(item.country, locale)}
+                        </span>
+                      </div>
+                      <span className="text-base text-slate-900 font-bold">
+                        {formatCurrency(item.amount, trip.baseCurrency)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-sky-500 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${item.percentage}%`,
+                          }}
+                        />
+                      </div>
+                      <span className="text-sm font-semibold text-slate-600 w-12 text-end">
+                        {item.percentage.toFixed(0)}%
+                      </span>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                ))}
+              </div>
+
+              {/* Daily average per country */}
+              {countryDailyAverages.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-slate-200">
+                  <h4 className="text-sm font-semibold text-slate-700 mb-3">
+                    {locale === "he" ? "ממוצע הוצאה ליום לפי מדינה" : "Daily average per country"}
+                  </h4>
+                  <div className="space-y-2">
+                    {countryDailyAverages.map((item: any) => (
+                      <div key={item.country} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <span>{getCountryFlag(item.country)}</span>
+                          <span className="text-slate-600">
+                            {getCountryName(item.country, locale)}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            ({item.days} {item.days === 1 ? (locale === "he" ? "יום" : "day") : (locale === "he" ? "ימים" : "days")})
+                          </span>
+                        </div>
+                        <span className="font-bold text-slate-900">
+                          {formatCurrency(item.dailyAverage, trip.baseCurrency)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* MAIN HERO GRAPH - Time-based spending */}
         <Card className="border-slate-200 shadow-sm">

@@ -308,6 +308,7 @@
     "planned": "מתוכנן",
     "spendingPace": "קצב הוצאה",
     "spendingPaceDesc": "עקוב אחר קצב ההוצאה היומי",
+    "spendingPaceNote": "לא כולל טיסות לחישוב יומי מדויק",
     "avgPerDay": "ממוצע/יום",
     "progress": "התקדמות",
     "projected": "צפוי",

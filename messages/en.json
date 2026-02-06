@@ -308,6 +308,7 @@
     "planned": "Planned",
     "spendingPace": "Spending Pace",
     "spendingPaceDesc": "Track your daily spending rate",
+    "spendingPaceNote": "Excludes flights for daily accuracy",
     "avgPerDay": "Avg/Day",
     "progress": "Progress",
     "projected": "Projected",

@@ -382,12 +382,32 @@ export function calculateDailySpend(expenses: Expense[]): DailySpend[] {
     if (!hasConvertedAmount(expense)) continue
     // Use experience date (usageDate) if available, otherwise payment date
     const experienceDate = expense.usageDate || expense.date
-    const existing = byDate.get(experienceDate) || { amount: 0, count: 0, isFuture: experienceDate > today }
-    byDate.set(experienceDate, {
-      amount: existing.amount + (expense.convertedAmount || 0),
-      count: existing.count + 1,
-      isFuture: experienceDate > today,
-    })
+    
+    // Normalize lodging by nights
+    if (expense.category === 'Lodging' && expense.numberOfNights && expense.numberOfNights > 1) {
+      const perNight = (expense.convertedAmount || 0) / expense.numberOfNights
+      const startDate = new Date(experienceDate)
+      
+      for (let i = 0; i < expense.numberOfNights; i++) {
+        const nightDate = new Date(startDate)
+        nightDate.setDate(startDate.getDate() + i)
+        const nightDateStr = nightDate.toISOString().split('T')[0]
+        
+        const existing = byDate.get(nightDateStr) || { amount: 0, count: 0, isFuture: nightDateStr > today }
+        byDate.set(nightDateStr, {
+          amount: existing.amount + perNight,
+          count: existing.count + (i === 0 ? 1 : 0), // Only count once
+          isFuture: nightDateStr > today,
+        })
+      }
+    } else {
+      const existing = byDate.get(experienceDate) || { amount: 0, count: 0, isFuture: experienceDate > today }
+      byDate.set(experienceDate, {
+        amount: existing.amount + (expense.convertedAmount || 0),
+        count: existing.count + 1,
+        isFuture: experienceDate > today,
+      })
+    }
   }
 
   return Array.from(byDate.entries())
