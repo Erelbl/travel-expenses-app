@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Filter, Calendar, DollarSign, BarChart3, Plus, Target, Tag, Download, TrendingDown, Zap, X } from "lucide-react"
+import { ArrowLeft, Calendar, DollarSign, BarChart3, Plus, Target, Tag, Download, TrendingDown, Zap, X } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { Button } from "@/components/ui/button"
@@ -12,14 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { DatePickerInput } from "@/components/ui/date-picker-input"
 import { Badge } from "@/components/ui/badge"
-import { Sheet, SheetHeader, SheetTitle, SheetContent, SheetClose } from "@/components/ui/sheet"
 import { StatCardSkeleton, ReportCardSkeleton } from "@/components/ui/skeleton"
 import { ErrorState } from "@/components/ui/error-state"
 import { EmptyState } from "@/components/ui/empty-state"
 import { TimeSeriesChart } from "@/components/charts/TimeSeriesChart"
-import { CountryMultiSelect } from "@/components/CountryMultiSelect"
 import { tripsRepository, expensesRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
 import { Expense, ExpenseCategory } from "@/lib/schemas/expense.schema"
@@ -129,7 +126,6 @@ export default function ReportsPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<ExpenseCategory | null>(null)
   const [exporting, setExporting] = useState(false)
   const [includeFlightsInCountry, setIncludeFlightsInCountry] = useState(() => {
@@ -299,12 +295,15 @@ export default function ReportsPage() {
   const summaryForDailyAvg = calculateSummary(expensesForDailyAvg, trip)
   
   const topCategories = getTopCategories(categoryBreakdown, 5)
-  const dailySpend = calculateDailySpend(sortedExpenses)
+  
+  // Exclude flights from timeline and burn rate (default behavior)
+  const expensesForTimeline = sortedExpenses.filter(e => e.category !== 'Flights')
+  const dailySpend = calculateDailySpend(expensesForTimeline)
   
   // New calculations for modules
   const topDrains = getTopDrains(sortedExpenses, 4)
   const biggestExpenses = getBiggestExpenses(sortedExpenses, 5)
-  const burnRate = calculateBurnRate(sortedExpenses, trip, filters)
+  const burnRate = calculateBurnRate(expensesForTimeline, trip, filters)
   
   // Get trip countries for filter
   const tripCountries = trip.plannedCountries || trip.countries || []
@@ -574,44 +573,111 @@ export default function ReportsPage() {
               >
                 <Download className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="default"
-                onClick={() => setShowFilters(true)}
-                className="gap-2 hidden md:flex"
-              >
-                <Filter className="h-4 w-4" />
-                <span className="text-sm font-medium">{t("reports.filters")}</span>
-                {hasActiveFilters && (
-                  <Badge variant="default" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
-                    {activeFilterChips.length}
-                  </Badge>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setShowFilters(true)}
-                className="md:hidden relative"
-              >
-                <Filter className="h-4 w-4" />
-                {hasActiveFilters && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-sky-500 text-white text-[10px] flex items-center justify-center font-semibold">
-                    {activeFilterChips.length}
-                  </span>
-                )}
-              </Button>
             </div>
           </div>
           
-          {/* Filter Chips Bar */}
+          {/* Inline Filters Section */}
+          <div className="px-4 py-4 border-t border-slate-200 bg-slate-50">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {/* Date Range */}
+              <div>
+                <Label className="text-xs text-slate-600 mb-1">{t("reports.dateRange")}</Label>
+                <Select
+                  value={filters.dateRange}
+                  onChange={(e) =>
+                    setFilters({ ...filters, dateRange: e.target.value as ReportFilters["dateRange"] })
+                  }
+                  className="h-9 text-sm"
+                >
+                  <option value="all">{t("reports.allTime")}</option>
+                  <option value="today">{t("reports.today")}</option>
+                  <option value="7d">{t("reports.last7Days")}</option>
+                  <option value="30d">{t("reports.last30Days")}</option>
+                  <option value="trip">{t("reports.tripDates")}</option>
+                </Select>
+              </div>
+
+              {/* Category */}
+              <div>
+                <Label className="text-xs text-slate-600 mb-1">{t("reports.category")}</Label>
+                <Select
+                  value={filters.categories && filters.categories.length === 1 ? filters.categories[0] : "all"}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    setFilters({ ...filters, categories: val === "all" ? [] : [val as ExpenseCategory] })
+                  }}
+                  className="h-9 text-sm"
+                >
+                  <option value="all">{t("reports.allCategories")}</option>
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>{t(`categories.${cat}`)}</option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Country */}
+              {tripCountries.length > 0 && (
+                <div>
+                  <Label className="text-xs text-slate-600 mb-1">{t("reports.country")}</Label>
+                  <Select
+                    value={filters.countries && filters.countries.length === 1 ? filters.countries[0] : "all"}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setFilters({ ...filters, countries: val === "all" ? [] : [val] })
+                    }}
+                    className="h-9 text-sm"
+                  >
+                    <option value="all">{t("reports.allCountries")}</option>
+                    {tripCountries.map((country) => (
+                      <option key={country} value={country}>{getCountryName(country, locale)}</option>
+                    ))}
+                  </Select>
+                </div>
+              )}
+
+              {/* Amount Min */}
+              <div>
+                <Label className="text-xs text-slate-600 mb-1">{t("reports.min")}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={filters.amountMin ?? ""}
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      amountMin: e.target.value ? parseFloat(e.target.value) : undefined,
+                    })
+                  }
+                  placeholder="0"
+                  className="h-9 text-sm"
+                />
+              </div>
+
+              {/* Sort */}
+              <div>
+                <Label className="text-xs text-slate-600 mb-1">{t("reports.sortBy")}</Label>
+                <Select
+                  value={filters.sort || "date"}
+                  onChange={(e) =>
+                    setFilters({ ...filters, sort: e.target.value as "amount" | "date" })
+                  }
+                  className="h-9 text-sm"
+                >
+                  <option value="date">{t("reports.sortByDate")}</option>
+                  <option value="amount">{t("reports.sortByAmount")}</option>
+                </Select>
+            </div>
+          </div>
+          
+            {/* Active Filter Chips */}
           {activeFilterChips.length > 0 && (
-            <div className="px-4 pb-3 flex flex-wrap gap-2 items-center">
+              <div className="mt-3 flex flex-wrap gap-2 items-center">
               {activeFilterChips.map((chip) => (
                 <Badge
                   key={chip.key}
                   variant="default"
-                  className="gap-1.5 cursor-pointer"
+                    className="gap-1.5 cursor-pointer h-6 text-xs"
                   onClick={chip.onRemove}
                 >
                   <span>{chip.label}</span>
@@ -620,12 +686,13 @@ export default function ReportsPage() {
               ))}
               <button
                 onClick={clearFilters}
-                className="text-xs text-sky-600 hover:text-sky-700 font-medium ml-1"
+                  className="text-xs text-sky-600 hover:text-sky-700 font-medium"
               >
-                {t("reports.clearAll") || "Clear all"}
+                  {t("reports.clearAll")}
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
 
@@ -1141,164 +1208,6 @@ export default function ReportsPage() {
             )}
           </CardContent>
         </Card>
-
-        {/* Filters Sheet (Mobile-friendly) */}
-        <Sheet open={showFilters} onOpenChange={setShowFilters}>
-          <SheetHeader>
-            <SheetTitle>{t("reports.filtersTitle") || "Filters"}</SheetTitle>
-            <SheetClose onClick={() => setShowFilters(false)} />
-          </SheetHeader>
-          <SheetContent className="space-y-5 max-h-[70vh] overflow-y-auto">
-            {/* Date Range Preset */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">{t("reports.dateRange") || "Date Range"}</Label>
-              <Select
-                value={filters.dateRange}
-                onChange={(e) =>
-                  setFilters({ ...filters, dateRange: e.target.value as ReportFilters["dateRange"] })
-                }
-                className="text-base"
-              >
-                <option value="all">{t("reports.allTime") || "All Time"}</option>
-                <option value="today">{t("reports.today") || "Today"}</option>
-                <option value="7d">{t("reports.last7Days") || "Last 7 Days"}</option>
-                <option value="30d">{t("reports.last30Days") || "Last 30 Days"}</option>
-                <option value="trip">{t("reports.tripDates") || "Trip Dates"}</option>
-                <option value="custom">{t("reports.custom") || "Custom"}</option>
-              </Select>
-            </div>
-
-            {filters.dateRange === "custom" && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2 min-w-0">
-                  <Label className="text-sm font-semibold">{t("reports.startDate") || "Start"}</Label>
-                  <DatePickerInput
-                    value={filters.startDate || ""}
-                    onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                    className="text-base"
-                    locale={locale}
-                  />
-                </div>
-                <div className="space-y-2 min-w-0">
-                  <Label className="text-sm font-semibold">{t("reports.endDate") || "End"}</Label>
-                  <DatePickerInput
-                    value={filters.endDate || ""}
-                    onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                    className="text-base"
-                    locale={locale}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Categories Multi-Select */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">{t("reports.categories") || "Categories"}</Label>
-              <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((cat) => {
-                  const isSelected = filters.categories?.includes(cat)
-                  return (
-                    <Badge
-                      key={cat}
-                      variant={isSelected ? "default" : "outline"}
-                      interactive
-                      className="cursor-pointer"
-                      onClick={() => {
-                        const current = filters.categories || []
-                        setFilters({
-                          ...filters,
-                          categories: isSelected
-                            ? current.filter((c) => c !== cat)
-                            : [...current, cat],
-                        })
-                      }}
-                    >
-                      {t(`categories.${cat}`)}
-                    </Badge>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Countries Multi-Select */}
-            {tripCountries.length > 0 && (
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">{t("reports.countries") || "Countries"}</Label>
-                <CountryMultiSelect
-                  value={filters.countries || []}
-                  onChange={(countries) => setFilters({ ...filters, countries })}
-                  placeholder={t("reports.selectCountries") || "Select countries..."}
-                />
-              </div>
-            )}
-
-            {/* Amount Range */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">{t("reports.amountRange") || "Amount Range"}</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">{t("reports.min") || "Min"}</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={filters.amountMin ?? ""}
-                    onChange={(e) =>
-                      setFilters({
-                        ...filters,
-                        amountMin: e.target.value ? parseFloat(e.target.value) : undefined,
-                      })
-                    }
-                    placeholder="0"
-                    className="text-base"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">{t("reports.max") || "Max"}</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={filters.amountMax ?? ""}
-                    onChange={(e) =>
-                      setFilters({
-                        ...filters,
-                        amountMax: e.target.value ? parseFloat(e.target.value) : undefined,
-                      })
-                    }
-                    placeholder={t("reports.noLimit") || "No limit"}
-                    className="text-base"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Sort By */}
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold">{t("reports.sortBy") || "Sort By"}</Label>
-              <Select
-                value={filters.sort || "date"}
-                onChange={(e) =>
-                  setFilters({ ...filters, sort: e.target.value as "amount" | "date" })
-                }
-                className="text-base"
-              >
-                <option value="date">{t("reports.sortByDate") || "Date"}</option>
-                <option value="amount">{t("reports.sortByAmount") || "Amount (High to Low)"}</option>
-              </Select>
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-3 border-t border-slate-200">
-              <Button variant="outline" onClick={clearFilters} className="flex-1 text-base py-2.5">
-                {t("reports.clearFilters") || "Clear"}
-              </Button>
-              <Button onClick={() => setShowFilters(false)} className="flex-1 text-base py-2.5">
-                {t("reports.apply") || "Apply"}
-              </Button>
-            </div>
-          </SheetContent>
-        </Sheet>
 
       </>
         )}
