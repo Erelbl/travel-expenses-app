@@ -3,6 +3,14 @@
     "name": "TravelWise",
     "tagline": "עקוב אחר הוצאות הנסיעה שלך"
   },
+  "onboarding": {
+    "welcomeTitle": "ברוך הבא ל-TravelWise",
+    "welcomeBody": "בוא ניצור את הטיול הראשון שלך.",
+    "createTrip": "צור טיול",
+    "emptyTripText": "הוסף הוצאה ראשונה כדי להתחיל לעקוב.",
+    "addExpense": "הוסף הוצאה",
+    "reportsTip": "כאן תראה תובנות על ההוצאות שלך."
+  },
   "auth": {
     "signOut": "התנתק",
     "signIn": "התחבר",

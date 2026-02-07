@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import { motion } from "framer-motion"
 import { ArrowLeft, Calendar, DollarSign, BarChart3, Plus, Target, Tag, Download, TrendingDown, Zap, X, Filter, ChevronDown } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { OfflineBanner } from "@/components/OfflineBanner"
@@ -121,6 +122,8 @@ export default function ReportsPage() {
   const router = useRouter()
   const tripId = params.tripId as string
   const isRTL = locale === "he"
+  
+  const [showReportsTip, setShowReportsTip] = useState(false)
 
   const [trip, setTrip] = useState<Trip | null>(null)
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -183,6 +186,15 @@ export default function ReportsPage() {
   useEffect(() => {
     loadData()
   }, [tripId])
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !loading && trip) {
+      const hasSeenReportsTip = localStorage.getItem(`tw_hasSeenReportsTip_${tripId}`)
+      if (!hasSeenReportsTip) {
+        setShowReportsTip(true)
+      }
+    }
+  }, [loading, trip, tripId])
 
   async function loadData() {
     try {
@@ -547,6 +559,43 @@ export default function ReportsPage() {
     <div className="min-h-screen pb-20 md:pb-6" dir={isRTL ? "rtl" : "ltr"}>
       {/* Offline Banner */}
       <OfflineBanner />
+      
+      {/* Reports Tip Tooltip */}
+      {showReportsTip && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/30"
+            onClick={() => {
+              setShowReportsTip(false)
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(`tw_hasSeenReportsTip_${tripId}`, 'true')
+              }
+            }}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-sm mx-4"
+          >
+            <div className="bg-sky-600 text-white p-4 rounded-xl shadow-xl relative" dir={isRTL ? "rtl" : "ltr"}>
+              <button
+                onClick={() => {
+                  setShowReportsTip(false)
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem(`tw_hasSeenReportsTip_${tripId}`, 'true')
+                  }
+                }}
+                className={`absolute top-2 ${isRTL ? 'left-2' : 'right-2'} text-white/80 hover:text-white`}
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <p className="text-sm font-medium pr-6">
+                {t('onboarding.reportsTip')}
+              </p>
+            </div>
+          </motion.div>
+        </>
+      )}
       
       {/* Header */}
       <div className="sticky top-0 z-10 border-b bg-white">

@@ -3,6 +3,14 @@
     "name": "TravelWise",
     "tagline": "Track Your Travel Spending"
   },
+  "onboarding": {
+    "welcomeTitle": "Welcome to TravelWise",
+    "welcomeBody": "Let's create your first trip.",
+    "createTrip": "Create Trip",
+    "emptyTripText": "Add your first expense to start tracking.",
+    "addExpense": "Add Expense",
+    "reportsTip": "Here you'll see insights about your spending."
+  },
   "auth": {
     "signOut": "Sign Out",
     "signIn": "Sign In",

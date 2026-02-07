@@ -774,23 +774,45 @@ export default function TripPageContent({ tripId }: { tripId: string }) {
           </CardHeader>
           <CardContent className="p-0">
             {expenses.length === 0 ? (
-              <EmptyState
-                title={t("home.noExpensesTitle")}
-                message={t("home.noExpensesMessage")}
-                icon={
-                  <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
-                    <DollarSign className="h-7 w-7 text-slate-400" />
+              <>
+                {/* Empty Trip Onboarding Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="m-4 p-6 bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-200 rounded-xl text-center"
+                >
+                  <div className="w-12 h-12 rounded-full bg-sky-100 flex items-center justify-center mx-auto mb-4">
+                    <Plus className="h-6 w-6 text-sky-600" />
                   </div>
-                }
-                action={
-                  canAddExpense(trip) && (
+                  <p className="text-slate-700 mb-4">
+                    {t("onboarding.emptyTripText")}
+                  </p>
+                  {canAddExpense(trip) && (
                     <Button onClick={() => setShowQuickAdd(true)} size="lg">
                       <Plus className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-                      {t("home.addYourFirst")}
+                      {t("onboarding.addExpense")}
                     </Button>
-                  )
-                }
-              />
+                  )}
+                </motion.div>
+                <EmptyState
+                  title={t("home.noExpensesTitle")}
+                  message={t("home.noExpensesMessage")}
+                  icon={
+                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                      <DollarSign className="h-7 w-7 text-slate-400" />
+                    </div>
+                  }
+                  action={
+                    canAddExpense(trip) && (
+                      <Button onClick={() => setShowQuickAdd(true)} size="lg">
+                        <Plus className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                        {t("home.addYourFirst")}
+                      </Button>
+                    )
+                  }
+                />
+              </>
             ) : (
               <div>
                 {recentExpenses.map((expense) => (

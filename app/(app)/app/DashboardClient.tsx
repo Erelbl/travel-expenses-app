@@ -2,7 +2,9 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { Calendar, TrendingUp, Package, ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { Calendar, TrendingUp, Package, ArrowRight, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -29,7 +31,30 @@ interface DashboardClientProps {
 
 export function DashboardClient({ trips, userName, userGender }: DashboardClientProps) {
   const { t, locale } = useI18n()
+  const router = useRouter()
   const isRTL = locale === 'he'
+  const [showWelcome, setShowWelcome] = useState(false)
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hasSeenWelcome = localStorage.getItem('tw_hasSeenWelcome')
+      if (!hasSeenWelcome && trips.length === 0) {
+        setShowWelcome(true)
+      }
+    }
+  }, [trips.length])
+
+  const handleWelcomeDismiss = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tw_hasSeenWelcome', 'true')
+    }
+    setShowWelcome(false)
+  }
+
+  const handleCreateTrip = () => {
+    handleWelcomeDismiss()
+    router.push('/trips/new')
+  }
   
   // Gender-based greeting logic
   const getGreeting = () => {
@@ -50,6 +75,44 @@ export function DashboardClient({ trips, userName, userGender }: DashboardClient
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60">
+      {/* Welcome Modal */}
+      {showWelcome && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/50"
+            onClick={handleWelcomeDismiss}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative"
+              dir={isRTL ? "rtl" : "ltr"}
+            >
+              <button
+                onClick={handleWelcomeDismiss}
+                className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} text-slate-400 hover:text-slate-600`}
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <h2 className="text-2xl font-bold text-slate-900 mb-3">
+                {t('onboarding.welcomeTitle')}
+              </h2>
+              <p className="text-slate-600 mb-6">
+                {t('onboarding.welcomeBody')}
+              </p>
+              <Button
+                size="lg"
+                onClick={handleCreateTrip}
+                className="w-full"
+              >
+                {t('onboarding.createTrip')}
+              </Button>
+            </motion.div>
+          </div>
+        </>
+      )}
+
       {/* Hero Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
