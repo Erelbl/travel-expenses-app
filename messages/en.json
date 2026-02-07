@@ -250,6 +250,7 @@
   "reports": {
     "title": "Reports",
     "filters": "Filters",
+    "filter": "Filter",
     "filtersTitle": "Filter Reports",
     "totalSpent": "Total Spent",
     "perDay": "Per Day",
@@ -293,6 +294,7 @@
     "apply": "Apply",
     "exportToExcel": "Export to Excel",
     "exporting": "Exporting...",
+    "exportUpgradeRequired": "Export to Excel is available for Plus and above. Upgrade to unlock this feature.",
     "exportFailed": "Export failed. Please try again.",
     "travelSummary": "Travel Summary",
     "travelSummaryDesc": "Your spending at a glance",

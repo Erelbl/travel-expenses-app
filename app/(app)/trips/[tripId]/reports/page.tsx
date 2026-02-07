@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Calendar, DollarSign, BarChart3, Plus, Target, Tag, Download, TrendingDown, Zap, X } from "lucide-react"
+import { ArrowLeft, Calendar, DollarSign, BarChart3, Plus, Target, Tag, Download, TrendingDown, Zap, X, Filter, ChevronDown } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { Button } from "@/components/ui/button"
@@ -129,6 +129,8 @@ export default function ReportsPage() {
   const [hoveredCategory, setHoveredCategory] = useState<ExpenseCategory | null>(null)
   const [exporting, setExporting] = useState(false)
   const [filtersExpanded, setFiltersExpanded] = useState(false)
+  const [userPlan, setUserPlan] = useState<"free" | "plus" | "pro" | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [includeFlightsInCountry, setIncludeFlightsInCountry] = useState(() => {
     if (typeof window === 'undefined') return false
     const stored = localStorage.getItem(`reports:countryIncludeFlights:${params.tripId}`)
@@ -186,9 +188,10 @@ export default function ReportsPage() {
     try {
       setLoading(true)
       setError(false)
-      const [tripData, expensesData] = await Promise.all([
+      const [tripData, expensesData, userResponse] = await Promise.all([
         tripsRepository.getTrip(tripId),
         expensesRepository.listExpenses(tripId),
+        fetch('/api/me').then(r => r.json())
       ])
 
       if (!tripData) {
@@ -198,6 +201,8 @@ export default function ReportsPage() {
 
       setTrip(tripData)
       setExpenses(expensesData)
+      setUserPlan(userResponse.plan || "free")
+      setIsAdmin(userResponse.isAdmin || false)
     } catch (error) {
       console.error("Failed to load data:", error)
       setError(true)
@@ -494,6 +499,14 @@ export default function ReportsPage() {
   const activeFilterChips = getActiveFilterChips()
 
   async function handleExportToExcel() {
+    // Check entitlement: Plus and above only
+    const effectivePlan = isAdmin ? "pro" : userPlan
+    if (effectivePlan === "free" || !effectivePlan) {
+      // Show upgrade prompt
+      alert(t("reports.exportUpgradeRequired") || "Export to Excel is available in Plus and above plans. Upgrade to access this feature.")
+      return
+    }
+
     try {
       setExporting(true)
       const response = await fetch(`/api/trips/${tripId}/reports/export`)
@@ -583,22 +596,23 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => setFiltersExpanded(true)}
-                  className="flex items-center gap-2 text-sm text-slate-700 hover:text-slate-900"
+                  className="flex items-center gap-2.5 text-sm text-slate-700 hover:text-slate-900 cursor-pointer transition-colors group"
+                  aria-label={t("reports.filters")}
                 >
-                  <Calendar className="h-4 w-4" />
-                  <span>{filters.dateRange === "all" ? t("reports.allTime") : filters.dateRange === "trip" ? t("reports.tripDates") : filters.dateRange === "7d" ? t("reports.last7Days") : filters.dateRange === "30d" ? t("reports.last30Days") : t("reports.today")}</span>
-                  {(filters.countries && filters.countries.length > 0) && (
+                  <Filter className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <span className="font-medium">{t("reports.filter")}</span>
+                  {(filters.countries && filters.countries.length > 0 || filters.categories && filters.categories.length > 0) && (
                     <>
                       <span className="text-slate-400">•</span>
-                      <span>🌍 {filters.countries.length}</span>
+                      {filters.countries && filters.countries.length > 0 && (
+                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full">🌍 {filters.countries.length}</span>
+                      )}
+                      {filters.categories && filters.categories.length > 0 && (
+                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded-full">🏷 {filters.categories.length}</span>
+                      )}
                     </>
                   )}
-                  {(filters.categories && filters.categories.length > 0) && (
-                    <>
-                      <span className="text-slate-400">•</span>
-                      <span>🏷 {filters.categories.length}</span>
-                    </>
-                  )}
+                  <ChevronDown className="h-3.5 w-3.5 ml-auto text-slate-400 group-hover:text-slate-600 transition-colors" />
                 </button>
                 {hasActiveFilters && (
                   <button

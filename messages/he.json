@@ -250,6 +250,7 @@
   "reports": {
     "title": "דוחות",
     "filters": "סינון",
+    "filter": "פילטר",
     "filtersTitle": "סינון דוחות",
     "totalSpent": "סה״כ הוצאות",
     "perDay": "ליום",
@@ -293,6 +294,7 @@
     "apply": "החל",
     "exportToExcel": "ייצוא לאקסל",
     "exporting": "מייצא...",
+    "exportUpgradeRequired": "ייצוא ל-Excel זמין רק למנויי Plus ומעלה. שדרג כדי לפתוח תכונה זו.",
     "exportFailed": "הייצוא נכשל. אנא נסה שוב.",
     "travelSummary": "סיכום הטיול",
     "travelSummaryDesc": "ההוצאות שלך במבט חטוף",

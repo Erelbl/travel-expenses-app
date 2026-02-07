@@ -40,6 +40,7 @@ export const plans: Plan[] = [
       "Unlimited trips",
       "Share trips with partners",
       "All currencies",
+      "Export to Excel",
       "Scan up to 10 receipts per year",
       "Advanced insights",
     ],
@@ -54,6 +55,7 @@ export const plans: Plan[] = [
     shortDescription: "For power users and teams",
     features: [
       "Everything in Plus",
+      "Export to Excel",
       "Unlimited receipt scans",
       "Advanced trip sharing",
       "Priority support",

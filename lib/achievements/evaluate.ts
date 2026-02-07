@@ -58,21 +58,21 @@ export async function evaluateAchievements(
     const existingMax = existingMaxLevelByKey.get(def.key) || 0
 
     // If user already has max level >= target, no new unlocks
+    // CRITICAL: This prevents re-triggering achievements at max level
     if (targetLevel <= existingMax) {
+      // For trip-based achievements, handle level reductions (e.g., after trip deletion)
+      if (def.isTripBased && existingMax > targetLevel) {
+        await prisma.userAchievement.deleteMany({
+          where: {
+            userId,
+            key: def.key,
+            level: { gt: targetLevel },
+          },
+        })
+        // Update map after deletion
+        existingMaxLevelByKey.set(def.key, targetLevel)
+      }
       continue
-    }
-
-    // For trip-based achievements, remove levels that are no longer valid
-    if (def.isTripBased && existingMax > targetLevel) {
-      await prisma.userAchievement.deleteMany({
-        where: {
-          userId,
-          key: def.key,
-          level: { gt: targetLevel },
-        },
-      })
-      // Update map after deletion
-      existingMaxLevelByKey.set(def.key, targetLevel)
     }
 
     // Insert missing levels from existingMax+1 to targetLevel
