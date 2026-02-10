@@ -1,12 +1,4 @@
-import { Resend } from "resend"
-
-function getResendClient() {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    throw new Error("RESEND_API_KEY is not configured")
-  }
-  return new Resend(apiKey)
-}
+import { getResendClient, EMAIL_FROM } from "./config"
 
 interface SendInviteEmailParams {
   to: string
@@ -30,15 +22,14 @@ export async function sendInviteEmail({
     ? 'You can view and add expenses to this trip.'
     : 'You can view expenses for this trip.'
   
-  const fromEmail = process.env.EMAIL_FROM || "TravelWise <onboarding@resend.dev>"
   console.log("[EMAIL] Sending email", {
-    from: fromEmail,
+    from: EMAIL_FROM,
     to,
     subject: `${inviterName} invited you to join ${tripName}`,
   })
   
   const result = await resend.emails.send({
-    from: fromEmail,
+    from: EMAIL_FROM,
     to,
     subject: `${inviterName} invited you to join ${tripName}`,
     html: `

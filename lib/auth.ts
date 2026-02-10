@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials"
 import Google from "next-auth/providers/google"
 import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
+import { EMAIL_FROM } from "@/lib/email/config"
 
 // Ensure AUTH_SECRET is set (required for JWT strategy)
 if (!process.env.AUTH_SECRET && process.env.NODE_ENV === "production") {
@@ -101,7 +102,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
     Resend({
       apiKey: process.env.RESEND_API_KEY,
-      from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+      from: EMAIL_FROM,
     }),
   ],
   pages: {

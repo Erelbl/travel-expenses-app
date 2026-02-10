@@ -4,16 +4,8 @@ import { prisma } from "@/lib/db"
 import { signIn } from "@/lib/auth"
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
-import { Resend } from "resend"
 import crypto from "crypto"
-
-function getResendClient() {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    throw new Error("RESEND_API_KEY is not configured")
-  }
-  return new Resend(apiKey)
-}
+import { getResendClient, EMAIL_FROM } from "@/lib/email/config"
 
 export async function signUpAction(formData: FormData) {
   try {
@@ -140,7 +132,7 @@ export async function sendVerificationEmail(userId: string) {
   try {
     const resend = getResendClient()
     await resend.emails.send({
-      from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+      from: EMAIL_FROM,
       to: user.email,
       subject: "Verify your email",
       html: `
