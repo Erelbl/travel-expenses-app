@@ -1,9 +1,16 @@
 /**
  * Centralized entitlements and plan capabilities
  * Single source of truth for feature gating
+ * 
+ * NOTE: This module is being replaced by lib/billing/plan.ts
+ * This file is kept for backward compatibility with existing receipt scan logic
+ * New feature gates should use lib/billing/plan.ts
  */
 
-export type PlanTier = "free" | "plus" | "pro"
+import { normalizePlan, type UserPlan } from "@/lib/billing/plan"
+
+// Export UserPlan as PlanTier for backward compatibility
+export type PlanTier = UserPlan
 
 /**
  * Minimal user interface for entitlement checks
@@ -24,7 +31,7 @@ export interface EntitlementUser {
  * For feature gating, use getEffectivePlan() instead.
  */
 export function getUserPlan(user: EntitlementUser): PlanTier {
-  return user.plan || "free"
+  return normalizePlan(user.plan)
 }
 
 /**
@@ -36,11 +43,11 @@ export function getEffectivePlan(user: EntitlementUser): PlanTier {
   if (user.isAdmin) {
     // Debug logging in non-production environments
     if (process.env.NODE_ENV !== "production") {
-      console.log(`[Entitlements] Admin bypass: user ${user.id} → effective plan: PRO (actual: ${user.plan || "free"})`)
+      console.log(`[Entitlements] Admin bypass: user ${user.id} → effective plan: PRO (actual: ${normalizePlan(user.plan)})`)
     }
     return "pro"
   }
-  const effectivePlan = user.plan || "free"
+  const effectivePlan = normalizePlan(user.plan)
   
   // Debug logging in non-production environments
   if (process.env.NODE_ENV !== "production") {

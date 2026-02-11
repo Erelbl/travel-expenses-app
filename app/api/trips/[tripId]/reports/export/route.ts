@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import * as XLSX from 'xlsx'
 import { logError } from '@/lib/utils/logger'
 import { getCountryName } from '@/lib/utils/countries'
+import { hasMinimumPlan } from '@/lib/billing/plan'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +21,19 @@ export async function GET(
     const { tripId } = await params
     if (!tripId) {
       return NextResponse.json({ error: 'Missing tripId' }, { status: 400 })
+    }
+
+    // Check plan entitlement: Export requires PLUS or above
+    const canExport = await hasMinimumPlan(session.user.id, "plus")
+    if (!canExport) {
+      return NextResponse.json(
+        { 
+          error: 'NOT_ALLOWED_PLAN',
+          message: 'Export to Excel requires Plus or Pro plan',
+          upgradeRequired: true,
+        },
+        { status: 403 }
+      )
     }
 
     // Verify user has access to this trip

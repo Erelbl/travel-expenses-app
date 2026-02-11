@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { SettingsClient } from "./SettingsClient"
+import { normalizePlan } from "@/lib/billing/plan"
 
 function isAdminEmail(email: string | null | undefined): boolean {
   if (!email) return false
@@ -44,7 +45,7 @@ export default async function SettingsPage() {
       initialEmail={user?.email || ""}
       initialBaseCurrency={user?.baseCurrency || "USD"}
       initialGender={(user?.gender as "male" | "female") || "male"}
-      userPlan={(user?.plan as "free" | "plus" | "pro") || "free"}
+      userPlan={normalizePlan(user?.plan)}
       receiptScansUsed={user?.receiptScansUsed || 0}
       receiptScansResetAt={user?.receiptScansResetAt ?? null}
     />
