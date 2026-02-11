@@ -111,111 +111,34 @@ export function LandingPage() {
             >
               <div className="flex-shrink-0 w-[240px] md:w-auto snap-center">
               <PhoneFrame>
-                <div className="h-full bg-gradient-to-b from-sky-100/60 via-blue-100/40 to-slate-50/60 p-4 overflow-hidden">
-                  <div className="bg-gradient-to-br from-sky-400/90 via-blue-500/90 to-indigo-500/90 rounded-2xl p-4 mb-3">
-                    <h3 className="text-white text-sm font-bold mb-1">Welcome back</h3>
-                    <p className="text-sky-50/80 text-xs">Your trips at a glance</p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="bg-white rounded-xl p-3 shadow-sm">
-                      <div className="font-semibold text-xs mb-1">Tokyo Adventure</div>
-                      <div className="flex justify-between text-xs text-slate-600">
-                        <span>¥45,230</span>
-                        <span className="text-emerald-600">On budget</span>
-                      </div>
-                      <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full w-3/4 bg-sky-500 rounded-full" />
-                      </div>
-                    </div>
-                    <div className="bg-white rounded-xl p-3 shadow-sm">
-                      <div className="font-semibold text-xs mb-1">Europe Trip</div>
-                      <div className="flex justify-between text-xs text-slate-600">
-                        <span>€1,420</span>
-                        <span>12 expenses</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <Image
+                  src="/landing/screens/home.png"
+                  alt="TravelWise home screen showing trips overview"
+                  fill
+                  className="object-cover"
+                />
               </PhoneFrame>
               </div>
               
               <div className="flex-shrink-0 w-[240px] md:w-auto snap-center">
               <PhoneFrame className="md:scale-110">
-                <div className="h-full bg-white p-4 flex flex-col">
-                  <div className="mb-4">
-                    <h3 className="font-bold text-sm mb-1">Add Expense</h3>
-                    <p className="text-xs text-slate-500">Quick capture</p>
-                  </div>
-                  <div className="mb-4">
-                    <div className="text-3xl font-bold text-slate-900 mb-1">$127.50</div>
-                    <div className="text-xs text-slate-500">USD</div>
-                  </div>
-                  <div className="flex gap-2 flex-wrap mb-4">
-                    <div className="px-3 py-1.5 bg-sky-100 text-sky-700 rounded-lg text-xs font-medium">
-                      🍽️ Food
-                    </div>
-                    <div className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs">
-                      🚕 Transport
-                    </div>
-                    <div className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs">
-                      🏨 Hotel
-                    </div>
-                  </div>
-                  <div className="space-y-2 flex-1">
-                    <div className="bg-slate-50 rounded-lg p-2">
-                      <div className="text-xs text-slate-500 mb-1">Merchant</div>
-                      <div className="text-sm">Restaurant ABC</div>
-                    </div>
-                  </div>
-                  <div className="mt-auto">
-                    <div className="bg-sky-600 text-white text-center py-3 rounded-xl font-semibold text-sm">
-                      Save Expense
-                    </div>
-                  </div>
-                </div>
+                <Image
+                  src="/landing/screens/reports-summary.png"
+                  alt="TravelWise reports summary showing spending breakdown"
+                  fill
+                  className="object-cover"
+                />
               </PhoneFrame>
               </div>
               
               <div className="flex-shrink-0 w-[240px] md:w-auto snap-center">
               <PhoneFrame>
-                <div className="h-full bg-gradient-to-b from-emerald-50 to-white p-4">
-                  <div className="mb-4">
-                    <h3 className="font-bold text-sm mb-1">Insights</h3>
-                    <p className="text-xs text-slate-500">Your spending breakdown</p>
-                  </div>
-                  <div className="bg-white rounded-2xl p-3 mb-3 shadow-sm">
-                    <div className="text-xs text-slate-500 mb-1">Total Spend</div>
-                    <div className="text-2xl font-bold text-slate-900">$2,845</div>
-                    <div className="text-xs text-emerald-600 mt-1">↓ 15% vs last trip</div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-sky-500" />
-                        <span>Food & Dining</span>
-                      </div>
-                      <span className="font-semibold">$890</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-violet-500" />
-                        <span>Accommodation</span>
-                      </div>
-                      <span className="font-semibold">$1,120</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-amber-500" />
-                        <span>Transport</span>
-                      </div>
-                      <span className="font-semibold">$560</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 p-3 bg-emerald-50 rounded-xl">
-                    <div className="text-xs font-semibold text-emerald-700 mb-1">💡 Smart Tip</div>
-                    <div className="text-xs text-emerald-600">You're spending less on transport this trip!</div>
-                  </div>
-                </div>
+                <Image
+                  src="/landing/screens/reports-insights.png"
+                  alt="TravelWise insights showing detailed analytics"
+                  fill
+                  className="object-cover"
+                />
               </PhoneFrame>
               </div>
             </div>
