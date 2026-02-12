@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { PageContainer } from "@/components/ui/page-container"
@@ -45,7 +45,7 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, current
     <PageContainer>
       <PageHeader 
         title={t("admin.title")}
-        description={`${t("admin.subtitle")} • ${t("admin.updatedAgo", { seconds: secondsAgo.toString() })}`}
+        description={`${t("admin.subtitle")} ג€¢ ${t("admin.updatedAgo", { seconds: secondsAgo.toString() })}`}
       />
       
       <div className="space-y-8">
@@ -142,4 +142,5 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, current
     </PageContainer>
   )
 }
+
 
