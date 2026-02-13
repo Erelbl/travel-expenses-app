@@ -15,7 +15,7 @@
  */
 
 import { prisma } from "@/lib/db"
-import { plans as HARDCODED_PLANS } from "@/lib/plans"
+import { plans as HARDCODED_PLANS, PLAN_IDS, type PlanId as PlanIdFromPlans } from "@/lib/plans"
 
 // ============================================================================
 // Type Definitions
@@ -24,8 +24,9 @@ import { plans as HARDCODED_PLANS } from "@/lib/plans"
 /**
  * Standardized plan tier enum
  * These are the ONLY valid plan values in the system
+ * Re-export from lib/plans.ts for consistency
  */
-export type UserPlan = "free" | "plus" | "pro"
+export type UserPlan = PlanIdFromPlans
 
 /**
  * Plan ranking for comparison (higher = more features)
@@ -54,6 +55,7 @@ export interface PlanMetadata {
 /**
  * Normalize unknown input to a valid UserPlan
  * Handles case-insensitive matching, null, undefined, empty strings
+ * IMPORTANT: This is a runtime guard that coerces invalid plans to "free"
  * 
  * @param input - Any input to normalize
  * @returns Valid UserPlan (defaults to "free" for unknown inputs)
@@ -64,21 +66,25 @@ export function normalizePlan(input: unknown): UserPlan {
   }
 
   if (typeof input !== "string") {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(`[Billing] Invalid plan type (${typeof input}), defaulting to "free"`)
-    }
+    console.warn(`[Billing] Invalid plan type (${typeof input}), defaulting to "free"`)
     return "free"
   }
 
   const normalized = input.toLowerCase().trim()
 
-  // Exact match
-  if (normalized === "free" || normalized === "plus" || normalized === "pro") {
+  // Check against PLAN_IDS constant (single source of truth)
+  if (PLAN_IDS.includes(normalized as UserPlan)) {
     return normalized as UserPlan
   }
 
-  // Dev warning for typos/unknown plans
-  if (process.env.NODE_ENV !== "production" && input.trim() !== "") {
+  // Legacy "traveler" plan → migrate to "plus"
+  if (normalized === "traveler") {
+    console.warn(`[Billing] Legacy plan "traveler" detected, normalizing to "plus"`)
+    return "plus"
+  }
+
+  // Unknown plan warning
+  if (input.trim() !== "") {
     console.warn(`[Billing] Unknown plan string: "${input}", defaulting to "free"`)
   }
 

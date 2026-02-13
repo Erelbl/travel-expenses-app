@@ -66,8 +66,8 @@ export function AdminUsersTable({ users, total, currentPage, filters }: AdminUse
           <Select value={filters.plan} onChange={(e) => handlePlanChange(e.target.value)}>
             <option value="All">{t("admin.planAll")}</option>
             <option value="Free">{t("admin.planFree")}</option>
-            <option value="Traveler">{t("admin.planTraveler")}</option>
-            <option value="PRO">{t("admin.planPro")}</option>
+            <option value="Plus">{t("admin.planPlus")}</option>
+            <option value="Pro">{t("admin.planPro")}</option>
           </Select>
         </div>
         

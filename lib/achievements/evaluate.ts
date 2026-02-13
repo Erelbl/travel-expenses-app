@@ -13,7 +13,7 @@ export interface UnlockedAchievement {
 /**
  * Evaluates achievements for a user based on current metrics.
  * Inserts missing achievement levels and removes invalid trip-based levels.
- * Returns newly unlocked achievements.
+ * Returns ONLY newly unlocked achievements that haven't been notified yet.
  */
 export async function evaluateAchievements(
   userId: string
@@ -24,15 +24,21 @@ export async function evaluateAchievements(
   // Preload all existing achievements for this user ONCE
   const allExisting = await prisma.userAchievement.findMany({
     where: { userId },
-    select: { key: true, level: true },
+    select: { key: true, level: true, notifiedAt: true },
   })
   
-  // Build map: key -> max level
+  // Build maps: key -> max level, and set of notified achievements
   const existingMaxLevelByKey = new Map<AchievementKey, number>()
+  const notifiedSet = new Set<string>()
+  
   for (const ach of allExisting) {
     const current = existingMaxLevelByKey.get(ach.key) || 0
     if (ach.level > current) {
       existingMaxLevelByKey.set(ach.key, ach.level)
+    }
+    // Track which achievements were already notified
+    if (ach.notifiedAt) {
+      notifiedSet.add(`${ach.key}:${ach.level}`)
     }
   }
 
@@ -87,6 +93,7 @@ export async function evaluateAchievements(
           userId,
           key: def.key,
           level,
+          notifiedAt: null, // Will be set when user is actually notified
         })),
         skipDuplicates: true,
       })
@@ -94,17 +101,41 @@ export async function evaluateAchievements(
       // Update map after insertion
       existingMaxLevelByKey.set(def.key, targetLevel)
 
-      // Add to newly unlocked (only the highest newly inserted level)
-      newlyUnlocked.push({
-        key: def.key,
-        level: targetLevel,
-        title: def.title,
-        message: def.message(targetLevel),
-        icon: def.icon,
-      })
+      // Add to newly unlocked ONLY if not already notified
+      // This handles the case where achievement was unlocked but notification wasn't shown
+      const achievementKey = `${def.key}:${targetLevel}`
+      if (!notifiedSet.has(achievementKey)) {
+        newlyUnlocked.push({
+          key: def.key,
+          level: targetLevel,
+          title: def.title,
+          message: def.message(targetLevel),
+          icon: def.icon,
+        })
+      }
     }
   }
 
   return { newlyUnlocked }
+}
+
+/**
+ * Mark achievement as notified (called after showing popup to user)
+ */
+export async function markAchievementNotified(
+  userId: string,
+  key: AchievementKey,
+  level: number
+): Promise<void> {
+  await prisma.userAchievement.updateMany({
+    where: {
+      userId,
+      key,
+      level,
+    },
+    data: {
+      notifiedAt: new Date(),
+    },
+  })
 }
 

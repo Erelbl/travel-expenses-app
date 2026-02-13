@@ -45,7 +45,22 @@ export function AchievementUnlockOverlay({
   const current = achievements[currentIndex]
   const currentAchievement = getAchievementMetadata(current.key)
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    // Mark current achievement as notified
+    try {
+      await fetch('/api/achievements/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: current.key,
+          level: current.level,
+        }),
+      })
+    } catch (error) {
+      console.error('Failed to mark achievement as notified:', error)
+      // Continue anyway - don't block user
+    }
+
     if (currentIndex < achievements.length - 1) {
       // Show next achievement
       setIsVisible(false)

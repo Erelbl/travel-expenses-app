@@ -1,4 +1,23 @@
-export type PlanId = "free" | "plus" | "pro"
+// ============================================================================
+// SINGLE SOURCE OF TRUTH FOR PLAN IDS
+// ============================================================================
+
+/**
+ * Valid plan IDs - the ONLY valid values in the system
+ * Use these constants instead of hardcoded strings
+ */
+export const PLAN_IDS = ["free", "plus", "pro"] as const
+export type PlanId = typeof PLAN_IDS[number]
+
+/**
+ * Plan display labels (i18n keys only - not hardcoded text)
+ * Actual translations are in messages/en.json and messages/he.json
+ */
+export const PLAN_LABELS: Record<PlanId, { nameKey: string; descKey: string }> = {
+  free: { nameKey: "plans.free.name", descKey: "plans.free.desc" },
+  plus: { nameKey: "plans.plus.name", descKey: "plans.plus.desc" },
+  pro: { nameKey: "plans.pro.name", descKey: "plans.pro.desc" },
+}
 
 export interface Plan {
   id: PlanId

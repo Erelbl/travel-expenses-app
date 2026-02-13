@@ -247,6 +247,7 @@ model UserAchievement {
   key        AchievementKey
   level      Int            @default(1)
   unlockedAt DateTime       @default(now())
+  notifiedAt DateTime?      // Track when user was notified about this achievement level
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

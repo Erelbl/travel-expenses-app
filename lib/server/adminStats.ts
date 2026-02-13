@@ -8,7 +8,7 @@ export interface AdminUser {
   createdAt: Date
   lastLoginAt: Date | null
   isDisabled: boolean
-  plan: "Free" | "Traveler" | "PRO"
+  plan: "Free" | "Plus" | "Pro"
   tripsCount: number
   expensesCount: number
   activeDays: number
@@ -309,10 +309,10 @@ async function getUsersPageUncached(
       lastLoginAt: user.lastLoginAt,
       isDisabled: user.isDisabled,
       plan: (user.plan === "plus"
-        ? "Traveler"
+        ? "Plus"
         : user.plan === "pro"
-        ? "PRO"
-        : "Free") as "Free" | "Traveler" | "PRO",
+        ? "Pro"
+        : "Free") as "Free" | "Plus" | "Pro",
       tripsCount: tripCountMap.get(user.id) || 0,
       expensesCount: expenseCountMap.get(user.id) || 0,
       activeDays: stats.activeDays,
