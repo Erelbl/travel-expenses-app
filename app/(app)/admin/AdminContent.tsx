@@ -7,7 +7,7 @@ import { StatCard } from "@/components/stat-card"
 import { Users, UserCheck, UserX, Calendar, MapPin, Receipt, CheckCircle, XCircle } from "lucide-react"
 import { AdminUsersTable } from "./AdminUsersTable"
 import { AdminSignupChart } from "./AdminSignupChart"
-import type { AdminUser, SignupTrendDataPoint, TripStats } from "@/lib/server/adminStats"
+import type { AdminUser, SignupTrendDataPoint, TripStats, TopUser, UsersPageFilters } from "@/lib/server/adminStats"
 
 interface AdminStats {
   users: {
@@ -32,11 +32,13 @@ interface AdminContentProps {
   usersData: { users: AdminUser[], total: number }
   signupTrend: SignupTrendDataPoint[]
   tripStats: TripStats
+  topUsersByExpenses: TopUser[]
+  topUsersBySpend: TopUser[]
   currentPage: number
-  currentPlan: string
+  filters: UsersPageFilters
 }
 
-export function AdminContent({ stats, usersData, signupTrend, tripStats, currentPage, currentPlan }: AdminContentProps) {
+export function AdminContent({ stats, usersData, signupTrend, tripStats, topUsersByExpenses, topUsersBySpend, currentPage, filters }: AdminContentProps) {
   const { t } = useI18n()
   
   const secondsAgo = Math.floor((Date.now() - stats.timestamp) / 1000)
@@ -135,7 +137,7 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, current
             users={usersData.users}
             total={usersData.total}
             currentPage={currentPage}
-            currentPlan={currentPlan}
+            filters={filters}
           />
         </section>
       </div>

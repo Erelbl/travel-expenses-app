@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useI18n } from "@/lib/i18n/I18nProvider"
-import { AdminUser } from "@/lib/server/adminStats"
+import { AdminUser, UsersPageFilters } from "@/lib/server/adminStats"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
@@ -15,10 +15,10 @@ interface AdminUsersTableProps {
   users: AdminUser[]
   total: number
   currentPage: number
-  currentPlan: string
+  filters: UsersPageFilters
 }
 
-export function AdminUsersTable({ users, total, currentPage, currentPlan }: AdminUsersTableProps) {
+export function AdminUsersTable({ users, total, currentPage, filters }: AdminUsersTableProps) {
   const { t, locale } = useI18n()
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
@@ -31,7 +31,7 @@ export function AdminUsersTable({ users, total, currentPage, currentPlan }: Admi
   }
 
   function handlePageChange(page: number) {
-    router.push(`/admin?page=${page}&plan=${currentPlan}`)
+    router.push(`/admin?page=${page}&plan=${filters.plan}`)
   }
 
   async function handleToggleDisabled(userId: string, currentlyDisabled: boolean) {
@@ -63,7 +63,7 @@ export function AdminUsersTable({ users, total, currentPage, currentPlan }: Admi
       <div className="p-4 border-b border-slate-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-slate-700">{t("admin.plan")}:</label>
-          <Select value={currentPlan} onChange={(e) => handlePlanChange(e.target.value)}>
+          <Select value={filters.plan} onChange={(e) => handlePlanChange(e.target.value)}>
             <option value="All">{t("admin.planAll")}</option>
             <option value="Free">{t("admin.planFree")}</option>
             <option value="Traveler">{t("admin.planTraveler")}</option>

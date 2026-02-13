@@ -325,11 +325,11 @@ async function getUsersPageUncached(
   // Apply min trips/expenses filters (post-processing since these are computed)
   let filteredUsers = enrichedUsers
   if (filters.minTrips !== undefined && filters.minTrips > 0) {
-    filteredUsers = filteredUsers.filter((u) => u.tripsCount >= filters.minTrips)
+    filteredUsers = filteredUsers.filter((u) => u.tripsCount >= filters.minTrips!)
   }
   if (filters.minExpenses !== undefined && filters.minExpenses > 0) {
     filteredUsers = filteredUsers.filter(
-      (u) => u.expensesCount >= filters.minExpenses
+      (u) => u.expensesCount >= filters.minExpenses!
     )
   }
 
