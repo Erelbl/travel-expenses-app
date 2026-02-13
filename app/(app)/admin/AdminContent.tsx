@@ -1,6 +1,5 @@
 "use client"
 
-import { useI18n } from "@/lib/i18n/I18nProvider"
 import { PageContainer } from "@/components/ui/page-container"
 import { PageHeader } from "@/components/page-header"
 import { StatCard } from "@/components/stat-card"
@@ -11,7 +10,7 @@ import { Card } from "@/components/ui/card"
 import type { AdminUser, SignupTrendDataPoint, TripStats, TopUser, UsersPageFilters } from "@/lib/server/adminStats"
 
 interface AdminStats {
-  users: {
+    users: {
     total: number
     verified: number
     unverified: number
@@ -31,6 +30,35 @@ interface AdminStats {
   timestamp: number
 }
 
+interface AdminLabels {
+  title: string
+  subtitle: string
+  updatedAgo: string
+  usageAnalytics: string
+  activeUsers7d: string
+  activeUsers30d: string
+  payingUsers: string
+  newUsers7d: string
+  totalTrips: string
+  totalExpenses: string
+  topUsersByExpenses: string
+  topUsersBySpend: string
+  users: string
+  totalUsers: string
+  verified: string
+  unverified: string
+  last7Days: string
+  newUsers: string
+  userSignupTrend: string
+  tripsStats: string
+  activeTrips: string
+  endedTrips: string
+  deletedTrips: string
+  expenses: string
+  newExpenses: string
+  allUsers: string
+}
+
 interface AdminContentProps {
   stats: AdminStats
   usersData: { users: AdminUser[], total: number }
@@ -40,29 +68,27 @@ interface AdminContentProps {
   topUsersBySpend: TopUser[]
   currentPage: number
   filters: UsersPageFilters
+  labels: AdminLabels
 }
 
-export function AdminContent({ stats, usersData, signupTrend, tripStats, topUsersByExpenses, topUsersBySpend, currentPage, filters }: AdminContentProps) {
-  const { t } = useI18n()
-  
-  const secondsAgo = Math.floor((Date.now() - stats.timestamp) / 1000)
+export function AdminContent({ stats, usersData, signupTrend, tripStats, topUsersByExpenses, topUsersBySpend, currentPage, filters, labels }: AdminContentProps) {
   const buildStamp = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "2026-02-13-01"
   
   return (
     <PageContainer>
       <PageHeader 
-        title={t("admin.title")}
-        description={`${t("admin.subtitle")} • ${t("admin.updatedAgo", { seconds: secondsAgo.toString() })}`}
+        title={labels.title}
+        description={`${labels.subtitle} • ${labels.updatedAgo}`}
       />
       
       {/* Build stamp and data freshness */}
       <div className="mb-4 flex gap-2 items-center flex-wrap">
-        <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-md">
+        <div className="inline-flex items-center px-3 py-1 bg-blue-50 border border-blue-200 rounded-full">
           <span className="text-xs font-mono text-blue-700">Build: {buildStamp}</span>
         </div>
-        <div className="px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">
+        <div className="inline-flex items-center px-3 py-1 bg-green-50 border border-green-200 rounded-full">
           <span className="text-xs font-medium text-green-700">
-            🟢 Live data · {stats.users.total} users · {stats.expenses.total} expenses
+            🟢 {stats.users.total} users · {stats.expenses.total} expenses
           </span>
         </div>
       </div>
@@ -70,35 +96,35 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, topUser
       <div className="space-y-8">
         {/* KPI Cards - Compact Grid */}
         <section>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.usageAnalytics")}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">{labels.usageAnalytics}</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <StatCard
-              title={t("admin.activeUsers7d")}
+              title={labels.activeUsers7d}
               value={stats.users.active7d.toLocaleString()}
               icon={Activity}
             />
             <StatCard
-              title={t("admin.activeUsers30d")}
+              title={labels.activeUsers30d}
               value={stats.users.active30d.toLocaleString()}
               icon={Activity}
             />
             <StatCard
-              title={t("admin.payingUsers")}
+              title={labels.payingUsers}
               value={stats.users.paying.toLocaleString()}
               icon={CreditCard}
             />
             <StatCard
-              title={t("admin.newUsers7d")}
+              title={labels.newUsers7d}
               value={stats.users.createdLast7d.toLocaleString()}
               icon={TrendingUp}
             />
             <StatCard
-              title={t("admin.totalTrips")}
+              title={labels.totalTrips}
               value={tripStats.total.toLocaleString()}
               icon={MapPin}
             />
             <StatCard
-              title={t("admin.totalExpenses")}
+              title={labels.totalExpenses}
               value={stats.expenses.total.toLocaleString()}
               icon={Receipt}
             />
@@ -111,7 +137,7 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, topUser
             {/* Top by Expenses Count */}
             <Card>
               <div className="p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-800">{t("admin.topUsersByExpenses")}</h3>
+                <h3 className="text-sm font-semibold text-slate-800">{labels.topUsersByExpenses}</h3>
               </div>
               <div className="p-4">
                 {topUsersByExpenses.length > 0 ? (
@@ -132,7 +158,7 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, topUser
             {/* Top by Total Spend */}
             <Card>
               <div className="p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-800">{t("admin.topUsersBySpend")}</h3>
+                <h3 className="text-sm font-semibold text-slate-800">{labels.topUsersBySpend}</h3>
               </div>
               <div className="p-4">
                 {topUsersBySpend.length > 0 ? (
@@ -154,59 +180,59 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, topUser
 
         {/* Users Stats */}
         <section>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.users")}</h2>
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">{labels.users}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-              title={t("admin.totalUsers")}
+              title={labels.totalUsers}
               value={stats.users.total.toLocaleString()}
               icon={Users}
             />
             <StatCard
-              title={t("admin.verified")}
+              title={labels.verified}
               value={stats.users.verified.toLocaleString()}
               icon={UserCheck}
             />
             <StatCard
-              title={t("admin.unverified")}
+              title={labels.unverified}
               value={stats.users.unverified.toLocaleString()}
               icon={UserX}
             />
             <StatCard
-              title={t("admin.last7Days")}
+              title={labels.last7Days}
               value={stats.users.createdLast7d.toLocaleString()}
               icon={Calendar}
-              subtitle={t("admin.newUsers")}
+              subtitle={labels.newUsers}
             />
           </div>
         </section>
 
         {/* Signup Trend Chart */}
         <section>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.userSignupTrend")}</h2>
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">{labels.userSignupTrend}</h2>
           <AdminSignupChart data={signupTrend} />
         </section>
         
         {/* Trips Stats */}
         <section>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.tripsStats")}</h2>
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">{labels.tripsStats}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
-              title={t("admin.totalTrips")}
+              title={labels.totalTrips}
               value={tripStats.total.toLocaleString()}
               icon={MapPin}
             />
             <StatCard
-              title={t("admin.activeTrips")}
+              title={labels.activeTrips}
               value={tripStats.active.toLocaleString()}
               icon={CheckCircle}
             />
             <StatCard
-              title={t("admin.endedTrips")}
+              title={labels.endedTrips}
               value={tripStats.ended.toLocaleString()}
               icon={XCircle}
             />
             <StatCard
-              title={t("admin.deletedTrips")}
+              title={labels.deletedTrips}
               value={tripStats.deleted.toLocaleString()}
               icon={XCircle}
             />
@@ -215,25 +241,25 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, topUser
         
         {/* Expenses Stats */}
         <section>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.expenses")}</h2>
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">{labels.expenses}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <StatCard
-              title={t("admin.totalExpenses")}
+              title={labels.totalExpenses}
               value={stats.expenses.total.toLocaleString()}
               icon={Receipt}
             />
             <StatCard
-              title={t("admin.last7Days")}
+              title={labels.last7Days}
               value={stats.expenses.createdLast7d.toLocaleString()}
               icon={Calendar}
-              subtitle={t("admin.newExpenses")}
+              subtitle={labels.newExpenses}
             />
           </div>
         </section>
 
         {/* Users Table */}
         <section>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">{t("admin.allUsers")}</h2>
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">{labels.allUsers}</h2>
           <AdminUsersTable
             users={usersData.users}
             total={usersData.total}
