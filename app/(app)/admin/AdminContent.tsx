@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card"
 import type { AdminUser, SignupTrendDataPoint, TripStats, TopUser, UsersPageFilters } from "@/lib/server/adminStats"
 
 interface AdminStats {
-    users: {
+  users: {
     total: number
     verified: number
     unverified: number
@@ -72,26 +72,12 @@ interface AdminContentProps {
 }
 
 export function AdminContent({ stats, usersData, signupTrend, tripStats, topUsersByExpenses, topUsersBySpend, currentPage, filters, labels }: AdminContentProps) {
-  const buildStamp = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "2026-02-13-01"
-  
   return (
     <PageContainer>
       <PageHeader 
         title={labels.title}
         description={`${labels.subtitle} • ${labels.updatedAgo}`}
       />
-      
-      {/* Build stamp and data freshness */}
-      <div className="mb-4 flex gap-2 items-center flex-wrap">
-        <div className="inline-flex items-center px-3 py-1 bg-blue-50 border border-blue-200 rounded-full">
-          <span className="text-xs font-mono text-blue-700">Build: {buildStamp}</span>
-        </div>
-        <div className="inline-flex items-center px-3 py-1 bg-green-50 border border-green-200 rounded-full">
-          <span className="text-xs font-medium text-green-700">
-            🟢 {stats.users.total} users · {stats.expenses.total} expenses
-          </span>
-        </div>
-      </div>
       
       <div className="space-y-8">
         {/* KPI Cards - Compact Grid */}
@@ -143,9 +129,9 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, topUser
                 {topUsersByExpenses.length > 0 ? (
                   <div className="space-y-2">
                     {topUsersByExpenses.map((user, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm">
-                        <span className="text-slate-700 truncate">{user.email || "—"}</span>
-                        <span className="font-medium text-slate-900 ml-2">{user.value}</span>
+                      <div key={idx} className="flex justify-between items-center text-sm gap-2">
+                        <span className="text-slate-700 truncate flex-1 min-w-0">{user.email || "—"}</span>
+                        <span className="font-medium text-slate-900 whitespace-nowrap">{user.value}</span>
                       </div>
                     ))}
                   </div>
@@ -164,9 +150,9 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, topUser
                 {topUsersBySpend.length > 0 ? (
                   <div className="space-y-2">
                     {topUsersBySpend.map((user, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm">
-                        <span className="text-slate-700 truncate">{user.email || "—"}</span>
-                        <span className="font-medium text-slate-900 ml-2">${user.value.toLocaleString()}</span>
+                      <div key={idx} className="flex justify-between items-center text-sm gap-2">
+                        <span className="text-slate-700 truncate flex-1 min-w-0">{user.email || "—"}</span>
+                        <span className="font-medium text-slate-900 whitespace-nowrap">${user.value.toLocaleString()}</span>
                       </div>
                     ))}
                   </div>
