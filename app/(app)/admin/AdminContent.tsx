@@ -72,6 +72,11 @@ interface AdminContentProps {
 }
 
 export function AdminContent({ stats, usersData, signupTrend, tripStats, topUsersByExpenses, topUsersBySpend, currentPage, filters, labels }: AdminContentProps) {
+  // Helper to get display name with fallbacks
+  const getDisplayName = (user: TopUser) => {
+    return user.displayName || user.fullName || user.email || "—"
+  }
+
   return (
     <PageContainer>
       <PageHeader 
@@ -123,14 +128,16 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, topUser
             {/* Top by Expenses Count */}
             <Card>
               <div className="p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-800">{labels.topUsersByExpenses}</h3>
+                <h3 className="text-sm font-semibold text-slate-800 break-words">{labels.topUsersByExpenses}</h3>
               </div>
               <div className="p-4">
                 {topUsersByExpenses.length > 0 ? (
                   <div className="space-y-2">
                     {topUsersByExpenses.map((user, idx) => (
                       <div key={idx} className="flex justify-between items-center text-sm gap-2">
-                        <span className="text-slate-700 truncate flex-1 min-w-0">{user.email || "—"}</span>
+                        <span className="text-slate-700 truncate flex-1 min-w-0" title={getDisplayName(user)}>
+                          {getDisplayName(user)}
+                        </span>
                         <span className="font-medium text-slate-900 whitespace-nowrap">{user.value}</span>
                       </div>
                     ))}
@@ -144,14 +151,16 @@ export function AdminContent({ stats, usersData, signupTrend, tripStats, topUser
             {/* Top by Total Spend */}
             <Card>
               <div className="p-4 border-b border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-800">{labels.topUsersBySpend}</h3>
+                <h3 className="text-sm font-semibold text-slate-800 break-words">{labels.topUsersBySpend}</h3>
               </div>
               <div className="p-4">
                 {topUsersBySpend.length > 0 ? (
                   <div className="space-y-2">
                     {topUsersBySpend.map((user, idx) => (
                       <div key={idx} className="flex justify-between items-center text-sm gap-2">
-                        <span className="text-slate-700 truncate flex-1 min-w-0">{user.email || "—"}</span>
+                        <span className="text-slate-700 truncate flex-1 min-w-0" title={getDisplayName(user)}>
+                          {getDisplayName(user)}
+                        </span>
                         <span className="font-medium text-slate-900 whitespace-nowrap">${user.value.toLocaleString()}</span>
                       </div>
                     ))}

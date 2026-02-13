@@ -653,7 +653,14 @@
     "of": "מתוך",
     "prev": "הקודם",
     "next": "הבא",
-    "tripsStats": "סטטיסטיקות טיולים"
+    "tripsStats": "סטטיסטיקות טיולים",
+    "usageAnalytics": "אנליטיקת שימוש",
+    "activeUsers7d": "פעילים (7 ימים)",
+    "activeUsers30d": "פעילים (30 ימים)",
+    "payingUsers": "משתמשים משלמים",
+    "newUsers7d": "משתמשים חדשים (7 ימים)",
+    "topUsersByExpenses": "מובילים לפי הוצאות",
+    "topUsersBySpend": "מובילים לפי סה״כ הוצאה"
   },
   "achievements": {
     "title": "הישגים",

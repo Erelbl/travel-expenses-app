@@ -30,6 +30,8 @@ export interface TripStats {
 }
 
 export interface TopUser {
+  displayName: string | null
+  fullName: string | null
   email: string | null
   value: number
 }
@@ -439,15 +441,20 @@ async function getTopUsersByExpensesUncached(): Promise<TopUser[]> {
   const userIds = topUsers.map((u) => u.createdById)
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
-    select: { id: true, email: true },
+    select: { id: true, displayName: true, fullName: true, email: true },
   })
 
-  const userEmailMap = new Map(users.map((u) => [u.id, u.email]))
+  const userMap = new Map(users.map((u) => [u.id, u]))
 
-  return topUsers.map((u) => ({
-    email: userEmailMap.get(u.createdById) || null,
-    value: u._count.id,
-  }))
+  return topUsers.map((u) => {
+    const user = userMap.get(u.createdById)
+    return {
+      displayName: user?.displayName || null,
+      fullName: user?.fullName || null,
+      email: user?.email || null,
+      value: u._count.id,
+    }
+  })
 }
 
 export const getTopUsersByExpenses = () =>
@@ -488,15 +495,20 @@ async function getTopUsersBySpendUncached(): Promise<TopUser[]> {
   const userIds = topUserIds.map(([id]) => id)
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
-    select: { id: true, email: true },
+    select: { id: true, displayName: true, fullName: true, email: true },
   })
 
-  const userEmailMap = new Map(users.map((u) => [u.id, u.email]))
+  const userMap = new Map(users.map((u) => [u.id, u]))
 
-  return topUserIds.map(([userId, spend]) => ({
-    email: userEmailMap.get(userId) || null,
-    value: Math.round(spend * 100) / 100, // Round to 2 decimals
-  }))
+  return topUserIds.map(([userId, spend]) => {
+    const user = userMap.get(userId)
+    return {
+      displayName: user?.displayName || null,
+      fullName: user?.fullName || null,
+      email: user?.email || null,
+      value: Math.round(spend * 100) / 100, // Round to 2 decimals
+    }
+  })
 }
 
 export const getTopUsersBySpend = () =>

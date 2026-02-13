@@ -653,7 +653,14 @@
     "of": "of",
     "prev": "Previous",
     "next": "Next",
-    "tripsStats": "Trips Statistics"
+    "tripsStats": "Trips Statistics",
+    "usageAnalytics": "Usage Analytics",
+    "activeUsers7d": "Active (7d)",
+    "activeUsers30d": "Active (30d)",
+    "payingUsers": "Paying Users",
+    "newUsers7d": "New Users (7d)",
+    "topUsersByExpenses": "Top by Expenses",
+    "topUsersBySpend": "Top by Total Spend"
   },
   "achievements": {
     "title": "Achievements",
