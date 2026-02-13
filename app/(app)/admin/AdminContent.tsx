@@ -74,7 +74,7 @@ interface AdminContentProps {
 export function AdminContent({ stats, usersData, signupTrend, tripStats, topUsersByExpenses, topUsersBySpend, currentPage, filters, labels }: AdminContentProps) {
   // Helper to get display name with fallbacks
   const getDisplayName = (user: TopUser) => {
-    return user.displayName || user.fullName || user.email || "—"
+    return user.name || user.email || "—"
   }
 
   return (

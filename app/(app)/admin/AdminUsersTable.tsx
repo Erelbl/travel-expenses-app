@@ -101,10 +101,7 @@ export function AdminUsersTable({ users, total, currentPage, filters }: AdminUse
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                Display Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
-                Full Name
+                {t("admin.name")}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">
                 {t("admin.email")}
@@ -128,16 +125,13 @@ export function AdminUsersTable({ users, total, currentPage, filters }: AdminUse
               <tr key={user.id} className={user.isDisabled ? "bg-slate-50 opacity-60" : "hover:bg-slate-50"}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                   <div className="flex items-center gap-2">
-                    {user.displayName || "—"}
+                    {user.name || "—"}
                     {user.isDisabled && (
                       <span className="text-xs text-red-600 font-medium">
                         ({t("admin.disabled")})
                       </span>
                     )}
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                  {user.fullName || "—"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                   {user.email || "—"}

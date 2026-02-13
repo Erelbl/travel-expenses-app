@@ -3,8 +3,7 @@ import { unstable_cache } from "next/cache"
 
 export interface AdminUser {
   id: string
-  displayName: string | null
-  fullName: string | null
+  name: string | null
   email: string | null
   createdAt: Date
   lastLoginAt: Date | null
@@ -30,8 +29,7 @@ export interface TripStats {
 }
 
 export interface TopUser {
-  displayName: string | null
-  fullName: string | null
+  name: string | null
   email: string | null
   value: number
 }
@@ -305,8 +303,7 @@ async function getUsersPageUncached(
 
     return {
       id: user.id,
-      displayName: user.nickname || null,
-      fullName: user.name || null,
+      name: user.name || null,
       email: user.email,
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt,
@@ -441,7 +438,7 @@ async function getTopUsersByExpensesUncached(): Promise<TopUser[]> {
   const userIds = topUsers.map((u) => u.createdById)
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
-    select: { id: true, displayName: true, fullName: true, email: true },
+    select: { id: true, name: true, email: true },
   })
 
   const userMap = new Map(users.map((u) => [u.id, u]))
@@ -449,8 +446,7 @@ async function getTopUsersByExpensesUncached(): Promise<TopUser[]> {
   return topUsers.map((u) => {
     const user = userMap.get(u.createdById)
     return {
-      displayName: user?.displayName || null,
-      fullName: user?.fullName || null,
+      name: user?.name || null,
       email: user?.email || null,
       value: u._count.id,
     }
@@ -495,7 +491,7 @@ async function getTopUsersBySpendUncached(): Promise<TopUser[]> {
   const userIds = topUserIds.map(([id]) => id)
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
-    select: { id: true, displayName: true, fullName: true, email: true },
+    select: { id: true, name: true, email: true },
   })
 
   const userMap = new Map(users.map((u) => [u.id, u]))
@@ -503,8 +499,7 @@ async function getTopUsersBySpendUncached(): Promise<TopUser[]> {
   return topUserIds.map(([userId, spend]) => {
     const user = userMap.get(userId)
     return {
-      displayName: user?.displayName || null,
-      fullName: user?.fullName || null,
+      name: user?.name || null,
       email: user?.email || null,
       value: Math.round(spend * 100) / 100, // Round to 2 decimals
     }
