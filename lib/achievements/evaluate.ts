@@ -14,6 +14,11 @@ export interface UnlockedAchievement {
  * Evaluates achievements for a user based on current metrics.
  * Inserts missing achievement levels and removes invalid trip-based levels.
  * Returns ONLY newly unlocked achievements that haven't been notified yet.
+ * 
+ * IDEMPOTENCY GUARANTEE:
+ * - Each achievement tier is returned ONLY ONCE
+ * - If user already has max tier and it's been notified → returns empty
+ * - Uses notifiedAt field to track which achievements user has already seen
  */
 export async function evaluateAchievements(
   userId: string
@@ -27,18 +32,23 @@ export async function evaluateAchievements(
     select: { key: true, level: true, notifiedAt: true },
   })
   
-  // Build maps: key -> max level, and set of notified achievements
+  // Build maps: key -> max level, and set of all existing achievements (notified or not)
   const existingMaxLevelByKey = new Map<AchievementKey, number>()
   const notifiedSet = new Set<string>()
+  const allExistingSet = new Set<string>()
   
   for (const ach of allExisting) {
     const current = existingMaxLevelByKey.get(ach.key) || 0
     if (ach.level > current) {
       existingMaxLevelByKey.set(ach.key, ach.level)
     }
+    
+    const achKey = `${ach.key}:${ach.level}`
+    allExistingSet.add(achKey)
+    
     // Track which achievements were already notified
     if (ach.notifiedAt) {
-      notifiedSet.add(`${ach.key}:${ach.level}`)
+      notifiedSet.add(achKey)
     }
   }
 
@@ -63,8 +73,8 @@ export async function evaluateAchievements(
 
     const existingMax = existingMaxLevelByKey.get(def.key) || 0
 
-    // If user already has max level >= target, no new unlocks
-    // CRITICAL: This prevents re-triggering achievements at max level
+    // CRITICAL: If user already reached or exceeded target level, skip entirely
+    // This is the primary idempotency check - prevents re-evaluating achievements
     if (targetLevel <= existingMax) {
       // For trip-based achievements, handle level reductions (e.g., after trip deletion)
       if (def.isTripBased && existingMax > targetLevel) {
@@ -88,6 +98,7 @@ export async function evaluateAchievements(
     }
 
     if (levelsToInsert.length > 0) {
+      // Use createMany with skipDuplicates for safety
       await prisma.userAchievement.createMany({
         data: levelsToInsert.map((level) => ({
           userId,
@@ -101,10 +112,11 @@ export async function evaluateAchievements(
       // Update map after insertion
       existingMaxLevelByKey.set(def.key, targetLevel)
 
-      // Add to newly unlocked ONLY if not already notified
-      // This handles the case where achievement was unlocked but notification wasn't shown
+      // ONLY return the HIGHEST newly unlocked level for this achievement key
+      // Check both: not in existing set AND not notified
+      // This ensures we only show each tier ONCE
       const achievementKey = `${def.key}:${targetLevel}`
-      if (!notifiedSet.has(achievementKey)) {
+      if (!notifiedSet.has(achievementKey) && !allExistingSet.has(achievementKey)) {
         newlyUnlocked.push({
           key: def.key,
           level: targetLevel,
@@ -116,7 +128,16 @@ export async function evaluateAchievements(
     }
   }
 
-  return { newlyUnlocked }
+  // DEFENSIVE: Return ONLY unique achievements (should already be unique, but double-check)
+  const seen = new Set<string>()
+  const uniqueUnlocked = newlyUnlocked.filter(ach => {
+    const key = `${ach.key}:${ach.level}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  return { newlyUnlocked: uniqueUnlocked }
 }
 
 /**

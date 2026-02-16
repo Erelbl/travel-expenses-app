@@ -1,7 +1,7 @@
 "use client"
 // Reports dashboard with BI-style filters
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense, lazy } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge"
 import { StatCardSkeleton, ReportCardSkeleton } from "@/components/ui/skeleton"
 import { ErrorState } from "@/components/ui/error-state"
 import { EmptyState } from "@/components/ui/empty-state"
-import { TimeSeriesChart } from "@/components/charts/TimeSeriesChart"
 import { tripsRepository, expensesRepository } from "@/lib/data"
 import { Trip } from "@/lib/schemas/trip.schema"
 import { Expense, ExpenseCategory } from "@/lib/schemas/expense.schema"
@@ -38,6 +37,10 @@ import {
   calculateBurnRate,
 } from "@/lib/utils/reports"
 import { getTripDayInfo } from "@/lib/utils/date"
+
+// PERFORMANCE: Dynamic import for TimeSeriesChart to avoid blocking initial load
+// This chart is heavy and not needed for first meaningful paint
+const TimeSeriesChart = lazy(() => import("@/components/charts/TimeSeriesChart").then(mod => ({ default: mod.TimeSeriesChart })))
 
 const CATEGORIES: ExpenseCategory[] = [
   "Food", "Transport", "Flights", "Lodging", "Activities", "Shopping", "Health", "Other",
@@ -1267,17 +1270,26 @@ export default function ReportsPage() {
                 {t("reports.noData")}
               </p>
             ) : (
-              <TimeSeriesChart
-                data={dailySpend.map((d) => ({
-                  date: d.date,
-                  amount: d.amount,
-                  isFuture: d.isFuture,
-                }))}
-                height={300}
-                currency={trip.baseCurrency}
-                formatCurrency={formatCurrency}
-                highlightDates={highlightDates}
-              />
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-[300px]">
+                  <div className="space-y-3 w-full px-4">
+                    <div className="h-6 w-32 bg-slate-200 rounded animate-pulse" />
+                    <div className="h-[250px] bg-slate-100 rounded-lg animate-pulse" />
+                  </div>
+                </div>
+              }>
+                <TimeSeriesChart
+                  data={dailySpend.map((d) => ({
+                    date: d.date,
+                    amount: d.amount,
+                    isFuture: d.isFuture,
+                  }))}
+                  height={300}
+                  currency={trip.baseCurrency}
+                  formatCurrency={formatCurrency}
+                  highlightDates={highlightDates}
+                />
+              </Suspense>
             )}
           </CardContent>
         </Card>

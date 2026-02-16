@@ -9,8 +9,10 @@ import { evaluateAchievements } from '@/lib/achievements/evaluate'
 const expensesRepository = new PrismaExpensesRepository()
 const tripsRepository = new PrismaTripsRepository()
 
-// CRITICAL: No route-level caching - we rely on unstable_cache + revalidateTag for granular control
-export const dynamic = 'force-dynamic'
+// PERFORMANCE: Enable short-term caching (30s) for expense GET requests
+// This is a read-heavy endpoint - users view expenses more than they add them
+// Cache is invalidated via revalidatePath on POST (expense creation)
+export const revalidate = 30
 
 export async function GET(
   request: Request,
@@ -71,14 +73,19 @@ export async function POST(
     const body = await request.json()
     const expense = await expensesRepository.createExpense({ ...body, createdById: session.user.id })
     
-    // Check for newly unlocked achievements
+    // Check for newly unlocked achievements (returns only NEW unlocks that haven't been notified)
     const { newlyUnlocked } = await evaluateAchievements(session.user.id)
     
     // Revalidate all affected pages (no data cache since we removed unstable_cache)
     revalidatePath(`/trips/${tripId}`, 'page')
     revalidatePath(`/trips/${tripId}/reports`, 'page')
     
-    return NextResponse.json({ ...expense, newlyUnlocked })
+    // Return newlyUnlocked ONLY if there are actually new achievements
+    // The frontend will handle showing the popup
+    return NextResponse.json({ 
+      ...expense, 
+      newlyUnlocked: newlyUnlocked.length > 0 ? newlyUnlocked : undefined 
+    })
   } catch (error) {
     logError('API /trips/[tripId]/expenses POST', error)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })

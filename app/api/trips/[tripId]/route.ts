@@ -6,8 +6,10 @@ import { evaluateAchievements } from '@/lib/achievements/evaluate'
 
 const tripsRepository = new PrismaTripsRepository()
 
-// Disable caching for this route - trip data changes frequently via mutations
-export const dynamic = 'force-dynamic'
+// PERFORMANCE: Enable short-term caching (60s) for trip GET requests
+// This reduces DB load and improves perceived performance
+// Cache is invalidated automatically on mutations (POST/PATCH/DELETE via revalidatePath)
+export const revalidate = 60
 
 export async function GET(
   request: Request,
