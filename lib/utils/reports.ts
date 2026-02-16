@@ -375,9 +375,9 @@ export function calculateCurrencyBreakdown(expenses: Expense[]): CurrencyBreakdo
  * Calculate daily spending by EXPERIENCE DATE (usageDate or date)
  * 
  * LODGING DISTRIBUTION:
- * - If expense is Lodging with numberOfNights > 1, distribute amount evenly across nights
+ * - If expense is Lodging with nights > 0, distribute amount evenly across nights
  * - This prevents large spikes from multi-night hotel stays
- * - Uses usageDate as the start date for distribution
+ * - Uses usageDate if available, otherwise falls back to expenseDate
  */
 export function calculateDailySpend(expenses: Expense[]): DailySpend[] {
   const byDate = new Map<string, { amount: number; count: number; isFuture: boolean }>()
@@ -386,19 +386,19 @@ export function calculateDailySpend(expenses: Expense[]): DailySpend[] {
   for (const expense of expenses) {
     if (!hasConvertedAmount(expense)) continue
     
-    // Use experience date (usageDate) if available, otherwise payment date
-    const experienceDate = expense.usageDate || expense.date
+    // Determine start date: usageDate ?? expenseDate
+    const startDate = expense.usageDate || expense.date
     
     // CRITICAL: Distribute lodging expenses across nights to prevent spikes
-    // Check for numberOfNights field (matches schema)
-    if (expense.category === 'Lodging' && expense.numberOfNights && expense.numberOfNights > 1) {
+    // Requirements: category === "Lodging" AND nights > 0 AND startDate is not null
+    if (expense.category === 'Lodging' && expense.numberOfNights && expense.numberOfNights > 0 && startDate) {
       const perNight = (expense.convertedAmount || 0) / expense.numberOfNights
-      const startDate = new Date(experienceDate)
+      const startDateObj = new Date(startDate)
       
       // Distribute across each night
       for (let i = 0; i < expense.numberOfNights; i++) {
-        const nightDate = new Date(startDate)
-        nightDate.setDate(startDate.getDate() + i)
+        const nightDate = new Date(startDateObj)
+        nightDate.setDate(startDateObj.getDate() + i)
         const nightDateStr = nightDate.toISOString().split('T')[0]
         
         const existing = byDate.get(nightDateStr) || { amount: 0, count: 0, isFuture: nightDateStr > today }
@@ -409,12 +409,12 @@ export function calculateDailySpend(expenses: Expense[]): DailySpend[] {
         })
       }
     } else {
-      // Regular expense or single-night lodging
-      const existing = byDate.get(experienceDate) || { amount: 0, count: 0, isFuture: experienceDate > today }
-      byDate.set(experienceDate, {
+      // Regular expense or lodging without nights or startDate
+      const existing = byDate.get(startDate) || { amount: 0, count: 0, isFuture: startDate > today }
+      byDate.set(startDate, {
         amount: existing.amount + (expense.convertedAmount || 0),
         count: existing.count + 1,
-        isFuture: experienceDate > today,
+        isFuture: startDate > today,
       })
     }
   }
