@@ -23,6 +23,7 @@ export interface UnlockedAchievement {
 export async function evaluateAchievements(
   userId: string
 ): Promise<{ newlyUnlocked: UnlockedAchievement[] }> {
+  const DEBUG = process.env.DEBUG_ACHIEVEMENTS === '1'
   const newlyUnlocked: UnlockedAchievement[] = []
   const definitions = getAllDefinitions()
 
@@ -32,10 +33,13 @@ export async function evaluateAchievements(
     select: { key: true, level: true, notifiedAt: true },
   })
   
+  if (DEBUG) {
+    console.log(`[ACHIEVEMENTS] User ${userId} has ${allExisting.length} existing achievements`)
+  }
+  
   // Build maps: key -> max level, and set of all existing achievements (notified or not)
   const existingMaxLevelByKey = new Map<AchievementKey, number>()
   const notifiedSet = new Set<string>()
-  const allExistingSet = new Set<string>()
   
   for (const ach of allExisting) {
     const current = existingMaxLevelByKey.get(ach.key) || 0
@@ -44,7 +48,6 @@ export async function evaluateAchievements(
     }
     
     const achKey = `${ach.key}:${ach.level}`
-    allExistingSet.add(achKey)
     
     // Track which achievements were already notified
     if (ach.notifiedAt) {
@@ -72,6 +75,10 @@ export async function evaluateAchievements(
     }
 
     const existingMax = existingMaxLevelByKey.get(def.key) || 0
+
+    if (DEBUG) {
+      console.log(`[ACHIEVEMENTS] ${def.key}: metric=${metric}, targetLevel=${targetLevel}, existingMax=${existingMax}`)
+    }
 
     // CRITICAL: If user already reached or exceeded target level, skip entirely
     // This is the primary idempotency check - prevents re-evaluating achievements
@@ -113,10 +120,13 @@ export async function evaluateAchievements(
       existingMaxLevelByKey.set(def.key, targetLevel)
 
       // ONLY return the HIGHEST newly unlocked level for this achievement key
-      // Check both: not in existing set AND not notified
-      // This ensures we only show each tier ONCE
+      // CRITICAL FIX: Only check notifiedSet, NOT allExistingSet
+      // Because we just created these achievements, they won't be in the old allExistingSet
       const achievementKey = `${def.key}:${targetLevel}`
-      if (!notifiedSet.has(achievementKey) && !allExistingSet.has(achievementKey)) {
+      if (!notifiedSet.has(achievementKey)) {
+        if (DEBUG) {
+          console.log(`[ACHIEVEMENTS] Unlocking ${achievementKey}`)
+        }
         newlyUnlocked.push({
           key: def.key,
           level: targetLevel,
@@ -124,6 +134,10 @@ export async function evaluateAchievements(
           message: def.message(targetLevel),
           icon: def.icon,
         })
+      } else {
+        if (DEBUG) {
+          console.log(`[ACHIEVEMENTS] Skipping ${achievementKey} - already notified`)
+        }
       }
     }
   }
@@ -136,6 +150,10 @@ export async function evaluateAchievements(
     seen.add(key)
     return true
   })
+
+  if (DEBUG) {
+    console.log(`[ACHIEVEMENTS] Returning ${uniqueUnlocked.length} newly unlocked achievements`)
+  }
 
   return { newlyUnlocked: uniqueUnlocked }
 }

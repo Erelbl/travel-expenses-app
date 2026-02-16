@@ -24,7 +24,11 @@ export async function POST(request: Request) {
 
     await markAchievementNotified(session.user.id, key as AchievementKey, level)
 
-    return NextResponse.json({ success: true })
+    // Return deterministic contract: success + unlocked array (empty when nothing new)
+    return NextResponse.json({ 
+      success: true,
+      unlocked: [] // This endpoint only marks as notified, doesn't unlock new achievements
+    })
   } catch (error) {
     console.error('Failed to mark achievement as notified:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
