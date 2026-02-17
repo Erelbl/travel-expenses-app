@@ -24,7 +24,7 @@ const heebo = Heebo({
 export const metadata: Metadata = {
   title: "מעקב הוצאות נסיעות | TravelWise",
   description: "מעקב הוצאות נסיעות מודרני לטיולים שלך",
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: [
       { url: '/icon.png', sizes: '192x192', type: 'image/png' }
