@@ -1,11 +1,95 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Check } from "lucide-react"
 import { LandingNav } from "@/components/landing-nav"
 import { plans } from "@/lib/plans"
 
+type UserState = {
+  loaded: boolean
+  plan: string | null
+}
+
+function PlanCta({
+  planId,
+  isPaidPlan,
+  ctaLabel,
+  isPopular,
+  user,
+}: {
+  planId: string
+  isPaidPlan: boolean
+  ctaLabel: string
+  isPopular: boolean
+  user: UserState
+}) {
+  const baseClass = `block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors ${
+    isPopular
+      ? "bg-white text-sky-600 hover:bg-sky-50"
+      : "bg-slate-900 text-white hover:bg-slate-800"
+  }`
+
+  const disabledClass = `block w-full text-center px-6 py-3 rounded-xl font-semibold cursor-default opacity-60 ${
+    isPopular ? "bg-white/70 text-sky-600" : "bg-slate-200 text-slate-500"
+  }`
+
+  // Free plan — always "Get Started" (login or trips)
+  if (!isPaidPlan) {
+    const href = user.loaded && user.plan ? "/trips" : "/auth/login"
+    return (
+      <Link href={href} className={baseClass}>
+        {ctaLabel}
+      </Link>
+    )
+  }
+
+  // Paid plan but user state not loaded yet — render non-interactive label
+  if (!user.loaded) {
+    return (
+      <span className={`${disabledClass} animate-pulse`}>{ctaLabel}</span>
+    )
+  }
+
+  // Not logged in — redirect to login with callback
+  if (!user.plan) {
+    return (
+      <Link href="/auth/login?callbackUrl=/pricing" className={baseClass}>
+        {ctaLabel}
+      </Link>
+    )
+  }
+
+  // Determine if user already has this plan or better
+  const planRank: Record<string, number> = { free: 0, plus: 1, pro: 2 }
+  const userRank = planRank[user.plan] ?? 0
+  const planRequiredRank = planRank[planId] ?? 1
+  const alreadyHas = userRank >= planRequiredRank
+
+  if (alreadyHas) {
+    return <span className={disabledClass}>Current plan</span>
+  }
+
+  // Eligible — send to checkout redirect route
+  return (
+    <Link href={`/api/checkout/${planId}`} className={baseClass}>
+      {ctaLabel}
+    </Link>
+  )
+}
+
 export default function PricingPage() {
+  const [user, setUser] = useState<UserState>({ loaded: false, plan: null })
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        setUser({ loaded: true, plan: data?.plan ?? null })
+      })
+      .catch(() => setUser({ loaded: true, plan: null }))
+  }, [])
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-slate-50" dir="ltr">
       <LandingNav variant="marketing" />
@@ -124,19 +208,13 @@ export default function PricingPage() {
                     ))}
                   </ul>
 
-                  <Link
-                    href={isPaidPlan ? `/checkout?plan=${plan.id}` : "/auth/login"}
-                    className={`
-                      block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors
-                      ${
-                        isPopular
-                          ? "bg-white text-sky-600 hover:bg-sky-50"
-                          : "bg-slate-900 text-white hover:bg-slate-800"
-                      }
-                    `}
-                  >
-                    {plan.ctaLabel}
-                  </Link>
+                  <PlanCta
+                    planId={plan.id}
+                    isPaidPlan={isPaidPlan}
+                    ctaLabel={plan.ctaLabel}
+                    isPopular={isPopular}
+                    user={user}
+                  />
                 </div>
               )
             })}
@@ -158,7 +236,7 @@ export default function PricingPage() {
               <div className="divide-y divide-slate-200">
                 <div className="grid grid-cols-4 gap-4 p-6">
                   <div className="text-slate-700">Active trips</div>
-                  <div className="text-center text-slate-600">3</div>
+                  <div className="text-center text-slate-600">1</div>
                   <div className="text-center text-emerald-600 font-semibold">Unlimited</div>
                   <div className="text-center text-emerald-600 font-semibold">Unlimited</div>
                 </div>
@@ -198,7 +276,6 @@ export default function PricingPage() {
           <div className="mt-16 text-center max-w-2xl mx-auto">
             <p className="text-slate-600">
               All plans include offline support, multi-currency tracking, and secure data storage.
-              Payment processing coming soon.
             </p>
           </div>
         </div>
@@ -228,4 +305,3 @@ export default function PricingPage() {
     </div>
   )
 }
-
