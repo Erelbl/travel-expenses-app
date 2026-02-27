@@ -38,11 +38,20 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
   const [copied, setCopied] = useState(false)
   const [creating, setCreating] = useState(false)
   const [revoking, setRevoking] = useState(false)
+  const [userPlan, setUserPlan] = useState<string>("free")
+  const [planLoaded, setPlanLoaded] = useState(false)
 
-  // Load current pending invite
+  // Load current pending invite and user plan
   useEffect(() => {
     if (open) {
       loadCurrentInvite()
+      fetch("/api/me")
+        .then((r) => r.json())
+        .then((data) => {
+          setUserPlan(data.plan || "free")
+          setPlanLoaded(true)
+        })
+        .catch(() => setPlanLoaded(true))
     }
   }, [open, trip.id])
 
@@ -255,6 +264,14 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
         </ModalHeader>
 
         <ModalContent className="space-y-6 max-h-[70vh] overflow-y-auto pb-6">
+          {planLoaded && userPlan === "free" ? (
+            <div className="py-10 text-center space-y-3">
+              <Users className="mx-auto h-10 w-10 text-slate-300" />
+              <p className="font-semibold text-slate-900">Sharing is available on Plus and Pro.</p>
+              <p className="text-sm text-slate-500">Upgrade your plan to invite others to this trip.</p>
+            </div>
+          ) : (
+          <>
           {/* Trip Info */}
           <div className="text-center py-2">
             <p className="text-sm text-slate-500">{t("share.sharingTrip")}</p>
@@ -392,6 +409,8 @@ export function ShareTripModal({ open, onOpenChange, trip }: ShareTripModalProps
               ))}
             </div>
           </div>
+          </>
+          )}
         </ModalContent>
       </div>
     </Modal>

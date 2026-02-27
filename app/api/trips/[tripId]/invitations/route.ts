@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { invitationsRepository } from "@/lib/data/prisma/invitations-prisma.repository"
+import { getEffectivePlanForUser } from "@/lib/billing/plan"
 
 export async function GET(
   req: NextRequest,
@@ -54,6 +55,11 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     userId = session.user.id
+
+    const effectivePlan = await getEffectivePlanForUser(userId)
+    if (effectivePlan === "free") {
+      return NextResponse.json({ error: "PLAN_LIMIT_SHARING" }, { status: 403 })
+    }
 
     console.log("[INVITE] Step: parse_body, userId:", userId)
     const body = await req.json()
