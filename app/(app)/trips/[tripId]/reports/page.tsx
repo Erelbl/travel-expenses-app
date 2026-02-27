@@ -5,7 +5,7 @@ import { useEffect, useState, Suspense, lazy } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { ArrowLeft, Calendar, DollarSign, BarChart3, Plus, Target, Tag, Download, TrendingDown, Zap, X, Filter, ChevronDown } from "lucide-react"
+import { ArrowLeft, Calendar, DollarSign, BarChart3, Plus, Target, Tag, Download, TrendingDown, Zap, X, Filter, ChevronDown, Lock } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { OfflineBanner } from "@/components/OfflineBanner"
 import { Button } from "@/components/ui/button"
@@ -119,6 +119,21 @@ function DonutChart({
   )
 }
 
+function AdvancedInsightsLockedPanel() {
+  return (
+    <Card className="border-slate-200 shadow-sm">
+      <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+        <Lock className="h-8 w-8 text-slate-300" />
+        <p className="font-semibold text-slate-900">Advanced insights</p>
+        <p className="text-sm text-slate-500">Upgrade to Plus or Pro to unlock advanced insights.</p>
+        <Link href="/pricing">
+          <Button variant="outline" size="sm">Upgrade</Button>
+        </Link>
+      </CardContent>
+    </Card>
+  )
+}
+
 export default function ReportsPage() {
   const { t, locale } = useI18n()
   const params = useParams()
@@ -137,6 +152,7 @@ export default function ReportsPage() {
   const [filtersExpanded, setFiltersExpanded] = useState(false)
   const [userPlan, setUserPlan] = useState<"free" | "plus" | "pro" | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
+  const isAdvancedAllowed = isAdmin || userPlan === "plus" || userPlan === "pro"
   const [includeFlightsInCountry, setIncludeFlightsInCountry] = useState(() => {
     if (typeof window === 'undefined') return false
     const stored = localStorage.getItem(`reports:countryIncludeFlights:${params.tripId}`)
@@ -907,6 +923,7 @@ export default function ReportsPage() {
         </div>
 
         {/* BURN RATE / SPENDING PACE MODULE */}
+        {isAdvancedAllowed ? (
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
@@ -1003,9 +1020,13 @@ export default function ReportsPage() {
             </p>
           </CardContent>
         </Card>
+        ) : (
+          <AdvancedInsightsLockedPanel />
+        )}
 
         {/* TOP DRAINS MODULE */}
-        {topDrains.length > 0 && (
+        {isAdvancedAllowed ? (
+          topDrains.length > 0 && (
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg font-bold text-slate-900">
@@ -1083,6 +1104,9 @@ export default function ReportsPage() {
               )}
             </CardContent>
           </Card>
+          )
+        ) : (
+          <AdvancedInsightsLockedPanel />
         )}
 
         {/* Category Breakdown */}
@@ -1155,6 +1179,7 @@ export default function ReportsPage() {
 
         {/* Country Breakdown (multi-country only) */}
         {isMultiCountry && countryBreakdown.length > 0 && (
+          isAdvancedAllowed ? (
           <Card className="border-slate-200 shadow-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
@@ -1239,6 +1264,9 @@ export default function ReportsPage() {
               )}
             </CardContent>
           </Card>
+          ) : (
+            <AdvancedInsightsLockedPanel />
+          )
         )}
 
         {/* MAIN HERO GRAPH - Time-based spending */}
@@ -1248,7 +1276,9 @@ export default function ReportsPage() {
               <div>
                 <CardTitle className="text-xl font-bold text-slate-900">{t("reports.spendingOverTime")}</CardTitle>
                 <p className="text-sm text-slate-600 mt-1">{t("reports.experienceDateBased")}</p>
-                <p className="text-sm text-slate-500 mt-2 italic">{spendingInsight}</p>
+                {isAdvancedAllowed && (
+                  <p className="text-sm text-slate-500 mt-2 italic">{spendingInsight}</p>
+                )}
               </div>
               {summary.totalFuture > 0 && (
                 <div className="flex items-center gap-4 text-sm">
