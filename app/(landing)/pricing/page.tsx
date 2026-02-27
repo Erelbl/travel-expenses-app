@@ -60,20 +60,25 @@ function PlanCta({
     )
   }
 
-  // Determine if user already has this plan or better
   const planRank: Record<string, number> = { free: 0, plus: 1, pro: 2 }
   const userRank = planRank[user.plan] ?? 0
-  const planRequiredRank = planRank[planId] ?? 1
-  const alreadyHas = userRank >= planRequiredRank
+  const cardRank = planRank[planId] ?? 1
 
-  if (alreadyHas) {
+  // Exact match — user is already on this plan
+  if (user.plan === planId) {
     return <span className={disabledClass}>Current plan</span>
   }
 
-  // Eligible — send to checkout redirect route
+  // User is on a higher plan — this card's features are included
+  if (userRank > cardRank) {
+    return <span className={disabledClass}>Included in your plan</span>
+  }
+
+  // Eligible to upgrade — link to checkout redirect route
+  const upgradeLabel = planId === "pro" ? "Upgrade to Pro" : "Upgrade to Plus"
   return (
     <Link href={`/api/checkout/${planId}`} className={baseClass}>
-      {ctaLabel}
+      {upgradeLabel}
     </Link>
   )
 }
