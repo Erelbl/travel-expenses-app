@@ -25,7 +25,8 @@ import { getTodayString } from "@/lib/utils/date"
 import { usePreferencesStore } from "@/lib/store/preferences.store"
 import { useTripPreferencesStore } from "@/lib/store/trip-preferences.store"
 import { 
-  getTripAllowedCurrencies, 
+  getTripAllowedCurrencies,
+  getAllowedCurrenciesForPlan,
   getDefaultCurrencyForExpense,
   currencyForCountry
 } from "@/lib/utils/countryCurrency"
@@ -113,10 +114,15 @@ export default function AddExpensePage() {
     usageDate: "",
   })
 
-  // Get allowed currencies: core currencies (EUR, USD, ILS) + trip-specific currencies
-  const allowedCurrencies = trip ? getTripAllowedCurrencies(trip.plannedCountries) : []
-  
-  // Currencies to show in dropdown - filtered to trip-relevant only
+  // Derive effective plan from receipt scan status (already fetched, uses admin override)
+  const userPlan = receiptScanStatus?.plan ?? "free"
+
+  // Allowed currencies: plan-aware (free = USD+EUR+baseCurrency; plus/pro = trip currencies)
+  const allowedCurrencies = trip
+    ? getAllowedCurrenciesForPlan(userPlan, trip.baseCurrency, trip.plannedCountries ?? undefined)
+    : []
+
+  // Currencies to show in dropdown - filtered by plan allowlist
   const displayCurrencies = CURRENCIES.filter((c) => allowedCurrencies.includes(c.code))
 
   // Get trip countries - ONLY these should be selectable

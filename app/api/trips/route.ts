@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/db'
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
 import { logError } from '@/lib/utils/logger'
 import { evaluateAchievements } from '@/lib/achievements/evaluate'
+import { getEffectivePlanForUser } from '@/lib/billing/plan'
 
 const tripsRepository = new PrismaTripsRepository()
 
@@ -33,6 +35,16 @@ export async function POST(request: Request) {
     const session = await auth()
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const effectivePlan = await getEffectivePlanForUser(session.user.id)
+    if (effectivePlan === 'free') {
+      const activeCount = await prisma.trip.count({
+        where: { ownerId: session.user.id, isClosed: false },
+      })
+      if (activeCount >= 1) {
+        return NextResponse.json({ error: 'PLAN_LIMIT_ACTIVE_TRIPS' }, { status: 403 })
+      }
     }
 
     const body = await request.json()

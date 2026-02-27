@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { X } from "lucide-react"
 import { toast } from "sonner"
@@ -18,7 +18,7 @@ import { CURRENCIES } from "@/lib/utils/currency"
 import { COUNTRIES_DATA, getCountryName } from "@/lib/utils/countries.data"
 import { getCurrencySelectLabel } from "@/lib/utils/currency.data"
 import { getTodayString } from "@/lib/utils/date"
-import { getTripAllowedCurrencies } from "@/lib/utils/countryCurrency"
+import { getTripAllowedCurrencies, getAllowedCurrenciesForPlan } from "@/lib/utils/countryCurrency"
 import { useI18n } from "@/lib/i18n/I18nProvider"
 import { usePreferencesStore } from "@/lib/store/preferences.store"
 import { createTripAction } from "./actions"
@@ -40,6 +40,8 @@ export default function NewTripPage() {
   const router = useRouter()
   const { preferences, profile } = usePreferencesStore()
   const [loading, setLoading] = useState(false)
+  const [userPlan, setUserPlan] = useState<string>("free")
+  const [activeTripsCount, setActiveTripsCount] = useState<number>(0)
   const [formData, setFormData] = useState({
     name: "",
     startDate: getTodayString(),
@@ -54,8 +56,28 @@ export default function NewTripPage() {
     targetBudget: "" as string,
   })
 
-  // Derived currencies based on planned countries
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then((data) => {
+        setUserPlan(data.plan || "free")
+        setActiveTripsCount(data.activeTripsCount ?? 0)
+      })
+      .catch(() => {}) // fail silently – server enforces the limits anyway
+  }, [])
+
+  const isAtTripLimit = userPlan === "free" && activeTripsCount >= 1
+
+  // Derived currencies based on planned countries (plus/pro) or plan limit (free)
   const allowedCurrencies = getTripAllowedCurrencies(formData.plannedCountries)
+
+  // For baseCurrency dropdown: free users only see USD + EUR + currently selected value
+  const baseCurrencyOptions =
+    userPlan === "free"
+      ? CURRENCIES.filter((c) =>
+          getAllowedCurrenciesForPlan("free", formData.baseCurrency).includes(c.code)
+        )
+      : CURRENCIES
 
   function addCountry(countryCode: string) {
     if (!formData.plannedCountries.includes(countryCode)) {
@@ -124,8 +146,12 @@ export default function NewTripPage() {
       
       router.push(`/trips/${result.id}`)
     } catch (error) {
-      console.error("Failed to create trip:", error)
-      toast.error(t('createTrip.error'))
+      if (error instanceof Error && error.message === "PLAN_LIMIT_ACTIVE_TRIPS") {
+        toast.error("Free plan supports 1 active trip. Upgrade to create more.")
+      } else {
+        console.error("Failed to create trip:", error)
+        toast.error(t('createTrip.error'))
+      }
     } finally {
       setLoading(false)
     }
@@ -241,7 +267,7 @@ export default function NewTripPage() {
                 }
                 required
               >
-                {CURRENCIES.map((currency) => (
+                {baseCurrencyOptions.map((currency) => (
                   <option key={currency.code} value={currency.code}>
                     {getCurrencySelectLabel(currency.code, locale)}
                   </option>
@@ -377,6 +403,12 @@ export default function NewTripPage() {
               </div>
             </div>
 
+            {isAtTripLimit && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Free plan supports 1 active trip. Upgrade to create more.
+              </div>
+            )}
+
             <div className="flex justify-end gap-4">
               <Button
                 type="button"
@@ -387,7 +419,7 @@ export default function NewTripPage() {
               >
                 {t('common.cancel')}
               </Button>
-              <Button type="submit" disabled={loading} size="lg" className="flex-1 md:flex-initial">
+              <Button type="submit" disabled={loading || isAtTripLimit} size="lg" className="flex-1 md:flex-initial">
                 {loading ? t('createTrip.creating') : t('createTrip.create')}
               </Button>
             </div>

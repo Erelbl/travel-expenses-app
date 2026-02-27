@@ -88,6 +88,29 @@ export function getTripAllowedCurrencies(plannedCountries?: string[]): string[] 
 }
 
 /**
+ * Free-plan base currency allowlist (always included for free users)
+ */
+export const FREE_PLAN_BASE_CURRENCIES = ["EUR", "USD"] as const
+
+/**
+ * Get allowed expense currencies based on plan.
+ * Free users: USD + EUR + trip baseCurrency (if provided).
+ * Plus/Pro users: full set from getTripAllowedCurrencies (trip-country currencies + core).
+ */
+export function getAllowedCurrenciesForPlan(
+  plan: string,
+  baseCurrency?: string,
+  plannedCountries?: string[]
+): string[] {
+  if (plan === "free") {
+    const currencies = new Set<string>(FREE_PLAN_BASE_CURRENCIES)
+    if (baseCurrency) currencies.add(baseCurrency)
+    return Array.from(currencies).sort()
+  }
+  return getTripAllowedCurrencies(plannedCountries)
+}
+
+/**
  * Get default currency for an expense based on country
  * Falls back to trip base currency if no mapping exists
  */

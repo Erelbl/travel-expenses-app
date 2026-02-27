@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth'
 import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repository'
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
 import { logError } from '@/lib/utils/logger'
+import { getEffectivePlanForUser } from '@/lib/billing/plan'
+import { getAllowedCurrenciesForPlan } from '@/lib/utils/countryCurrency'
 
 const expensesRepository = new PrismaExpensesRepository()
 const tripsRepository = new PrismaTripsRepository()
@@ -63,6 +65,15 @@ export async function PATCH(
     }
 
     const body = await request.json()
+
+    const effectivePlan = await getEffectivePlanForUser(session.user.id)
+    if (effectivePlan === 'free' && body.currency) {
+      const allowed = getAllowedCurrenciesForPlan('free', trip.baseCurrency)
+      if (!allowed.includes(body.currency)) {
+        return NextResponse.json({ error: 'PLAN_LIMIT_CURRENCY' }, { status: 403 })
+      }
+    }
+
     const expense = await expensesRepository.updateExpense(expenseId, body)
     
     // Revalidate all affected pages (no data cache since we removed unstable_cache)

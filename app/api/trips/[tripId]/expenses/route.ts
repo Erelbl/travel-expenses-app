@@ -5,6 +5,8 @@ import { PrismaExpensesRepository } from '@/lib/data/prisma/expenses-prisma.repo
 import { PrismaTripsRepository } from '@/lib/data/prisma/trips-prisma.repository'
 import { logError } from '@/lib/utils/logger'
 import { evaluateAchievements } from '@/lib/achievements/evaluate'
+import { getEffectivePlanForUser } from '@/lib/billing/plan'
+import { getAllowedCurrenciesForPlan } from '@/lib/utils/countryCurrency'
 
 const expensesRepository = new PrismaExpensesRepository()
 const tripsRepository = new PrismaTripsRepository()
@@ -71,6 +73,15 @@ export async function POST(
     }
     
     const body = await request.json()
+
+    const effectivePlan = await getEffectivePlanForUser(session.user.id)
+    if (effectivePlan === 'free' && body.currency) {
+      const allowed = getAllowedCurrenciesForPlan('free', trip.baseCurrency)
+      if (!allowed.includes(body.currency)) {
+        return NextResponse.json({ error: 'PLAN_LIMIT_CURRENCY' }, { status: 403 })
+      }
+    }
+
     const expense = await expensesRepository.createExpense({ ...body, createdById: session.user.id })
     
     // Check for newly unlocked achievements (returns only NEW unlocks that haven't been notified)

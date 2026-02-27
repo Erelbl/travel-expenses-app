@@ -24,12 +24,19 @@ export async function GET() {
         baseCurrency: true,
         language: true,
         gender: true,
+        plan: true,
+        isAdmin: true,
       },
     })
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
+
+    // Count active (non-closed) trips owned by user
+    const activeTripsCount = await prisma.trip.count({
+      where: { ownerId: userId, isClosed: false },
+    })
 
     // Get trips where user is owner or member
     const myTrips = await prisma.trip.findMany({
@@ -71,8 +78,14 @@ export async function GET() {
     // Calculate stats for "all trip expenses"
     const tripsStats = calculateStats(tripsExpenses, user.baseCurrency)
 
+    // Derive effective plan (admins get pro)
+    const effectivePlan = user.isAdmin ? "pro" : (user.plan || "free")
+
     return NextResponse.json({
       user,
+      plan: effectivePlan,
+      isAdmin: user.isAdmin,
+      activeTripsCount,
       stats: {
         my: { ...myStats, totalTrips: tripIds.length },
         trips: { ...tripsStats, totalTrips: tripIds.length },
