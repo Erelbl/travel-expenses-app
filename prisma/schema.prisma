@@ -30,6 +30,11 @@ model User {
   receiptScansUsed     Int       @default(0)
   receiptScansResetAt  DateTime?
 
+  // Lemon Squeezy
+  lemonSubscriptionId  String?
+  lemonCustomerEmail   String?
+  subscriptionStatus   String?
+
   ownedTrips         Trip[]
   memberships        TripMember[]
   expenses           Expense[]
