@@ -508,10 +508,50 @@ export function SettingsClient({
                 </div>
               </div>
 
-              {userPlan === "free" && (
-                <Button variant="outline" className="w-full" disabled>
-                  {t('appSettings.planUpgrade')}
-                </Button>
+              {/* Upgrade / Manage plan — not shown to admins (they always have Pro) */}
+              {!isAdmin && userPlan === "free" && (
+                <div className="space-y-2 pt-1">
+                  <a
+                    href="/api/checkout/plus"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center rounded-lg border border-sky-300 bg-sky-50 px-4 py-2.5 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-100"
+                  >
+                    Upgrade to Plus
+                  </a>
+                  <a
+                    href="/api/checkout/pro"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                  >
+                    Upgrade to Pro
+                  </a>
+                </div>
+              )}
+
+              {!isAdmin && userPlan === "plus" && (
+                <div className="space-y-2 pt-1">
+                  <a
+                    href="/api/checkout/pro"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                  >
+                    Upgrade to Pro
+                  </a>
+                  <p className="text-xs text-slate-500 text-center">
+                    To manage or cancel your subscription,{" "}
+                    <Link href="/contact" className="underline hover:text-slate-700">contact support</Link>.
+                  </p>
+                </div>
+              )}
+
+              {!isAdmin && userPlan === "pro" && (
+                <p className="text-xs text-slate-500 text-center pt-1">
+                  To manage or cancel your subscription,{" "}
+                  <Link href="/contact" className="underline hover:text-slate-700">contact support</Link>.
+                </p>
               )}
             </CardContent>
           </Card>
