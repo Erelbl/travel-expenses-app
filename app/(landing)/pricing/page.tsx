@@ -107,7 +107,7 @@ export default function PricingPage() {
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {plans.map((plan) => {
-              const isPopular = plan.popular
+              const isPopular = plan.popular ?? false
               const isPaidPlan = plan.priceYearly > 0
 
               return (
