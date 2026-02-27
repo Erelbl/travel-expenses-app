@@ -26,7 +26,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   
   // Plan and entitlements
-  plan                 String?   @default("free")
+  plan                 String    @default("free")
   receiptScansUsed     Int       @default(0)
   receiptScansResetAt  DateTime?
 

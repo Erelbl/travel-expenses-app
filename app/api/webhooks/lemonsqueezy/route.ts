@@ -53,8 +53,12 @@ export async function POST(req: Request) {
   const data = payload.data as Record<string, unknown> | undefined
   const attributes = data?.attributes as Record<string, unknown> | undefined
 
+  // Log raw fields to help diagnose payload shape
+  console.log(`[lemonsqueezy] event=${eventName} dataId=${String(data?.id ?? "")}`)
+  console.log(`[lemonsqueezy] attributes keys=${Object.keys(attributes ?? {}).join(",")}`)
+
   if (eventName === "order_created") {
-    console.log("[lemonsqueezy] order_created received – no-op")
+    console.log("[lemonsqueezy] order_created – no-op")
     return NextResponse.json({ ok: true })
   }
 
@@ -68,17 +72,20 @@ export async function POST(req: Request) {
   }
 
   const subscriptionId = String(data?.id ?? "")
-  const customerEmail =
+
+  // Try both known email field locations in Lemon payload
+  const customerEmail: string =
     (attributes?.user_email as string | undefined) ??
     (attributes?.customer_email as string | undefined) ??
     ""
 
-  const variantName =
+  const variantName: string =
     (attributes?.variant_name as string | undefined) ?? ""
 
+  const rawStatus = (attributes?.status as string | undefined) ?? ""
+
   const isCancelled =
-    eventName === "subscription_cancelled" ||
-    (attributes?.status as string | undefined) === "cancelled"
+    eventName === "subscription_cancelled" || rawStatus === "cancelled"
 
   let plan: "free" | "plus" | "pro" = "free"
   let subscriptionStatus = "active"
@@ -93,7 +100,7 @@ export async function POST(req: Request) {
   }
 
   console.log(
-    `[lemonsqueezy] event=${eventName} email=${customerEmail} variantName="${variantName}" plan=${plan} status=${subscriptionStatus}`,
+    `[lemonsqueezy] parsed: event=${eventName} subscriptionId=${subscriptionId} email="${customerEmail}" variantName="${variantName}" rawStatus=${rawStatus} derivedPlan=${plan} subscriptionStatus=${subscriptionStatus}`,
   )
 
   if (!customerEmail) {
@@ -101,27 +108,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true })
   }
 
-  const user = await prisma.user.findUnique({
+  // User lookup
+  const existingUser = await prisma.user.findUnique({
     where: { email: customerEmail },
-    select: { id: true },
+    select: { id: true, plan: true },
   })
 
-  if (!user) {
-    console.log(`[lemonsqueezy] User not found for email: ${customerEmail}`)
+  console.log(
+    `[lemonsqueezy] user lookup email="${customerEmail}" found=${existingUser !== null} userId=${existingUser?.id ?? "n/a"} currentPlan=${existingUser?.plan ?? "n/a"}`,
+  )
+
+  if (!existingUser) {
+    console.log(`[lemonsqueezy] User not found for email: ${customerEmail} – returning 200`)
     return NextResponse.json({ ok: true })
   }
 
-  await prisma.user.update({
-    where: { id: user.id },
+  console.log(
+    `[lemonsqueezy] updating user ${existingUser.id}: plan ${existingUser.plan} -> ${plan}`,
+  )
+
+  const updated = await prisma.user.update({
+    where: { id: existingUser.id },
     data: {
       plan,
       subscriptionStatus,
-      lemonSubscriptionId: subscriptionId || undefined,
-      lemonCustomerEmail: customerEmail || undefined,
+      lemonSubscriptionId: subscriptionId || null,
+      lemonCustomerEmail: customerEmail,
     },
+    select: { id: true, plan: true, subscriptionStatus: true },
   })
 
-  console.log(`[lemonsqueezy] Updated user ${user.id} to plan=${plan}`)
+  console.log(
+    `[lemonsqueezy] update confirmed: userId=${updated.id} plan=${updated.plan} subscriptionStatus=${updated.subscriptionStatus}`,
+  )
 
   return NextResponse.json({ ok: true })
 }
