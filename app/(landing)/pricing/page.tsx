@@ -20,7 +20,8 @@ async function startCheckout(planId: string): Promise<void> {
     })
     const data = await res.json()
     if (res.ok && data.url) {
-      window.location.href = data.url
+      console.log("[billing redirect exact url]", data.url)
+      window.location.assign(data.url)
     } else {
       const msg = data?.detail || data?.error || "Unable to start checkout."
       alert(`Checkout error: ${msg}`)
