@@ -26,21 +26,38 @@ export async function POST(request: Request) {
       ? process.env.LEMONSQUEEZY_PLUS_VARIANT_ID
       : process.env.LEMONSQUEEZY_PRO_VARIANT_ID
 
+  console.log("[create-checkout] plan=%s userId=%s email_present=%s apiKey_present=%s storeId=%s variantId=%s",
+    plan,
+    session.user.id,
+    !!session.user.email,
+    !!apiKey,
+    storeId ?? "MISSING",
+    variantId ?? "MISSING",
+  )
+
   if (!apiKey || !storeId || !variantId) {
-    console.error("[create-checkout] Missing env:", { apiKey: !!apiKey, storeId: !!storeId, variantId: !!variantId })
-    return NextResponse.json({ error: "Checkout not configured" }, { status: 503 })
+    return NextResponse.json(
+      { error: "CHECKOUT_NOT_CONFIGURED", detail: `Missing: ${[!apiKey && "LEMONSQUEEZY_API_KEY", !storeId && "LEMONSQUEEZY_STORE_ID", !variantId && `LEMONSQUEEZY_${plan.toUpperCase()}_VARIANT_ID`].filter(Boolean).join(", ")}` },
+      { status: 503 }
+    )
   }
 
+  // Lemon Squeezy create-checkout payload
+  // Ref: https://docs.lemonsqueezy.com/api/checkouts/create-checkout
+  // Note: `locale` is NOT a valid top-level attribute — omit it to avoid 422
   const payload = {
     data: {
       type: "checkouts",
       attributes: {
-        checkout_options: { embed: false },
+        checkout_options: {
+          embed: false,
+        },
         checkout_data: {
           email: session.user.email,
-          custom: { user_id: session.user.id },
+          custom: {
+            user_id: session.user.id,
+          },
         },
-        locale: "en",
       },
       relationships: {
         store: { data: { type: "stores", id: storeId } },
@@ -62,22 +79,32 @@ export async function POST(request: Request) {
     })
   } catch (err) {
     console.error("[create-checkout] Network error calling Lemon API:", err)
-    return NextResponse.json({ error: "Failed to reach checkout provider" }, { status: 502 })
+    return NextResponse.json({ error: "CHECKOUT_CREATION_FAILED", detail: "Network error reaching checkout provider" }, { status: 502 })
   }
 
   if (!lsRes.ok) {
-    const errText = await lsRes.text()
-    console.error("[create-checkout] Lemon API error:", lsRes.status, errText)
-    return NextResponse.json({ error: "Failed to create checkout" }, { status: 502 })
+    let errBody = ""
+    try {
+      errBody = await lsRes.text()
+    } catch {
+      errBody = "(unreadable)"
+    }
+    console.error("[create-checkout] Lemon API returned %d: %s", lsRes.status, errBody)
+    // Surface a safe subset of the error to help debug (no secrets in errBody)
+    return NextResponse.json(
+      { error: "CHECKOUT_CREATION_FAILED", detail: `Lemon API ${lsRes.status}`, lemonError: errBody.slice(0, 500) },
+      { status: 502 }
+    )
   }
 
   const data = await lsRes.json()
   const checkoutUrl: string | undefined = data?.data?.attributes?.url
 
   if (!checkoutUrl) {
-    console.error("[create-checkout] No URL in Lemon response:", JSON.stringify(data))
-    return NextResponse.json({ error: "No checkout URL returned" }, { status: 502 })
+    console.error("[create-checkout] No URL in Lemon response:", JSON.stringify(data).slice(0, 500))
+    return NextResponse.json({ error: "CHECKOUT_CREATION_FAILED", detail: "No checkout URL returned by Lemon" }, { status: 502 })
   }
 
+  console.log("[create-checkout] Success plan=%s", plan)
   return NextResponse.json({ url: checkoutUrl })
 }

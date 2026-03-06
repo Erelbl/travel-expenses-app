@@ -76,13 +76,14 @@ export function SettingsClient({
         body: JSON.stringify({ plan }),
       })
       const data = await res.json()
-      if (data.url) {
+      if (res.ok && data.url) {
         window.open(data.url, "_blank", "noopener,noreferrer")
       } else {
-        toast.error("Unable to start checkout. Please try again.")
+        const msg = data?.detail || data?.error || "Unable to start checkout."
+        toast.error(`Checkout error: ${msg}`)
       }
     } catch {
-      toast.error("Unable to start checkout. Please try again.")
+      toast.error("Unable to start checkout. Please check your connection.")
     } finally {
       setCheckoutLoading(null)
     }

@@ -12,16 +12,21 @@ type UserState = {
 }
 
 async function startCheckout(planId: string): Promise<void> {
-  const res = await fetch("/api/billing/create-checkout", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ plan: planId }),
-  })
-  const data = await res.json()
-  if (data.url) {
-    window.location.href = data.url
-  } else {
-    alert("Unable to start checkout. Please try again.")
+  try {
+    const res = await fetch("/api/billing/create-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan: planId }),
+    })
+    const data = await res.json()
+    if (res.ok && data.url) {
+      window.location.href = data.url
+    } else {
+      const msg = data?.detail || data?.error || "Unable to start checkout."
+      alert(`Checkout error: ${msg}`)
+    }
+  } catch {
+    alert("Unable to start checkout. Please check your connection and try again.")
   }
 }
 
