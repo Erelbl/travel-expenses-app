@@ -12,23 +12,15 @@ type UserState = {
 }
 
 async function startCheckout(planId: string): Promise<void> {
-  try {
-    const res = await fetch("/api/billing/create-checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan: planId }),
-    })
-    const data = await res.json()
-    if (res.ok && data.url) {
-      console.log("[billing redirect exact url]", data.url)
-      window.location.assign(data.url)
-    } else {
-      const msg = data?.detail || data?.error || "Unable to start checkout."
-      alert(`Checkout error: ${msg}`)
-    }
-  } catch {
-    alert("Unable to start checkout. Please check your connection and try again.")
-  }
+  const res = await fetch("/api/billing/create-checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ plan: planId }),
+  })
+  const data = await res.json()
+  if (!res.ok || !data?.url) throw new Error(data?.detail || data?.error || "CHECKOUT_URL_MISSING")
+  console.log("[billing redirect client]", data.url)
+  window.location.assign(data.url)
 }
 
 function PlanCta({
@@ -102,8 +94,13 @@ function PlanCta({
     <button
       onClick={async () => {
         setLoading(true)
-        await startCheckout(planId)
-        setLoading(false)
+        try {
+          await startCheckout(planId)
+          // navigation fired — do not reset loading state
+        } catch (err) {
+          setLoading(false)
+          alert(err instanceof Error ? err.message : "Unable to start checkout.")
+        }
       }}
       disabled={loading}
       className={`${baseClass} disabled:opacity-60 disabled:cursor-wait`}

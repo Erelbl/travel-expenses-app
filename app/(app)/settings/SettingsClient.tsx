@@ -76,17 +76,13 @@ export function SettingsClient({
         body: JSON.stringify({ plan }),
       })
       const data = await res.json()
-      if (res.ok && data.url) {
-        console.log("[billing redirect exact url]", data.url)
-        window.location.assign(data.url)
-      } else {
-        const msg = data?.detail || data?.error || "Unable to start checkout."
-        toast.error(`Checkout error: ${msg}`)
-      }
-    } catch {
-      toast.error("Unable to start checkout. Please check your connection.")
-    } finally {
+      if (!res.ok || !data?.url) throw new Error(data?.detail || data?.error || "CHECKOUT_URL_MISSING")
+      console.log("[billing redirect client]", data.url)
+      window.location.assign(data.url)
+      // navigation fired — do not reset loading state
+    } catch (err) {
       setCheckoutLoading(null)
+      toast.error(err instanceof Error ? err.message : "Unable to start checkout.")
     }
   }
 
