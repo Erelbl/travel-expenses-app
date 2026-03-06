@@ -108,19 +108,35 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true })
   }
 
-  // User lookup
+  // User lookup — also fetch lemonSubscriptionId for cancellation guard
   const existingUser = await prisma.user.findUnique({
     where: { email: customerEmail },
-    select: { id: true, plan: true },
+    select: { id: true, plan: true, lemonSubscriptionId: true },
   })
 
   console.log(
-    `[lemonsqueezy] user lookup email="${customerEmail}" found=${existingUser !== null} userId=${existingUser?.id ?? "n/a"} currentPlan=${existingUser?.plan ?? "n/a"}`,
+    `[lemonsqueezy] user lookup email="${customerEmail}" found=${existingUser !== null} userId=${existingUser?.id ?? "n/a"} currentPlan=${existingUser?.plan ?? "n/a"} currentLemonSubscriptionId=${existingUser?.lemonSubscriptionId ?? "n/a"}`,
   )
 
   if (!existingUser) {
     console.log(`[lemonsqueezy] User not found for email: ${customerEmail} – returning 200`)
     return NextResponse.json({ ok: true })
+  }
+
+  // Guard: on cancellation, only downgrade if the cancelled subscription is the
+  // user's CURRENT active subscription. If the user already has a newer subscription
+  // (e.g. just upgraded Plus → Pro), the old Plus cancellation event must be ignored.
+  if (isCancelled) {
+    const currentSubId = existingUser.lemonSubscriptionId ?? ""
+    if (currentSubId && currentSubId !== subscriptionId) {
+      console.log(
+        `[lemonsqueezy] cancelled: subscriptionId=${subscriptionId} does NOT match currentLemonSubscriptionId=${currentSubId} – ignoring to prevent downgrade`,
+      )
+      return NextResponse.json({ ok: true })
+    }
+    console.log(
+      `[lemonsqueezy] cancelled: subscriptionId=${subscriptionId} matches current subscription – proceeding with downgrade to free`,
+    )
   }
 
   console.log(
