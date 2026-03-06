@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, User, Settings as SettingsIcon, CreditCard, Shield, Check, LogOut, UserCog, Lock, Camera, Infinity as InfinityIcon, Trophy } from "lucide-react"
+import { ArrowLeft, User, Settings as SettingsIcon, CreditCard, Shield, Check, LogOut, UserCog, Lock, Camera, Infinity as InfinityIcon, Trophy, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -65,6 +65,28 @@ export function SettingsClient({
     confirmPassword: "",
   })
   const [changingPassword, setChangingPassword] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
+
+  async function handleUpgrade(plan: "plus" | "pro") {
+    setCheckoutLoading(plan)
+    try {
+      const res = await fetch("/api/billing/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.open(data.url, "_blank", "noopener,noreferrer")
+      } else {
+        toast.error("Unable to start checkout. Please try again.")
+      }
+    } catch {
+      toast.error("Unable to start checkout. Please try again.")
+    } finally {
+      setCheckoutLoading(null)
+    }
+  }
 
   useEffect(() => {
     const nameChanged = displayName !== initialDisplayName || fullName !== initialFullName
@@ -511,35 +533,35 @@ export function SettingsClient({
               {/* Upgrade / Manage plan — not shown to admins (they always have Pro) */}
               {!isAdmin && userPlan === "free" && (
                 <div className="space-y-2 pt-1">
-                  <a
-                    href="/api/checkout/plus"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center rounded-lg border border-sky-300 bg-sky-50 px-4 py-2.5 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-100"
+                  <button
+                    onClick={() => handleUpgrade("plus")}
+                    disabled={checkoutLoading !== null}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-sky-300 bg-sky-50 px-4 py-2.5 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-100 disabled:opacity-60 disabled:cursor-wait"
                   >
+                    {checkoutLoading === "plus" && <Loader2 className="h-4 w-4 animate-spin" />}
                     Upgrade to Plus
-                  </a>
-                  <a
-                    href="/api/checkout/pro"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                  </button>
+                  <button
+                    onClick={() => handleUpgrade("pro")}
+                    disabled={checkoutLoading !== null}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60 disabled:cursor-wait"
                   >
+                    {checkoutLoading === "pro" && <Loader2 className="h-4 w-4 animate-spin" />}
                     Upgrade to Pro
-                  </a>
+                  </button>
                 </div>
               )}
 
               {!isAdmin && userPlan === "plus" && (
                 <div className="space-y-2 pt-1">
-                  <a
-                    href="/api/checkout/pro"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                  <button
+                    onClick={() => handleUpgrade("pro")}
+                    disabled={checkoutLoading !== null}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60 disabled:cursor-wait"
                   >
+                    {checkoutLoading === "pro" && <Loader2 className="h-4 w-4 animate-spin" />}
                     Upgrade to Pro
-                  </a>
+                  </button>
                   <p className="text-xs text-slate-500 text-center">
                     To manage or cancel your subscription,{" "}
                     <Link href="/contact" className="underline hover:text-slate-700">contact support</Link>.

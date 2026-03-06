@@ -11,6 +11,20 @@ type UserState = {
   plan: string | null
 }
 
+async function startCheckout(planId: string): Promise<void> {
+  const res = await fetch("/api/billing/create-checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ plan: planId }),
+  })
+  const data = await res.json()
+  if (data.url) {
+    window.location.href = data.url
+  } else {
+    alert("Unable to start checkout. Please try again.")
+  }
+}
+
 function PlanCta({
   planId,
   isPaidPlan,
@@ -24,6 +38,8 @@ function PlanCta({
   isPopular: boolean
   user: UserState
 }) {
+  const [loading, setLoading] = useState(false)
+
   const baseClass = `block w-full text-center px-6 py-3 rounded-xl font-semibold transition-colors ${
     isPopular
       ? "bg-white text-sky-600 hover:bg-sky-50"
@@ -74,12 +90,20 @@ function PlanCta({
     return <span className={disabledClass}>Included in your plan</span>
   }
 
-  // Eligible to upgrade — link to checkout redirect route
+  // Eligible to upgrade — POST to create-checkout then redirect
   const upgradeLabel = planId === "pro" ? "Upgrade to Pro" : "Upgrade to Plus"
   return (
-    <Link href={`/api/checkout/${planId}`} className={baseClass}>
-      {upgradeLabel}
-    </Link>
+    <button
+      onClick={async () => {
+        setLoading(true)
+        await startCheckout(planId)
+        setLoading(false)
+      }}
+      disabled={loading}
+      className={`${baseClass} disabled:opacity-60 disabled:cursor-wait`}
+    >
+      {loading ? "Loading…" : upgradeLabel}
+    </button>
   )
 }
 
