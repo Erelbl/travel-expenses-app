@@ -98,13 +98,21 @@ export async function POST(request: Request) {
   }
 
   const data = await lsRes.json()
+
+  // Log the raw response structure to verify field paths (no secrets)
+  console.log("[create-checkout] Lemon response keys:", Object.keys(data ?? {}))
+  console.log("[create-checkout] data.data keys:", Object.keys(data?.data ?? {}))
+  console.log("[create-checkout] data.data.attributes keys:", Object.keys(data?.data?.attributes ?? {}))
+  console.log("[create-checkout] data.data.attributes.url:", data?.data?.attributes?.url)
+
+  // Per Lemon Squeezy JSON:API spec, the checkout URL lives at data.attributes.url
   const checkoutUrl: string | undefined = data?.data?.attributes?.url
 
   if (!checkoutUrl) {
-    console.error("[create-checkout] No URL in Lemon response:", JSON.stringify(data).slice(0, 500))
+    console.error("[create-checkout] No URL found. Full response:", JSON.stringify(data).slice(0, 1000))
     return NextResponse.json({ error: "CHECKOUT_CREATION_FAILED", detail: "No checkout URL returned by Lemon" }, { status: 502 })
   }
 
-  console.log("[create-checkout] Success plan=%s", plan)
+  console.log("[create-checkout] Success plan=%s checkoutUrl=%s", plan, checkoutUrl)
   return NextResponse.json({ url: checkoutUrl })
 }
