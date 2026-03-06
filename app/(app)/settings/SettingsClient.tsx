@@ -77,7 +77,7 @@ export function SettingsClient({
       })
       const data = await res.json()
       if (res.ok && data.url) {
-        window.open(data.url, "_blank", "noopener,noreferrer")
+        window.location.href = data.url
       } else {
         const msg = data?.detail || data?.error || "Unable to start checkout."
         toast.error(`Checkout error: ${msg}`)
