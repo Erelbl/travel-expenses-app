@@ -4,9 +4,14 @@ import { prisma } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 
-function derivePlan(variantName: string): "plus" | "pro" | null {
-  if (variantName.includes("Pro")) return "pro"
-  if (variantName.includes("Plus")) return "plus"
+/**
+ * Derive plan from product_name (preferred) or variant_name (fallback).
+ * variant_name is often "Default" in live payloads — do not rely on it alone.
+ */
+function derivePlanFromNames(productName: string, variantName: string): "plus" | "pro" | null {
+  const combined = `${productName} ${variantName}`
+  if (combined.includes("Pro")) return "pro"
+  if (combined.includes("Plus")) return "plus"
   return null
 }
 
@@ -53,16 +58,34 @@ export async function POST(req: Request) {
   const data = payload.data as Record<string, unknown> | undefined
   const attributes = data?.attributes as Record<string, unknown> | undefined
 
-  // Log raw fields to help diagnose payload shape
-  console.log(`[lemonsqueezy] event=${eventName} dataId=${String(data?.id ?? "")}`)
-  console.log(`[lemonsqueezy] attributes keys=${Object.keys(attributes ?? {}).join(",")}`)
+  // --- Extract identity fields ---
 
-  if (eventName === "order_created") {
-    console.log("[lemonsqueezy] order_created – no-op")
-    return NextResponse.json({ ok: true })
-  }
+  // Preferred: user_id injected into custom_data at checkout creation
+  const customData = meta?.custom_data as Record<string, unknown> | undefined
+  const customUserId = String(customData?.user_id ?? "").trim()
 
+  // Fallback: email from payload attributes
+  const customerEmail: string =
+    String(
+      (attributes?.user_email as string | undefined) ??
+      (attributes?.customer_email as string | undefined) ??
+      ""
+    ).trim()
+
+  // --- Plan signal fields ---
+  const productName: string = String(attributes?.product_name ?? "").trim()
+  const variantName: string = String(attributes?.variant_name ?? "").trim()
+  const variantId: string = String(attributes?.variant_id ?? "").trim()
+  const rawStatus: string = String(attributes?.status ?? "").trim()
+  const subscriptionId = String(data?.id ?? "")
+
+  console.log(
+    `[lemonsqueezy] event=${eventName} dataId=${subscriptionId} customUserId="${customUserId}" email="${customerEmail}" productName="${productName}" variantName="${variantName}" variantId=${variantId} rawStatus=${rawStatus}`,
+  )
+
+  // Events that do nothing
   if (
+    eventName !== "order_created" &&
     eventName !== "subscription_created" &&
     eventName !== "subscription_updated" &&
     eventName !== "subscription_cancelled"
@@ -71,22 +94,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true })
   }
 
-  const subscriptionId = String(data?.id ?? "")
-
-  // Try both known email field locations in Lemon payload
-  const customerEmail: string =
-    (attributes?.user_email as string | undefined) ??
-    (attributes?.customer_email as string | undefined) ??
-    ""
-
-  const variantName: string =
-    (attributes?.variant_name as string | undefined) ?? ""
-
-  const rawStatus = (attributes?.status as string | undefined) ?? ""
-
   const isCancelled =
     eventName === "subscription_cancelled" || rawStatus === "cancelled"
 
+  // Derive plan
   let plan: "free" | "plus" | "pro" = "free"
   let subscriptionStatus = "active"
 
@@ -94,38 +105,54 @@ export async function POST(req: Request) {
     plan = "free"
     subscriptionStatus = "cancelled"
   } else {
-    const derived = derivePlan(variantName)
-    if (derived) plan = derived
+    const derived = derivePlanFromNames(productName, variantName)
+    if (derived) {
+      plan = derived
+    } else {
+      // Cannot determine plan — log and skip to avoid wiping existing plan
+      console.warn(
+        `[lemonsqueezy] Could not derive plan from productName="${productName}" variantName="${variantName}" – skipping update`,
+      )
+      return NextResponse.json({ ok: true })
+    }
     subscriptionStatus = "active"
   }
 
-  console.log(
-    `[lemonsqueezy] parsed: event=${eventName} subscriptionId=${subscriptionId} email="${customerEmail}" variantName="${variantName}" rawStatus=${rawStatus} derivedPlan=${plan} subscriptionStatus=${subscriptionStatus}`,
-  )
+  console.log(`[lemonsqueezy] derivedPlan=${plan} subscriptionStatus=${subscriptionStatus}`)
 
-  if (!customerEmail) {
-    console.warn("[lemonsqueezy] No customer email in payload – skipping DB update")
-    return NextResponse.json({ ok: true })
+  // --- User lookup: prefer by user_id, fallback to email ---
+  let existingUser: { id: string; plan: string; lemonSubscriptionId: string | null } | null = null
+
+  if (customUserId) {
+    existingUser = await prisma.user.findUnique({
+      where: { id: customUserId },
+      select: { id: true, plan: true, lemonSubscriptionId: true },
+    })
+    console.log(
+      `[lemonsqueezy] user lookup by id="${customUserId}" found=${existingUser !== null} currentPlan=${existingUser?.plan ?? "n/a"}`,
+    )
   }
 
-  // User lookup — also fetch lemonSubscriptionId for cancellation guard
-  const existingUser = await prisma.user.findUnique({
-    where: { email: customerEmail },
-    select: { id: true, plan: true, lemonSubscriptionId: true },
-  })
-
-  console.log(
-    `[lemonsqueezy] user lookup email="${customerEmail}" found=${existingUser !== null} userId=${existingUser?.id ?? "n/a"} currentPlan=${existingUser?.plan ?? "n/a"} currentLemonSubscriptionId=${existingUser?.lemonSubscriptionId ?? "n/a"}`,
-  )
+  if (!existingUser && customerEmail) {
+    existingUser = await prisma.user.findUnique({
+      where: { email: customerEmail },
+      select: { id: true, plan: true, lemonSubscriptionId: true },
+    })
+    console.log(
+      `[lemonsqueezy] user lookup by email="${customerEmail}" found=${existingUser !== null} currentPlan=${existingUser?.plan ?? "n/a"}`,
+    )
+  }
 
   if (!existingUser) {
-    console.log(`[lemonsqueezy] User not found for email: ${customerEmail} – returning 200`)
+    console.warn(
+      `[lemonsqueezy] No user found for customUserId="${customUserId}" email="${customerEmail}" – returning 200`,
+    )
     return NextResponse.json({ ok: true })
   }
 
   // Guard: on cancellation, only downgrade if the cancelled subscription is the
-  // user's CURRENT active subscription. If the user already has a newer subscription
-  // (e.g. just upgraded Plus → Pro), the old Plus cancellation event must be ignored.
+  // user's CURRENT active subscription. Upgrading Plus → Pro fires a cancellation
+  // for the old Plus sub — that must NOT wipe the new Pro plan.
   if (isCancelled) {
     const currentSubId = existingUser.lemonSubscriptionId ?? ""
     if (currentSubId && currentSubId !== subscriptionId) {
@@ -135,12 +162,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true })
     }
     console.log(
-      `[lemonsqueezy] cancelled: subscriptionId=${subscriptionId} matches current subscription – proceeding with downgrade to free`,
+      `[lemonsqueezy] cancelled: subscriptionId=${subscriptionId} matches current – proceeding with downgrade to free`,
     )
   }
 
   console.log(
-    `[lemonsqueezy] updating user ${existingUser.id}: plan ${existingUser.plan} -> ${plan}`,
+    `[lemonsqueezy] updating userId=${existingUser.id}: plan ${existingUser.plan} -> ${plan}`,
   )
 
   const updated = await prisma.user.update({
@@ -149,7 +176,7 @@ export async function POST(req: Request) {
       plan,
       subscriptionStatus,
       lemonSubscriptionId: subscriptionId || null,
-      lemonCustomerEmail: customerEmail,
+      lemonCustomerEmail: customerEmail || null,
     },
     select: { id: true, plan: true, subscriptionStatus: true },
   })
