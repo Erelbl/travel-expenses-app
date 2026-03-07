@@ -81,9 +81,11 @@ export async function POST(req: Request) {
 
   // ends_at is present for cancelled/expired subscriptions
   const endsAtRaw = attributes?.ends_at as string | undefined | null
+  // renews_at is present for active subscriptions (next billing date)
+  const renewsAtRaw = attributes?.renews_at as string | undefined | null
 
   console.log(
-    `[lemonsqueezy] event=${eventName} dataId=${subscriptionId} customUserId="${customUserId}" email="${customerEmail}" productName="${productName}" variantName="${variantName}" variantId=${variantId} rawStatus=${rawStatus} ends_at=${endsAtRaw ?? "n/a"}`,
+    `[lemonsqueezy] event=${eventName} dataId=${subscriptionId} customUserId="${customUserId}" email="${customerEmail}" productName="${productName}" variantName="${variantName}" variantId=${variantId} rawStatus=${rawStatus} ends_at=${endsAtRaw ?? "n/a"} renews_at=${renewsAtRaw ?? "n/a"}`,
   )
 
   // Events we handle
@@ -153,6 +155,7 @@ export async function POST(req: Request) {
   let planToStore: "free" | "plus" | "pro"
   let newStatus: string
   let newEndsAt: Date | null = null
+  let newRenewsAt: Date | null = null
   let clearSubscriptionId = false
 
   if (eventName === "subscription_expired" || rawStatus === "expired") {
@@ -197,7 +200,8 @@ export async function POST(req: Request) {
     }
     planToStore = derived
     newStatus = "active"
-    console.log(`[lemonsqueezy] ${eventName}: active – setting plan=${planToStore}`)
+    newRenewsAt = renewsAtRaw ? new Date(renewsAtRaw) : null
+    console.log(`[lemonsqueezy] ${eventName}: active – setting plan=${planToStore} renews_at=${newRenewsAt?.toISOString() ?? "n/a"}`)
   }
 
   console.log(
@@ -212,12 +216,13 @@ export async function POST(req: Request) {
       lemonSubscriptionId: clearSubscriptionId ? null : (subscriptionId || null),
       lemonCustomerEmail: customerEmail || null,
       subscriptionEndsAt: newEndsAt,
+      subscriptionRenewsAt: newRenewsAt,
     },
-    select: { id: true, plan: true, subscriptionStatus: true, subscriptionEndsAt: true },
+    select: { id: true, plan: true, subscriptionStatus: true, subscriptionEndsAt: true, subscriptionRenewsAt: true },
   })
 
   console.log(
-    `[lemonsqueezy] update confirmed: userId=${updated.id} plan=${updated.plan} status=${updated.subscriptionStatus} endsAt=${updated.subscriptionEndsAt?.toISOString() ?? "n/a"}`,
+    `[lemonsqueezy] update confirmed: userId=${updated.id} plan=${updated.plan} status=${updated.subscriptionStatus} endsAt=${updated.subscriptionEndsAt?.toISOString() ?? "n/a"} renewsAt=${updated.subscriptionRenewsAt?.toISOString() ?? "n/a"}`,
   )
 
   return NextResponse.json({ ok: true })

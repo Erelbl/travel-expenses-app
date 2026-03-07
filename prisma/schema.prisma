@@ -35,6 +35,7 @@ model User {
   lemonCustomerEmail   String?
   subscriptionStatus   String?
   subscriptionEndsAt   DateTime?
+  subscriptionRenewsAt DateTime?
 
   ownedTrips         Trip[]
   memberships        TripMember[]

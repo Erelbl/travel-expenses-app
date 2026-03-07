@@ -30,6 +30,18 @@ interface SettingsClientProps {
   userPlan: "free" | "plus" | "pro"
   receiptScansUsed: number
   receiptScansResetAt: Date | null
+  subscriptionStatus: string | null
+  subscriptionEndsAt: Date | null
+  subscriptionRenewsAt: Date | null
+}
+
+function formatBillingDate(date: Date | null | undefined): string {
+  if (!date) return ""
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
 }
 
 export function SettingsClient({ 
@@ -42,6 +54,9 @@ export function SettingsClient({
   userPlan,
   receiptScansUsed,
   receiptScansResetAt,
+  subscriptionStatus,
+  subscriptionEndsAt,
+  subscriptionRenewsAt,
 }: SettingsClientProps) {
   const { t, locale } = useI18n()
   const router = useRouter()
@@ -67,6 +82,7 @@ export function SettingsClient({
   const [changingPassword, setChangingPassword] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
   const [managingSubscription, setManagingSubscription] = useState(false)
+  const [updatingPayment, setUpdatingPayment] = useState(false)
 
   async function handleUpgrade(plan: "plus" | "pro") {
     setCheckoutLoading(plan)
@@ -107,6 +123,22 @@ export function SettingsClient({
     } catch (err) {
       setManagingSubscription(false)
       toast.error(err instanceof Error ? err.message : "Unable to open subscription portal.")
+    }
+  }
+
+  async function handleUpdatePaymentMethod() {
+    setUpdatingPayment(true)
+    try {
+      const res = await fetch("/api/billing/manage-subscription", { method: "POST" })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || "PORTAL_URL_MISSING")
+      const target = data?.updatePaymentUrl || data?.portalUrl
+      if (!target) throw new Error("PORTAL_URL_MISSING")
+      console.log("[billing update payment]", target)
+      window.location.assign(target)
+    } catch (err) {
+      setUpdatingPayment(false)
+      toast.error(err instanceof Error ? err.message : "Unable to open payment portal.")
     }
   }
 
@@ -478,11 +510,64 @@ export function SettingsClient({
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-slate-600 mb-3">
-                    {userPlan === "free" && t('appSettings.planFreeDesc')}
-                    {userPlan === "plus" && "For travelers who want more control"}
-                    {(userPlan === "pro" || isAdmin) && "For power users and teams"}
-                  </p>
+                  {/* Subscription status messaging */}
+                  {!isAdmin && (() => {
+                    if (userPlan === "free") {
+                      return (
+                        <p className="text-sm text-slate-500 mb-3">
+                          {t('appSettings.planFreeDesc') || "Upgrade to unlock advanced features."}
+                        </p>
+                      )
+                    }
+
+                    const endsAfterToday =
+                      subscriptionEndsAt && new Date(subscriptionEndsAt) > new Date()
+
+                    if (subscriptionStatus === "cancelled" && endsAfterToday) {
+                      return (
+                        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 space-y-0.5">
+                          <p className="text-sm font-medium text-amber-800">
+                            Your subscription has been cancelled.
+                          </p>
+                          <p className="text-xs text-amber-700">
+                            You will keep access until{" "}
+                            <span className="font-semibold">{formatBillingDate(subscriptionEndsAt)}</span>.
+                          </p>
+                        </div>
+                      )
+                    }
+
+                    if (subscriptionStatus === "expired") {
+                      return (
+                        <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                          <p className="text-sm text-slate-600">Your subscription has expired.</p>
+                        </div>
+                      )
+                    }
+
+                    if (subscriptionStatus === "active") {
+                      return (
+                        <p className="text-sm text-slate-500 mb-3">
+                          {subscriptionRenewsAt ? (
+                            <>Renews on <span className="font-medium text-slate-700">{formatBillingDate(subscriptionRenewsAt)}</span></>
+                          ) : (
+                            userPlan === "plus" ? "For travelers who want more control" : "For power users and teams"
+                          )}
+                        </p>
+                      )
+                    }
+
+                    // Fallback: paid plan but no status metadata yet
+                    return (
+                      <p className="text-sm text-slate-500 mb-3">
+                        {userPlan === "plus" ? "For travelers who want more control" : "For power users and teams"}
+                      </p>
+                    )
+                  })()}
+
+                  {isAdmin && (
+                    <p className="text-sm text-slate-500 mb-3">For power users and teams</p>
+                  )}
                   
                   {/* Receipt Scanning Status */}
                   <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 mb-3">
@@ -576,14 +661,16 @@ export function SettingsClient({
 
               {!isAdmin && userPlan === "plus" && (
                 <div className="space-y-2 pt-1">
-                  <button
-                    onClick={() => handleUpgrade("pro")}
-                    disabled={checkoutLoading !== null || managingSubscription}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60 disabled:cursor-wait"
-                  >
-                    {checkoutLoading === "pro" && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Upgrade to Pro
-                  </button>
+                  {subscriptionStatus !== "cancelled" && (
+                    <button
+                      onClick={() => handleUpgrade("pro")}
+                      disabled={checkoutLoading !== null || managingSubscription}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60 disabled:cursor-wait"
+                    >
+                      {checkoutLoading === "pro" && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Upgrade to Pro
+                    </button>
+                  )}
                   <button
                     onClick={handleManageSubscription}
                     disabled={managingSubscription || checkoutLoading !== null}
@@ -592,11 +679,19 @@ export function SettingsClient({
                     {managingSubscription && <Loader2 className="h-4 w-4 animate-spin" />}
                     Manage subscription
                   </button>
+                  <button
+                    onClick={handleUpdatePaymentMethod}
+                    disabled={updatingPayment || managingSubscription}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-wait"
+                  >
+                    {updatingPayment && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Update payment method
+                  </button>
                 </div>
               )}
 
               {!isAdmin && userPlan === "pro" && (
-                <div className="pt-1">
+                <div className="space-y-2 pt-1">
                   <button
                     onClick={handleManageSubscription}
                     disabled={managingSubscription}
@@ -604,6 +699,14 @@ export function SettingsClient({
                   >
                     {managingSubscription && <Loader2 className="h-4 w-4 animate-spin" />}
                     Manage subscription
+                  </button>
+                  <button
+                    onClick={handleUpdatePaymentMethod}
+                    disabled={updatingPayment || managingSubscription}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-wait"
+                  >
+                    {updatingPayment && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Update payment method
                   </button>
                 </div>
               )}

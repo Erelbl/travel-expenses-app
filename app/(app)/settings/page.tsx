@@ -32,6 +32,9 @@ export default async function SettingsPage() {
       plan: true,
       receiptScansUsed: true,
       receiptScansResetAt: true,
+      subscriptionStatus: true,
+      subscriptionEndsAt: true,
+      subscriptionRenewsAt: true,
     },
   })
   
@@ -48,6 +51,9 @@ export default async function SettingsPage() {
       userPlan={normalizePlan(user?.plan)}
       receiptScansUsed={user?.receiptScansUsed || 0}
       receiptScansResetAt={user?.receiptScansResetAt ?? null}
+      subscriptionStatus={user?.subscriptionStatus ?? null}
+      subscriptionEndsAt={user?.subscriptionEndsAt ?? null}
+      subscriptionRenewsAt={user?.subscriptionRenewsAt ?? null}
     />
   )
 }
