@@ -66,6 +66,7 @@ export function SettingsClient({
   })
   const [changingPassword, setChangingPassword] = useState(false)
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
+  const [managingSubscription, setManagingSubscription] = useState(false)
 
   async function handleUpgrade(plan: "plus" | "pro") {
     setCheckoutLoading(plan)
@@ -83,6 +84,29 @@ export function SettingsClient({
     } catch (err) {
       setCheckoutLoading(null)
       toast.error(err instanceof Error ? err.message : "Unable to start checkout.")
+    }
+  }
+
+  async function handleManageSubscription() {
+    setManagingSubscription(true)
+    try {
+      const res = await fetch("/api/billing/manage-subscription", { method: "POST" })
+      const data = await res.json()
+      if (!res.ok || !data?.portalUrl) {
+        if (data?.error === "NO_SUBSCRIPTION") {
+          toast.error("No active subscription found.")
+        } else {
+          throw new Error(data?.error || "PORTAL_URL_MISSING")
+        }
+        setManagingSubscription(false)
+        return
+      }
+      console.log("[billing manage subscription]", data.portalUrl)
+      window.location.assign(data.portalUrl)
+      // navigation fired — do not reset loading state
+    } catch (err) {
+      setManagingSubscription(false)
+      toast.error(err instanceof Error ? err.message : "Unable to open subscription portal.")
     }
   }
 
@@ -554,24 +578,34 @@ export function SettingsClient({
                 <div className="space-y-2 pt-1">
                   <button
                     onClick={() => handleUpgrade("pro")}
-                    disabled={checkoutLoading !== null}
+                    disabled={checkoutLoading !== null || managingSubscription}
                     className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:opacity-60 disabled:cursor-wait"
                   >
                     {checkoutLoading === "pro" && <Loader2 className="h-4 w-4 animate-spin" />}
                     Upgrade to Pro
                   </button>
-                  <p className="text-xs text-slate-500 text-center">
-                    To manage or cancel your subscription,{" "}
-                    <Link href="/contact" className="underline hover:text-slate-700">contact support</Link>.
-                  </p>
+                  <button
+                    onClick={handleManageSubscription}
+                    disabled={managingSubscription || checkoutLoading !== null}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-wait"
+                  >
+                    {managingSubscription && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Manage subscription
+                  </button>
                 </div>
               )}
 
               {!isAdmin && userPlan === "pro" && (
-                <p className="text-xs text-slate-500 text-center pt-1">
-                  To manage or cancel your subscription,{" "}
-                  <Link href="/contact" className="underline hover:text-slate-700">contact support</Link>.
-                </p>
+                <div className="pt-1">
+                  <button
+                    onClick={handleManageSubscription}
+                    disabled={managingSubscription}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 disabled:cursor-wait"
+                  >
+                    {managingSubscription && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Manage subscription
+                  </button>
+                </div>
               )}
             </CardContent>
           </Card>

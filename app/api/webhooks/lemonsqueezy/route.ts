@@ -79,49 +79,30 @@ export async function POST(req: Request) {
   const rawStatus: string = String(attributes?.status ?? "").trim()
   const subscriptionId = String(data?.id ?? "")
 
+  // ends_at is present for cancelled/expired subscriptions
+  const endsAtRaw = attributes?.ends_at as string | undefined | null
+
   console.log(
-    `[lemonsqueezy] event=${eventName} dataId=${subscriptionId} customUserId="${customUserId}" email="${customerEmail}" productName="${productName}" variantName="${variantName}" variantId=${variantId} rawStatus=${rawStatus}`,
+    `[lemonsqueezy] event=${eventName} dataId=${subscriptionId} customUserId="${customUserId}" email="${customerEmail}" productName="${productName}" variantName="${variantName}" variantId=${variantId} rawStatus=${rawStatus} ends_at=${endsAtRaw ?? "n/a"}`,
   )
 
-  // Events that do nothing
-  if (
-    eventName !== "order_created" &&
-    eventName !== "subscription_created" &&
-    eventName !== "subscription_updated" &&
-    eventName !== "subscription_cancelled"
-  ) {
+  // Events we handle
+  const HANDLED_EVENTS = [
+    "order_created",
+    "subscription_created",
+    "subscription_updated",
+    "subscription_cancelled",
+    "subscription_resumed",
+    "subscription_expired",
+  ]
+  if (!HANDLED_EVENTS.includes(eventName)) {
     console.log(`[lemonsqueezy] Unhandled event: ${eventName} – no-op`)
     return NextResponse.json({ ok: true })
   }
 
-  const isCancelled =
-    eventName === "subscription_cancelled" || rawStatus === "cancelled"
-
-  // Derive plan
-  let plan: "free" | "plus" | "pro" = "free"
-  let subscriptionStatus = "active"
-
-  if (isCancelled) {
-    plan = "free"
-    subscriptionStatus = "cancelled"
-  } else {
-    const derived = derivePlanFromNames(productName, variantName)
-    if (derived) {
-      plan = derived
-    } else {
-      // Cannot determine plan — log and skip to avoid wiping existing plan
-      console.warn(
-        `[lemonsqueezy] Could not derive plan from productName="${productName}" variantName="${variantName}" – skipping update`,
-      )
-      return NextResponse.json({ ok: true })
-    }
-    subscriptionStatus = "active"
-  }
-
-  console.log(`[lemonsqueezy] derivedPlan=${plan} subscriptionStatus=${subscriptionStatus}`)
-
   // --- User lookup: prefer by user_id, fallback to email ---
-  let existingUser: { id: string; plan: string; lemonSubscriptionId: string | null } | null = null
+  type ExistingUser = { id: string; plan: string; lemonSubscriptionId: string | null }
+  let existingUser: ExistingUser | null = null
 
   if (customUserId) {
     existingUser = await prisma.user.findUnique({
@@ -150,39 +131,93 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true })
   }
 
-  // Guard: on cancellation, only downgrade if the cancelled subscription is the
-  // user's CURRENT active subscription. Upgrading Plus → Pro fires a cancellation
-  // for the old Plus sub — that must NOT wipe the new Pro plan.
-  if (isCancelled) {
+  // --- Guard: subscription ID mismatch for cancel/expire ---
+  // If the incoming subscription is not the user's current active one, ignore it
+  // (e.g. old Plus sub cancellation arriving after a Pro upgrade).
+  if (
+    eventName === "subscription_cancelled" ||
+    eventName === "subscription_expired" ||
+    rawStatus === "cancelled" ||
+    rawStatus === "expired"
+  ) {
     const currentSubId = existingUser.lemonSubscriptionId ?? ""
     if (currentSubId && currentSubId !== subscriptionId) {
       console.log(
-        `[lemonsqueezy] cancelled: subscriptionId=${subscriptionId} does NOT match currentLemonSubscriptionId=${currentSubId} – ignoring to prevent downgrade`,
+        `[lemonsqueezy] ${eventName}: subscriptionId=${subscriptionId} does NOT match currentLemonSubscriptionId=${currentSubId} – ignoring to prevent erroneous downgrade`,
       )
       return NextResponse.json({ ok: true })
     }
+  }
+
+  // --- Derive what to store ---
+  let planToStore: "free" | "plus" | "pro"
+  let newStatus: string
+  let newEndsAt: Date | null = null
+  let clearSubscriptionId = false
+
+  if (eventName === "subscription_expired" || rawStatus === "expired") {
+    // Subscription fully expired — downgrade to free now
+    planToStore = "free"
+    newStatus = "expired"
+    clearSubscriptionId = true
+    console.log(`[lemonsqueezy] ${eventName}: subscription expired – downgrading to free`)
+  } else if (eventName === "subscription_resumed") {
+    // User re-activated their subscription
+    const derived = derivePlanFromNames(productName, variantName)
+    if (!derived) {
+      console.warn(
+        `[lemonsqueezy] resumed: Could not derive plan from productName="${productName}" variantName="${variantName}" – skipping`,
+      )
+      return NextResponse.json({ ok: true })
+    }
+    planToStore = derived
+    newStatus = "active"
+    console.log(`[lemonsqueezy] ${eventName}: subscription resumed – restoring plan=${planToStore}`)
+  } else if (
+    eventName === "subscription_cancelled" ||
+    rawStatus === "cancelled"
+  ) {
+    // Cancelled but still active until ends_at.
+    // Keep the paid plan — user has access until the billing period ends.
+    const derived = derivePlanFromNames(productName, variantName)
+    planToStore = derived ?? (existingUser.plan as "free" | "plus" | "pro")
+    newStatus = "cancelled"
+    newEndsAt = endsAtRaw ? new Date(endsAtRaw) : null
     console.log(
-      `[lemonsqueezy] cancelled: subscriptionId=${subscriptionId} matches current – proceeding with downgrade to free`,
+      `[lemonsqueezy] ${eventName}: cancelled – keeping plan=${planToStore} until endsAt=${newEndsAt?.toISOString() ?? "unknown"}`,
     )
+  } else {
+    // subscription_created / subscription_updated / order_created — active purchase
+    const derived = derivePlanFromNames(productName, variantName)
+    if (!derived) {
+      console.warn(
+        `[lemonsqueezy] Could not derive plan from productName="${productName}" variantName="${variantName}" – skipping update`,
+      )
+      return NextResponse.json({ ok: true })
+    }
+    planToStore = derived
+    newStatus = "active"
+    console.log(`[lemonsqueezy] ${eventName}: active – setting plan=${planToStore}`)
   }
 
   console.log(
-    `[lemonsqueezy] updating userId=${existingUser.id}: plan ${existingUser.plan} -> ${plan}`,
+    `[lemonsqueezy] updating userId=${existingUser.id}: plan ${existingUser.plan} -> ${planToStore} status=${newStatus}`,
   )
 
   const updated = await prisma.user.update({
     where: { id: existingUser.id },
     data: {
-      plan,
-      subscriptionStatus,
-      lemonSubscriptionId: subscriptionId || null,
+      plan: planToStore,
+      subscriptionStatus: newStatus,
+      lemonSubscriptionId: clearSubscriptionId ? null : (subscriptionId || null),
       lemonCustomerEmail: customerEmail || null,
+      subscriptionEndsAt: newEndsAt,
     },
-    select: { id: true, plan: true, subscriptionStatus: true },
+    select: { id: true, plan: true, subscriptionStatus: true, subscriptionEndsAt: true },
   })
 
   console.log(
-    `[lemonsqueezy] update confirmed: userId=${updated.id} plan=${updated.plan} subscriptionStatus=${updated.subscriptionStatus}`,
+    `[lemonsqueezy] update confirmed: userId=${updated.id} plan=${updated.plan} status=${updated.subscriptionStatus} endsAt=${updated.subscriptionEndsAt?.toISOString() ?? "n/a"}`,
   )
 
   return NextResponse.json({ ok: true })
