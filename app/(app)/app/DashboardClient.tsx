@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Calendar, TrendingUp, Package, ArrowRight, X } from "lucide-react"
+import { Calendar, TrendingUp, Package, ArrowRight, X, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
@@ -34,7 +34,12 @@ export function DashboardClient({ trips, userName, userGender }: DashboardClient
   const router = useRouter()
   const isRTL = locale === 'he'
   const [showWelcome, setShowWelcome] = useState(false)
-  
+  const [userPlan, setUserPlan] = useState<string | null>(null)
+
+  // Derive active (non-closed) trip count directly from the loaded trips list
+  const activeTripsCount = trips.filter((t) => !t.isClosed).length
+  const atTripLimit = userPlan === "free" && activeTripsCount >= 1
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hasSeenWelcome = localStorage.getItem('tw_hasSeenWelcome')
@@ -44,6 +49,13 @@ export function DashboardClient({ trips, userName, userGender }: DashboardClient
     }
   }, [trips.length])
 
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.plan) setUserPlan(data.plan) })
+      .catch(() => {})
+  }, [])
+
   const handleWelcomeDismiss = () => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('tw_hasSeenWelcome', 'true')
@@ -52,6 +64,7 @@ export function DashboardClient({ trips, userName, userGender }: DashboardClient
   }
 
   const handleCreateTrip = () => {
+    if (atTripLimit) return
     handleWelcomeDismiss()
     router.push('/trips/new')
   }
@@ -104,9 +117,12 @@ export function DashboardClient({ trips, userName, userGender }: DashboardClient
               <Button
                 size="lg"
                 onClick={handleCreateTrip}
+                disabled={atTripLimit}
                 className="w-full"
               >
-                {t('onboarding.createTrip')}
+                {atTripLimit ? (
+                  <><Lock className="mr-2 h-4 w-4" />Free plan: 1 active trip limit reached</>
+                ) : t('onboarding.createTrip')}
               </Button>
             </motion.div>
           </div>
@@ -134,15 +150,34 @@ export function DashboardClient({ trips, userName, userGender }: DashboardClient
             <div className="text-sky-50/90 text-base md:text-lg mb-6">
               {/* Subtitle removed per UX requirements */}
             </div>
-            <Link href="/trips/new">
-              <Button
-                size="lg"
-                className="bg-white text-sky-600 hover:bg-sky-50 shadow-lg hover:shadow-xl transition-all"
-              >
-                <Package className={`${isRTL ? 'ml-2' : 'mr-2'} h-5 w-5`} />
-                {t('appDashboard.createTrip')}
-              </Button>
-            </Link>
+            {atTripLimit ? (
+              <div className="space-y-1">
+                <Button
+                  size="lg"
+                  disabled
+                  className="bg-white/50 text-sky-600 shadow-none cursor-default opacity-70"
+                >
+                  <Lock className={`${isRTL ? 'ml-2' : 'mr-2'} h-5 w-5`} />
+                  {t('appDashboard.createTrip')}
+                </Button>
+                <p className="text-xs text-sky-100 text-center">
+                  Free plan: 1 active trip.{' '}
+                  <Link href="/pricing" className="underline font-semibold hover:text-white">
+                    Upgrade
+                  </Link>
+                </p>
+              </div>
+            ) : (
+              <Link href="/trips/new">
+                <Button
+                  size="lg"
+                  className="bg-white text-sky-600 hover:bg-sky-50 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <Package className={`${isRTL ? 'ml-2' : 'mr-2'} h-5 w-5`} />
+                  {t('appDashboard.createTrip')}
+                </Button>
+              </Link>
+            )}
           </motion.div>
         </div>
       </motion.div>
@@ -164,12 +199,14 @@ export function DashboardClient({ trips, userName, userGender }: DashboardClient
                 </div>
               }
               action={
-                <Link href="/trips/new">
-                  <Button size="lg">
-                    <Package className={`${isRTL ? 'ml-2' : 'mr-2'} h-5 w-5`} />
-                    {t('appDashboard.createFirstTrip')}
-                  </Button>
-                </Link>
+                atTripLimit ? undefined : (
+                  <Link href="/trips/new">
+                    <Button size="lg">
+                      <Package className={`${isRTL ? 'ml-2' : 'mr-2'} h-5 w-5`} />
+                      {t('appDashboard.createFirstTrip')}
+                    </Button>
+                  </Link>
+                )
               }
             />
           </motion.div>

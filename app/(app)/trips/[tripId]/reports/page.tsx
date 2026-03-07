@@ -5,6 +5,7 @@ import { useEffect, useState, Suspense, lazy } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { toast } from "sonner"
 import { ArrowLeft, Calendar, DollarSign, BarChart3, Plus, Target, Tag, Download, TrendingDown, Zap, X, Filter, ChevronDown, Lock } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { OfflineBanner } from "@/components/OfflineBanner"
@@ -530,11 +531,12 @@ export default function ReportsPage() {
   const activeFilterChips = getActiveFilterChips()
 
   async function handleExportToExcel() {
-    // Check entitlement: Plus and above only
     const effectivePlan = isAdmin ? "pro" : userPlan
     if (effectivePlan === "free" || !effectivePlan) {
-      // Show upgrade prompt
-      alert(t("reports.exportUpgradeRequired") || "Export to Excel is available in Plus and above plans. Upgrade to access this feature.")
+      toast.error(
+        t("reports.exportUpgradeRequired") ||
+          "Export to Excel requires Plus or Pro. Upgrade to unlock this feature.",
+      )
       return
     }
 
@@ -634,27 +636,36 @@ export default function ReportsPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="default"
-                onClick={handleExportToExcel}
-                disabled={exporting || expenses.length === 0}
-                className="gap-2 hidden sm:flex"
-              >
-                <Download className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  {exporting ? t('reports.exporting') || 'Exporting...' : t('reports.exportToExcel') || 'Export to Excel'}
-                </span>
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleExportToExcel}
-                disabled={exporting || expenses.length === 0}
-                className="sm:hidden"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
+              {(() => {
+                const isFree = !isAdmin && (userPlan === "free" || userPlan === null)
+                return (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="default"
+                      onClick={handleExportToExcel}
+                      disabled={exporting || expenses.length === 0}
+                      className="gap-2 hidden sm:flex"
+                      title={isFree ? "Export to Excel requires Plus or Pro" : undefined}
+                    >
+                      {isFree ? <Lock className="h-4 w-4 text-slate-400" /> : <Download className="h-4 w-4" />}
+                      <span className="text-sm font-medium">
+                        {exporting ? t('reports.exporting') || 'Exporting...' : t('reports.exportToExcel') || 'Export to Excel'}
+                      </span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleExportToExcel}
+                      disabled={exporting || expenses.length === 0}
+                      className="sm:hidden"
+                      title={isFree ? "Export to Excel requires Plus or Pro" : undefined}
+                    >
+                      {isFree ? <Lock className="h-4 w-4 text-slate-400" /> : <Download className="h-4 w-4" />}
+                    </Button>
+                  </>
+                )
+              })()}
             </div>
           </div>
           

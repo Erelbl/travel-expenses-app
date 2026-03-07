@@ -21,6 +21,7 @@ import { CURRENCIES } from "@/lib/utils/currency"
 import { COUNTRIES } from "@/lib/utils/countries"
 import { 
   getTripAllowedCurrencies, 
+  getAllowedCurrenciesForPlan,
   currencyForCountry
 } from "@/lib/utils/countryCurrency"
 import { useI18n } from "@/lib/i18n/I18nProvider"
@@ -101,8 +102,13 @@ export default function EditExpensePage() {
     usageDate: "",
   })
 
-  // Get allowed currencies
-  const allowedCurrencies = trip ? getTripAllowedCurrencies(trip.plannedCountries) : []
+  // Derive effective plan from receipt scan status (same as add-expense)
+  const userPlan = receiptScanStatus?.plan ?? "free"
+
+  // Get allowed currencies — plan-aware (free = USD + EUR + baseCurrency only)
+  const allowedCurrencies = trip
+    ? getAllowedCurrenciesForPlan(userPlan, trip.baseCurrency, trip.plannedCountries ?? undefined)
+    : []
   const displayCurrencies = CURRENCIES.filter((c) => allowedCurrencies.includes(c.code))
 
   // Get trip countries
