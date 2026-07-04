@@ -871,6 +871,16 @@ export default function ReportsPage() {
                       {locale === "he" ? "משקף עלות בתוך היעד" : "In-destination cost"}
                     </span>
                   )}
+                  {summary.totalFuture > 0 && (
+                    <span className="block text-[10px] text-slate-400 mt-0.5">
+                      {t("reports.futureExpensesTotal")}: {formatCurrency(summary.totalFuture, trip.baseCurrency)}
+                      {" · "}
+                      {t("reports.totalIncludingFuture")}: {formatCurrency(summary.totalRealized + summary.totalFuture, trip.baseCurrency)}
+                    </span>
+                  )}
+                  <span className="block text-[10px] text-slate-400 mt-0.5">
+                    {t("reports.realizedNote")}
+                  </span>
                 </p>
               </CardContent>
             </Card>
