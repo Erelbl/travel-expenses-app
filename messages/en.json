@@ -203,6 +203,8 @@
     "sharing": "Sharing",
     "tripName": "Trip Name",
     "baseCurrency": "Base Currency",
+    "currentCurrency": "Current Currency",
+    "baseCurrencyHelper": "Used for all reports, budgets, and totals",
     "exchangeRates": "Exchange Rates",
     "ratesHelper": "Rates to convert from base currency",
     "budgetCalmNote": "For personal awareness only, you can always change this",

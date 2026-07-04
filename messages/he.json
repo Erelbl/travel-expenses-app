@@ -203,6 +203,8 @@
     "sharing": "שיתוף",
     "tripName": "שם הטיול",
     "baseCurrency": "מטבע בסיס",
+    "currentCurrency": "מטבע נוכחי",
+    "baseCurrencyHelper": "משמש לכל הדוחות, התקציבים והסיכומים",
     "exchangeRates": "שערי המרה",
     "ratesHelper": "שערים להמרה ממטבע הבסיס",
     "budgetCalmNote": "רק בשביל מודעות אישית, אפשר לשנות תמיד",

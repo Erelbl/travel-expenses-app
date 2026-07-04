@@ -21,7 +21,7 @@ import { canManageTrip } from "@/lib/utils/permissions"
 import { updateTripBasics, updateBudget, updateInsightsProfile, closeTrip, reopenTrip, deleteTrip } from "../actions"
 import { Badge } from "@/components/ui/badge"
 import { getCountryName, COUNTRIES_DATA } from "@/lib/utils/countries.data"
-import { currencyForCountry } from "@/lib/utils/countryCurrency"
+import { currencyForCountry, getTripAllowedCurrencies } from "@/lib/utils/countryCurrency"
 
 export default function TripSettingsPage() {
   const { t, locale } = useI18n()
@@ -45,6 +45,7 @@ export default function TripSettingsPage() {
     countries: [] as string[],
     currentCountry: null as string | null,
     currentCurrency: null as string | null,
+    baseCurrency: "" as string,
   })
 
   // Form state for Budget
@@ -95,6 +96,7 @@ export default function TripSettingsPage() {
         countries: tripData.countries || [],
         currentCountry: tripData.currentCountry ?? null,
         currentCurrency: tripData.currentCurrency ?? null,
+        baseCurrency: tripData.baseCurrency,
       }
       setFormData(initialFormData)
 
@@ -144,6 +146,7 @@ export default function TripSettingsPage() {
           countries: formData.countries,
           currentCountry: formData.currentCountry,
           currentCurrency: formData.currentCurrency,
+          baseCurrency: formData.baseCurrency,
         }),
         updateBudget(tripId, {
           targetBudget: budgetData.targetBudget,
@@ -400,7 +403,7 @@ export default function TripSettingsPage() {
                 {formData.currentCurrency && (
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-slate-700">
-                      {t('createTrip.baseCurrency')}
+                      {t('settings.currentCurrency')}
                     </Label>
                     <Input
                       value={formData.currentCurrency ?? ""}
@@ -627,11 +630,33 @@ export default function TripSettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-sm">
-              <span className="font-medium text-slate-700">{t('createTrip.baseCurrency')}:</span>
-              <span className="ml-2 text-slate-900">{trip.baseCurrency}</span>
-            </div>
-            
+            {canEdit ? (
+              <div className="space-y-2">
+                <Label htmlFor="baseCurrency" className="text-sm font-medium text-slate-700">
+                  {t('settings.baseCurrency')}
+                </Label>
+                <Select
+                  id="baseCurrency"
+                  value={formData.baseCurrency}
+                  onChange={(e) => setFormData({ ...formData, baseCurrency: e.target.value })}
+                >
+                  {Array.from(new Set([...getTripAllowedCurrencies(formData.countries), trip.baseCurrency]))
+                    .sort()
+                    .map((code) => (
+                      <option key={code} value={code}>{code}</option>
+                    ))}
+                </Select>
+                <p className="text-xs text-slate-500">
+                  {t('settings.baseCurrencyHelper')}
+                </p>
+              </div>
+            ) : (
+              <div className="text-sm">
+                <span className="font-medium text-slate-700">{t('createTrip.baseCurrency')}:</span>
+                <span className="ml-2 text-slate-900">{trip.baseCurrency}</span>
+              </div>
+            )}
+
             {/* Currencies used in expenses */}
             {(() => {
               const usedCurrencies = Array.from(new Set(expenses.map(e => e.currency)))
@@ -648,7 +673,7 @@ export default function TripSettingsPage() {
                     ))}
                   </div>
                   <p className="text-xs text-slate-500 mt-2">
-                    {t('settings.ratesHelper')} {trip.baseCurrency}
+                    {t('settings.ratesHelper')} {canEdit ? formData.baseCurrency : trip.baseCurrency}
                   </p>
                 </div>
               ) : (

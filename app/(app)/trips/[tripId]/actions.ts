@@ -57,6 +57,7 @@ export async function updateTripBasics(
     countries?: string[]
     currentCountry?: string | null
     currentCurrency?: string | null
+    baseCurrency?: string
   }
 ) {
   const session = await auth()
@@ -97,6 +98,7 @@ export async function updateTripBasics(
       countries: data.countries,
       currentCountry: data.currentCountry,
       currentCurrency: data.currentCurrency,
+      ...(data.baseCurrency ? { baseCurrency: data.baseCurrency } : {}),
     },
   })
 
